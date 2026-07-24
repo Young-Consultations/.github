@@ -1,0 +1,105 @@
+name: Execute approved Codex task
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_issue:
+        description: Source portfolio issue
+        required: true
+        type: string
+
+      task_type:
+        description: Task classification
+        required: true
+        type: string
+
+      project_component:
+        description: Repository component
+        required: true
+        type: string
+
+      priority:
+        description: Backlog priority
+        required: true
+        type: string
+
+      parallel_safe:
+        description: Whether parallel execution is safe
+        required: true
+        type: boolean
+
+      dependency_status:
+        description: Dependency validation status
+        required: true
+        type: string
+
+      codex_environment:
+        description: Codex environment identifier
+        required: true
+        type: string
+
+      concurrency_group:
+        description: Router-generated concurrency group
+        required: true
+        type: string
+
+      draft_pr_only:
+        description: Require draft pull requests
+        required: true
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ inputs.concurrency_group }}
+  cancel-in-progress: false
+
+jobs:
+  validate-boundary:
+    name: Validate consulting execution boundary
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validate router contract
+        shell: bash
+        env:
+          SOURCE_ISSUE: ${{ inputs.source_issue }}
+          TASK_TYPE: ${{ inputs.task_type }}
+          PROJECT_COMPONENT: ${{ inputs.project_component }}
+          PRIORITY: ${{ inputs.priority }}
+          DEPENDENCY_STATUS: ${{ inputs.dependency_status }}
+          CODEX_ENVIRONMENT: ${{ inputs.codex_environment }}
+          DRAFT_PR_ONLY: ${{ inputs.draft_pr_only }}
+        run: |
+          set -euo pipefail
+
+          test -n "$SOURCE_ISSUE"
+          test -n "$TASK_TYPE"
+          test -n "$PROJECT_COMPONENT"
+          test -n "$PRIORITY"
+          test -n "$CODEX_ENVIRONMENT"
+
+          case "$DEPENDENCY_STATUS" in
+            satisfied|none|waived) ;;
+            *)
+              echo "::error::Unsupported dependency status."
+              exit 1
+              ;;
+          esac
+
+          if [ "$DRAFT_PR_ONLY" != "true" ]; then
+            echo "::error::This repository only permits draft PR execution."
+            exit 1
+          fi
+
+          echo "Organization router contract accepted."
+          echo "Source issue: $SOURCE_ISSUE"
+          echo "Task type: $TASK_TYPE"
+          echo "Component: $PROJECT_COMPONENT"
+          echo "Codex environment: $CODEX_ENVIRONMENT"
+
+      - name: Report smoke-test boundary success
+        run: |
+          echo "Consulting-playbook execution boundary is available."
+          echo "No code changes or pull requests are created by this smoke-test workflow."
