@@ -91,6 +91,7 @@ jobs:
       - name: Checkout organization policy
         uses: actions/checkout@v4
         with:
+          repository: Young-Consultations/.github
           persist-credentials: false
 
       - name: Validate routing contract

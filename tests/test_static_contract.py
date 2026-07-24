@@ -29,3 +29,9 @@ def test_router_uses_least_privilege_permissions():
     assert "actions: read" in text
     assert "contents: write" not in text
     assert "pull-requests: write" not in text
+
+
+def test_router_checkout_uses_policy_repository():
+    text = Path(".github/workflows/codex-router.yml").read_text(encoding="utf-8")
+    assert "repository: Young-Consultations/.github" in text
+    assert "persist-credentials: false" in text
