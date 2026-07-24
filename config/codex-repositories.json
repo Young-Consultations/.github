@@ -1,0 +1,36 @@
+{
+  "repositories": {
+    "Young-Consultations/slugger": {
+      "enabled": true,
+      "test_only": false,
+      "allowed_task_types": ["automation", "bugfix", "documentation", "feature", "refactor", "test"],
+      "codex_environment": "slugger-codex-production",
+      "max_parallel_tasks": 2,
+      "component_concurrency": {
+        "policy": "component",
+        "description": "Serializes work by normalized project/component when a task is not parallel-safe."
+      },
+      "execution_workflow": {
+        "workflow_ref": "Young-Consultations/slugger/.github/workflows/codex-execute.yml@main",
+        "boundary": "canonical-slugger-execution-workflow",
+        "draft_pr_only": true
+      }
+    },
+    "Young-Consultations/consulting-playbook": {
+      "enabled": true,
+      "test_only": false,
+      "allowed_task_types": ["automation", "documentation", "feature", "refactor", "test"],
+      "codex_environment": "consulting-playbook-codex-placeholder",
+      "max_parallel_tasks": 1,
+      "component_concurrency": {
+        "policy": "component",
+        "description": "Placeholder policy; target repository owns its implementation workflow."
+      },
+      "execution_workflow": {
+        "workflow_ref": "Young-Consultations/consulting-playbook/.github/workflows/codex-execute.yml@main",
+        "boundary": "repository-specific-caller-boundary",
+        "draft_pr_only": true
+      }
+    }
+  }
+}
