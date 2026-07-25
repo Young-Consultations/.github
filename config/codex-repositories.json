@@ -31,6 +31,22 @@
         "boundary": "repository-specific-caller-boundary",
         "draft_pr_only": true
       }
+    },
+    "Young-Consultations/portfolio-tasks": {
+      "enabled": true,
+      "test_only": false,
+      "allowed_task_types": ["automation", "backlog-governance", "ci-cd", "documentation", "repository-maintenance"],
+      "codex_environment": "portfolio-tasks-codex-production",
+      "max_parallel_tasks": 1,
+      "component_concurrency": {
+        "policy": "component",
+        "description": "Serializes non-parallel-safe portfolio governance and repository maintenance work by normalized component."
+      },
+      "execution_workflow": {
+        "workflow_ref": "Young-Consultations/portfolio-tasks/.github/workflows/codex-execute.yml@main",
+        "boundary": "portfolio-tasks-execution-workflow",
+        "draft_pr_only": true
+      }
     }
   }
 }
