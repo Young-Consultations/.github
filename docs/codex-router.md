@@ -1,6 +1,6 @@
 # Organization Codex router
 
-This repository owns the reusable organization-level Codex routing policy. Portfolio intake and approval remain in `portfolio-tasks`; implementation workflows remain in target repositories such as `slugger` and `consulting-playbook`.
+This repository owns the reusable organization-level Codex routing policy. Portfolio intake and approval remain in `portfolio-tasks`; implementation workflows remain in registered target repositories such as `slugger`, `consulting-playbook`, and `portfolio-tasks` itself.
 
 ## Router contract
 
@@ -17,6 +17,10 @@ The router output shape is normalized:
 - `diagnostic_summary`
 
 The router never merges pull requests. Target repositories must create draft PRs that require human review and merge.
+
+## Registered production targets
+
+`Young-Consultations/portfolio-tasks` is registered for the narrow task types `automation`, `backlog-governance`, `ci-cd`, `documentation`, and `repository-maintenance`. Approved work is dispatched to `Young-Consultations/portfolio-tasks/.github/workflows/codex-execute.yml@main` with the `portfolio-tasks-codex-production` environment identifier. The registration remains subject to dependency validation, approved execution metadata, component concurrency, the repository allowlist, and the draft-PR-only boundary.
 
 ## Caller pattern
 
@@ -67,7 +71,7 @@ jobs:
 1. Add exactly one entry under `repositories` in `config/codex-repositories.json`.
 2. Set `enabled: true` only after the target repository owns a draft-PR-only execution workflow.
 3. Keep `allowed_task_types` narrow and reviewable.
-4. Set the Codex environment identifier, or use an explicit placeholder while bootstrapping.
+4. Set a real Codex environment identifier before enabling the repository; production registrations must not use placeholders.
 5. Set `max_parallel_tasks` and component concurrency policy based on the repository's write-conflict profile.
 6. Add or update contract tests for registered, disabled, unknown, conflicting, and parallel-safe routing behavior.
 

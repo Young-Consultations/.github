@@ -1,6 +1,8 @@
 import os
 import subprocess
 
+import pytest
+
 BASE_ENV = {
     "SOURCE_ISSUE": "Young-Consultations/portfolio-tasks#8",
     "TARGET_REPOSITORY": "Young-Consultations/slugger",
@@ -32,6 +34,24 @@ def test_consulting_playbook_reaches_boundary():
     assert result.returncode == 0, result.stderr
     assert "consulting-playbook" in result.stdout
     assert "validation_result=passed" in result.stdout
+
+
+@pytest.mark.parametrize(
+    "task_type",
+    ["automation", "backlog-governance", "ci-cd", "documentation", "repository-maintenance"],
+)
+def test_portfolio_tasks_permitted_task_types_validate(task_type):
+    result = run_router({"TARGET_REPOSITORY": "Young-Consultations/portfolio-tasks", "TASK_TYPE": task_type})
+    assert result.returncode == 0, result.stderr
+    assert "target_repository=Young-Consultations/portfolio-tasks" in result.stdout
+    assert "codex_environment=portfolio-tasks-codex-production" in result.stdout
+    assert "workflow_ref=Young-Consultations/portfolio-tasks/.github/workflows/codex-execute.yml@main" in result.stdout
+
+
+def test_portfolio_tasks_rejects_unpermitted_task_type():
+    result = run_router({"TARGET_REPOSITORY": "Young-Consultations/portfolio-tasks", "TASK_TYPE": "feature"})
+    assert result.returncode != 0
+    assert "not allowed" in result.stdout or "not allowed" in result.stderr
 
 
 def test_unknown_repository_fails_before_execution():

@@ -7,12 +7,33 @@ def test_registry_json_syntax_and_required_fields():
     repos = data["repositories"]
     assert "Young-Consultations/slugger" in repos
     assert "Young-Consultations/consulting-playbook" in repos
+    assert "Young-Consultations/portfolio-tasks" in repos
     for name, entry in repos.items():
         assert isinstance(entry["enabled"], bool), name
         assert entry["allowed_task_types"], name
         assert entry["codex_environment"], name
         assert entry["max_parallel_tasks"] >= 1, name
         assert entry["execution_workflow"]["draft_pr_only"] is True, name
+
+
+def test_portfolio_tasks_registration_contract():
+    data = json.loads(Path("config/codex-repositories.json").read_text(encoding="utf-8"))
+    entry = data["repositories"]["Young-Consultations/portfolio-tasks"]
+    assert entry["enabled"] is True
+    assert entry["test_only"] is False
+    assert entry["allowed_task_types"] == [
+        "automation",
+        "backlog-governance",
+        "ci-cd",
+        "documentation",
+        "repository-maintenance",
+    ]
+    assert entry["codex_environment"] == "portfolio-tasks-codex-production"
+    assert entry["execution_workflow"] == {
+        "workflow_ref": "Young-Consultations/portfolio-tasks/.github/workflows/codex-execute.yml@main",
+        "boundary": "portfolio-tasks-execution-workflow",
+        "draft_pr_only": True,
+    }
 
 
 def test_workflows_do_not_use_pull_request_target_or_merge():
