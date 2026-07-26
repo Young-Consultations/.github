@@ -1,0 +1,14 @@
+{
+  "contract_version": "ai-sdlc-contract/v1",
+  "correlation_id": "portfolio-142-docs-run-1",
+  "source_issue": "Young-Consultations/portfolio-tasks#142",
+  "target_repository": "Young-Consultations/consulting-playbook",
+  "task_type": "documentation",
+  "priority": "p2",
+  "executor": "codex",
+  "parallel_safe": true,
+  "draft_pr_only": true,
+  "instructions": "Document the approved consulting workflow and open a draft pull request.",
+  "requested_branch": "codex/portfolio-142-docs",
+  "timeout_minutes": 30
+}
