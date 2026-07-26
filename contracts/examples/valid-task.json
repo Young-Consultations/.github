@@ -1,0 +1,17 @@
+{
+  "contract_version": "ai-sdlc-contract/v1",
+  "task_id": "portfolio-142-docs",
+  "source_issue": "Young-Consultations/portfolio-tasks#142",
+  "status": "approved",
+  "executor": "codex",
+  "project": "consulting-playbook",
+  "priority": "p2",
+  "task_type": "documentation",
+  "target_repository": "Young-Consultations/consulting-playbook",
+  "parallel_safe": true,
+  "dependencies": [],
+  "risk": "low",
+  "scope": "small",
+  "instructions": "Document the approved consulting workflow and open a draft pull request.",
+  "created_by": "chatgpt-planning"
+}
