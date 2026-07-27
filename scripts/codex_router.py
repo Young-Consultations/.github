@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate and dispatch organization Codex tasks without exposing secrets."""
+"""Validate a canonical task and dispatch one canonical execution contract."""
 from __future__ import annotations
 
 import json
@@ -7,155 +7,208 @@ import os
 import re
 import subprocess
 import sys
-import time
 from pathlib import Path
-from typing import Any
+from typing import Any, NoReturn
 
-REGISTRY = Path("config/codex-repositories.json")
-VALID_DEPENDENCY_STATES = {"satisfied", "none", "waived"}
+from jsonschema import Draft202012Validator
+
+ROOT = Path(__file__).resolve().parents[1]
+REGISTRY = ROOT / "config/codex-repositories.json"
+TASK_SCHEMA = ROOT / "contracts/task-contract.schema.json"
+INPUT_SCHEMA = ROOT / "contracts/execution-input.schema.json"
 REPO_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
-SAFE_RE = re.compile(r"[^a-z0-9._/-]+")
+SAFE_RE = re.compile(r"[^a-z0-9._-]+")
+FAILURE_CATEGORIES = {
+    "contract-validation", "authorization", "dependency",
+    "repository-routing", "publication", "unknown",
+}
+REGISTRY_FIELDS = {
+    "enabled", "workflow_ref", "allowed_task_types", "codex_environment",
+    "max_parallel_tasks", "draft_pr_only", "contract_version",
+}
 
 
-def out(name: str, value: str) -> None:
+def output(name: str, value: Any) -> None:
+    rendered = value if isinstance(value, str) else json.dumps(value, separators=(",", ":"), sort_keys=True)
     path = os.environ.get("GITHUB_OUTPUT")
     if path:
         with open(path, "a", encoding="utf-8") as fh:
-            fh.write(f"{name}={value}\n")
+            fh.write(f"{name}={rendered}\n")
     else:
-        print(f"{name}={value}")
-
-
-def fail(message: str, result: str = "failure", code: int = 1) -> None:
-    summary = sanitize(message)
-    out("execution_result", result)
-    out("validation_result", "failed")
-    out("diagnostic_summary", summary)
-    print(f"::error::{summary}")
-    raise SystemExit(code)
+        print(f"{name}={rendered}")
 
 
 def sanitize(value: str) -> str:
     value = re.sub(r"gh[pousr]_[A-Za-z0-9_]+", "[redacted-token]", value)
     value = re.sub(r"(?i)(token|secret|password)=\S+", r"\1=[redacted]", value)
-    return value[:700]
+    return value.replace("\n", " ")[:700]
 
 
-def load_registry() -> dict[str, Any]:
-    with REGISTRY.open("r", encoding="utf-8") as fh:
-        data = json.load(fh)
-    repos = data.get("repositories")
-    if not isinstance(repos, dict):
-        fail("Registry is missing a repositories mapping.")
-    return repos
-
-
-def normalize_component(value: str) -> str:
-    lowered = value.strip().lower().replace(" ", "-")
-    return SAFE_RE.sub("-", lowered).strip("-") or "unspecified"
-
-
-def parse_metadata(raw: str) -> dict[str, Any]:
-    try:
-        metadata = json.loads(raw)
-    except json.JSONDecodeError as exc:
-        fail(f"approved_execution_metadata must be valid JSON: {exc.msg}")
-    if not isinstance(metadata, dict):
-        fail("approved_execution_metadata must be a JSON object.")
-    if metadata.get("approved") is not True:
-        fail("Task is missing approved execution metadata.")
-    approved_by = str(metadata.get("approved_by", "")).strip()
-    approval_id = str(metadata.get("approval_id", "")).strip()
-    if not approved_by or not approval_id:
-        fail("Approved metadata must include approved_by and approval_id.")
-    return metadata
-
-
-def validate() -> dict[str, str]:
-    repos = load_registry()
-    target = os.environ["TARGET_REPOSITORY"].strip()
-    task_type = os.environ["TASK_TYPE"].strip().lower()
-    component = os.environ["PROJECT_COMPONENT"].strip()
-    dependency_status = os.environ["DEPENDENCY_STATUS"].strip().lower()
-    parallel_safe = os.environ.get("PARALLEL_SAFE", "false").lower() == "true"
-
-    if not REPO_RE.match(target):
-        fail("target_repository must use owner/name format.")
-    if target not in repos:
-        fail(f"Repository {target} is not registered for Codex routing.")
-    entry = repos[target]
-    if not entry.get("enabled", False):
-        fail(f"Repository {target} is disabled for Codex routing.")
-    if task_type not in [str(item).lower() for item in entry.get("allowed_task_types", [])]:
-        fail(f"Task type {task_type} is not allowed for {target}.")
-    if dependency_status not in VALID_DEPENDENCY_STATES:
-        fail("dependency_status must be satisfied, none, or waived.")
-    parse_metadata(os.environ["APPROVED_EXECUTION_METADATA"])
-
-    max_parallel = int(entry.get("max_parallel_tasks", 1))
-    if max_parallel < 1:
-        fail(f"Repository {target} has invalid max_parallel_tasks.")
-    normalized_component = normalize_component(component)
-    repo_key = target.lower().replace("/", "-")
-    group = f"codex-{repo_key}-{os.getpid() if parallel_safe else normalized_component}"
-
-    workflow_ref = str(entry.get("execution_workflow", {}).get("workflow_ref", ""))
-    if not workflow_ref:
-        fail(f"Repository {target} is missing an execution workflow reference.")
-
-    outputs = {
-        "execution_result": "validated",
-        "validation_result": "passed",
-        "target_repository": target,
-        "codex_environment": str(entry.get("codex_environment", "placeholder-required")),
-        "workflow_ref": workflow_ref,
-        "concurrency_group": group,
-        "diagnostic_summary": "Routing validation passed; target workflow dispatch is ready.",
+def reject(category: str, message: str, correlation_id: str = "unknown") -> NoReturn:
+    if category not in FAILURE_CATEGORIES:
+        category = "unknown"
+    result = {
+        "correlation_id": correlation_id,
+        "execution_status": "rejected",
+        "failure_category": category,
+        "failure_message": sanitize(message),
     }
-    for key, value in outputs.items():
-        out(key, value)
-    return outputs
+    output("execution_result", result)
+    output("validation_result", "failed")
+    output("failure_category", category)
+    output("diagnostic_summary", result["failure_message"])
+    print(f"::error::{result['failure_message']}")
+    raise SystemExit(1)
+
+
+def read_json(path: Path) -> dict[str, Any]:
+    with path.open(encoding="utf-8") as fh:
+        return json.load(fh)
+
+
+def validate_registry() -> dict[str, Any]:
+    try:
+        data = read_json(REGISTRY)
+    except (OSError, json.JSONDecodeError) as exc:
+        reject("repository-routing", f"Registry cannot be loaded: {exc}")
+    repositories = data.get("repositories")
+    if not isinstance(repositories, dict) or not repositories:
+        reject("repository-routing", "Registry must contain a non-empty repositories mapping.")
+    supported_types = set(read_json(TASK_SCHEMA)["$defs"]["taskType"]["enum"])
+    for name, entry in repositories.items():
+        if not REPO_RE.fullmatch(name) or not isinstance(entry, dict):
+            reject("repository-routing", f"Invalid repository registry entry: {name}")
+        missing = REGISTRY_FIELDS - entry.keys()
+        if missing:
+            reject("repository-routing", f"Registry entry {name} is missing: {', '.join(sorted(missing))}")
+        if not isinstance(entry["enabled"], bool) or not isinstance(entry["draft_pr_only"], bool):
+            reject("repository-routing", f"Registry entry {name} has invalid boolean policy.")
+        if entry["draft_pr_only"] is not True:
+            reject("repository-routing", f"Registry entry {name} must enforce draft_pr_only.")
+        if not isinstance(entry["max_parallel_tasks"], int) or entry["max_parallel_tasks"] < 1:
+            reject("repository-routing", f"Registry entry {name} has invalid max_parallel_tasks.")
+        if not isinstance(entry["allowed_task_types"], list) or not entry["allowed_task_types"] or not set(entry["allowed_task_types"]) <= supported_types:
+            reject("repository-routing", f"Registry entry {name} has invalid allowed_task_types.")
+        expected_prefix = f"{name}/.github/workflows/"
+        if not isinstance(entry["workflow_ref"], str) or not entry["workflow_ref"].startswith(expected_prefix) or "@" not in entry["workflow_ref"]:
+            reject("repository-routing", f"Registry entry {name} has an invalid workflow_ref.")
+        if not isinstance(entry["codex_environment"], str) or not entry["codex_environment"]:
+            reject("repository-routing", f"Registry entry {name} has an invalid codex_environment.")
+        if entry["contract_version"] != read_json(INPUT_SCHEMA)["properties"]["contract_version"]["const"]:
+            reject("repository-routing", f"Registry entry {name} has an unsupported contract_version.")
+    return repositories
+
+
+def slug(value: str) -> str:
+    return SAFE_RE.sub("-", value.strip().lower().replace("/", "-")).strip("-") or "unspecified"
+
+
+def load_task() -> dict[str, Any]:
+    raw = os.environ.get("TASK_PAYLOAD", "")
+    try:
+        task = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        reject("contract-validation", f"task_payload must be valid JSON: {exc.msg}")
+    if not isinstance(task, dict):
+        reject("contract-validation", "task_payload must be a JSON object.")
+    correlation_id = str(task.get("task_id", "unknown"))
+    errors = sorted(Draft202012Validator(read_json(TASK_SCHEMA)).iter_errors(task), key=lambda e: list(e.path))
+    if errors:
+        reject("contract-validation", f"Task contract validation failed: {errors[0].message}", correlation_id)
+    return task
+
+
+def validate() -> dict[str, Any]:
+    repositories = validate_registry()
+    task = load_task()
+    correlation_id = task["task_id"]
+    if task["status"] not in {"approved", "queued"}:
+        reject("authorization", "Task status is not approved for execution.", correlation_id)
+    if task["executor"] != "codex":
+        reject("authorization", "Task executor must be codex.", correlation_id)
+    if task["dependencies"]:
+        reject("dependency", "Task has unresolved dependencies.", correlation_id)
+
+    target = task["target_repository"]
+    entry = repositories.get(target)
+    if entry is None:
+        reject("repository-routing", f"Repository {target} is not registered.", correlation_id)
+    if not entry["enabled"]:
+        reject("repository-routing", f"Repository {target} is disabled.", correlation_id)
+    if task["task_type"] not in entry["allowed_task_types"]:
+        reject("repository-routing", f"Task type {task['task_type']} is not allowed for {target}.", correlation_id)
+    if task["contract_version"] != entry["contract_version"]:
+        reject("contract-validation", "Task contract version is not supported by the target.", correlation_id)
+
+    execution = {
+        "contract_version": entry["contract_version"],
+        "correlation_id": correlation_id,
+        "source_issue": task["source_issue"],
+        "target_repository": target,
+        "task_type": task["task_type"],
+        "priority": task["priority"],
+        "executor": task["executor"],
+        "parallel_safe": task["parallel_safe"],
+        "draft_pr_only": entry["draft_pr_only"],
+        "instructions": task["instructions"],
+        "requested_branch": f"codex/{slug(correlation_id)}",
+        "timeout_minutes": 60,
+    }
+    errors = list(Draft202012Validator(read_json(INPUT_SCHEMA)).iter_errors(execution))
+    if errors:
+        reject("contract-validation", f"Execution input validation failed: {errors[0].message}", correlation_id)
+
+    issue = slug(task["source_issue"])
+    boundary = slug(correlation_id if task["parallel_safe"] else task["project"])
+    mode = "parallel" if task["parallel_safe"] else "serial"
+    group = f"codex-{slug(target)}-{issue}-{mode}-{boundary}"
+    values = {
+        "execution_result": "validated", "validation_result": "passed",
+        "target_repository": target, "workflow_ref": entry["workflow_ref"],
+        "codex_environment": entry["codex_environment"], "concurrency_group": group,
+        "execution_input": execution, "correlation_id": correlation_id,
+        "diagnostic_summary": "Canonical task accepted and execution input validated.",
+    }
+    for key, value in values.items():
+        output(key, value)
+    return values
 
 
 def dispatch() -> None:
+    try:
+        execution = json.loads(os.environ["EXECUTION_INPUT"])
+    except (KeyError, json.JSONDecodeError) as exc:
+        reject("contract-validation", f"Validated execution input is unavailable: {exc}")
+    correlation_id = str(execution.get("correlation_id", "unknown"))
+    errors = list(Draft202012Validator(read_json(INPUT_SCHEMA)).iter_errors(execution))
+    if errors:
+        reject("contract-validation", f"Execution input validation failed: {errors[0].message}", correlation_id)
     workflow_ref = os.environ["WORKFLOW_REF"]
-    target = os.environ["TARGET_REPOSITORY"]
     workflow_path = workflow_ref.split("/.github/workflows/", 1)[-1].split("@", 1)[0]
-    ref = workflow_ref.rsplit("@", 1)[-1] if "@" in workflow_ref else "main"
-
-    payload = {
-        "source_issue": os.environ["SOURCE_ISSUE"],
-        "task_type": os.environ["TASK_TYPE"],
-        "project_component": os.environ["PROJECT_COMPONENT"],
-        "priority": os.environ["PRIORITY"],
-        "parallel_safe": os.environ["PARALLEL_SAFE"],
-        "dependency_status": os.environ["DEPENDENCY_STATUS"],
-        "codex_environment": os.environ["CODEX_ENVIRONMENT"],
-        "concurrency_group": os.environ["CONCURRENCY_GROUP"],
-        "draft_pr_only": "true",
-    }
-    cmd = ["gh", "workflow", "run", workflow_path, "--repo", target, "--ref", ref]
-    for key, value in payload.items():
-        cmd.extend(["-f", f"{key}={value}"])
-
+    ref = workflow_ref.rsplit("@", 1)[-1]
+    cmd = ["gh", "workflow", "run", workflow_path, "--repo", execution["target_repository"], "--ref", ref]
+    for key, value in execution.items():
+        rendered = str(value).lower() if isinstance(value, bool) else ("" if value is None else str(value))
+        cmd.extend(["-f", f"{key}={rendered}"])
     try:
         subprocess.run(cmd, check=True, text=True, capture_output=True)
-    except subprocess.CalledProcessError as exc:
-        fail(f"Target workflow dispatch failed for {target}: {sanitize(exc.stderr or exc.stdout)}", result="dispatch_failed")
-
-    branch = f"codex/{normalize_component(os.environ['PROJECT_COMPONENT'])}/{int(time.time())}"
-    out("execution_result", "dispatched")
-    out("generated_branch", branch)
-    out("draft_pr_url", "pending-target-workflow")
-    out("test_result", "pending-target-workflow")
-    out("diagnostic_summary", "Target workflow dispatched. Branch, draft PR URL, and tests are finalized by the target repository workflow.")
+    except (OSError, subprocess.CalledProcessError) as exc:
+        detail = getattr(exc, "stderr", None) or getattr(exc, "stdout", None) or str(exc)
+        reject("publication", f"Target workflow dispatch failed: {detail}", correlation_id)
+    output("execution_result", "dispatched")
+    output("correlation_id", correlation_id)
+    output("generated_branch", execution["requested_branch"])
+    output("diagnostic_summary", "Canonical execution input dispatched to the registered workflow.")
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2 or sys.argv[1] not in {"validate", "dispatch"}:
-        print("Usage: codex_router.py validate|dispatch", file=sys.stderr)
+    if len(sys.argv) != 2 or sys.argv[1] not in {"validate", "dispatch", "validate-registry"}:
+        print("Usage: codex_router.py validate|dispatch|validate-registry", file=sys.stderr)
         raise SystemExit(2)
     if sys.argv[1] == "validate":
         validate()
-    else:
+    elif sys.argv[1] == "dispatch":
         dispatch()
+    else:
+        validate_registry()
+        print("Registry validation passed.")

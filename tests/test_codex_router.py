@@ -1,99 +1,139 @@
+import json
 import os
 import subprocess
 
 import pytest
 
-BASE_ENV = {
-    "SOURCE_ISSUE": "Young-Consultations/portfolio-tasks#8",
-    "TARGET_REPOSITORY": "Young-Consultations/slugger",
-    "TASK_TYPE": "automation",
-    "PROJECT_COMPONENT": "Publication Output",
-    "PRIORITY": "normal",
-    "PARALLEL_SAFE": "false",
-    "DEPENDENCY_STATUS": "satisfied",
-    "APPROVED_EXECUTION_METADATA": '{"approved": true, "approved_by": "portfolio-tasks", "approval_id": "8"}',
+
+BASE_TASK = {
+    "contract_version": "ai-sdlc-contract/v1",
+    "task_id": "portfolio-8-attempt-1",
+    "source_issue": "Young-Consultations/portfolio-tasks#8",
+    "status": "approved",
+    "executor": "codex",
+    "project": "Publication Output",
+    "priority": "p2",
+    "task_type": "automation",
+    "target_repository": "Young-Consultations/slugger",
+    "parallel_safe": False,
+    "dependencies": [],
+    "risk": "low",
+    "scope": "small",
+    "instructions": "Make the approved change and open a draft pull request.",
+    "created_by": "portfolio-tasks",
 }
 
 
-def run_router(env):
-    merged = os.environ.copy()
-    merged.update(BASE_ENV)
-    merged.update(env)
-    return subprocess.run(["python3", "scripts/codex_router.py", "validate"], env=merged, text=True, capture_output=True)
+def run_router(**changes):
+    task = {**BASE_TASK, **changes}
+    env = {**os.environ, "TASK_PAYLOAD": json.dumps(task)}
+    return subprocess.run(
+        ["python3", "scripts/codex_router.py", "validate"], env=env,
+        text=True, capture_output=True,
+    )
 
 
-def test_registered_slugger_task_validates():
-    result = run_router({})
-    assert result.returncode == 0, result.stderr
-    assert "validation_result=passed" in result.stdout
-    assert "target_repository=Young-Consultations/slugger" in result.stdout
-
-
-def test_consulting_playbook_reaches_boundary():
-    result = run_router({"TARGET_REPOSITORY": "Young-Consultations/consulting-playbook", "TASK_TYPE": "documentation"})
-    assert result.returncode == 0, result.stderr
-    assert "consulting-playbook" in result.stdout
-    assert "validation_result=passed" in result.stdout
+def output(result, key):
+    prefix = f"{key}="
+    return next(line[len(prefix):] for line in result.stdout.splitlines() if line.startswith(prefix))
 
 
 @pytest.mark.parametrize(
-    "task_type",
-    ["automation", "backlog-governance", "ci-cd", "documentation", "repository-maintenance"],
+    ("repository", "task_type"),
+    [
+        ("Young-Consultations/portfolio-tasks", "repository-maintenance"),
+        ("Young-Consultations/consulting-playbook", "documentation"),
+        ("Young-Consultations/slugger", "automation"),
+    ],
 )
-def test_portfolio_tasks_permitted_task_types_validate(task_type):
-    result = run_router({"TARGET_REPOSITORY": "Young-Consultations/portfolio-tasks", "TASK_TYPE": task_type})
-    assert result.returncode == 0, result.stderr
-    assert "target_repository=Young-Consultations/portfolio-tasks" in result.stdout
-    assert "codex_environment=portfolio-tasks-codex-production" in result.stdout
-    assert "workflow_ref=Young-Consultations/portfolio-tasks/.github/workflows/codex-execute.yml@main" in result.stdout
+def test_registered_routes_emit_one_execution_contract(repository, task_type):
+    result = run_router(target_repository=repository, task_type=task_type)
+    assert result.returncode == 0, result.stdout + result.stderr
+    payload = json.loads(output(result, "execution_input"))
+    assert set(payload) == {
+        "contract_version", "correlation_id", "source_issue", "target_repository",
+        "task_type", "priority", "executor", "parallel_safe", "draft_pr_only",
+        "instructions", "requested_branch", "timeout_minutes",
+    }
+    assert payload["target_repository"] == repository
 
 
-def test_portfolio_tasks_rejects_unpermitted_task_type():
-    result = run_router({"TARGET_REPOSITORY": "Young-Consultations/portfolio-tasks", "TASK_TYPE": "feature"})
-    assert result.returncode != 0
-    assert "not allowed" in result.stdout or "not allowed" in result.stderr
+def test_unknown_repository_is_canonical_routing_rejection():
+    result = run_router(target_repository="Young-Consultations/unknown")
+    assert result.returncode == 1
+    assert output(result, "failure_category") == "repository-routing"
 
 
-def test_unknown_repository_fails_before_execution():
-    result = run_router({"TARGET_REPOSITORY": "Young-Consultations/unknown"})
-    assert result.returncode != 0
-    assert "not registered" in result.stdout or "not registered" in result.stderr
-
-
-def test_disabled_repository_fails(tmp_path):
-    registry = tmp_path / "registry.yml"
-    original = open("config/codex-repositories.json", encoding="utf-8").read()
-    registry.write_text(original.replace('"enabled": true', '"enabled": false', 1), encoding="utf-8")
-    # Simulate by temporarily replacing registry in-place; restore immediately after.
-    os.replace("config/codex-repositories.json", "config/codex-repositories.json.bak")
-    os.replace(registry, "config/codex-repositories.json")
+def test_disabled_repository_is_rejected(tmp_path):
+    path = "config/codex-repositories.json"
+    original = open(path, encoding="utf-8").read()
+    changed = original.replace('"enabled": true', '"enabled": false', 1)
     try:
-        result = run_router({})
+        open(path, "w", encoding="utf-8").write(changed)
+        result = run_router()
     finally:
-        os.replace("config/codex-repositories.json.bak", "config/codex-repositories.json")
-    assert result.returncode != 0
-    assert "disabled" in result.stdout or "disabled" in result.stderr
+        open(path, "w", encoding="utf-8").write(original)
+    assert result.returncode == 1
+    assert "disabled" in result.stdout
 
 
-def test_conflicting_tasks_share_deterministic_concurrency_group():
-    first = run_router({"PROJECT_COMPONENT": "API Client", "PARALLEL_SAFE": "false"})
-    second = run_router({"PROJECT_COMPONENT": "API Client", "PARALLEL_SAFE": "false"})
-    assert first.returncode == second.returncode == 0
-    group_line = [line for line in first.stdout.splitlines() if line.startswith("concurrency_group=")][0]
-    assert group_line in second.stdout
-    assert group_line.endswith("api-client")
+def test_unsupported_task_type_is_rejected():
+    result = run_router(task_type="security")
+    assert result.returncode == 1
+    assert output(result, "failure_category") == "repository-routing"
 
 
-def test_parallel_safe_tasks_get_unique_group():
-    first = run_router({"PROJECT_COMPONENT": "API Client", "PARALLEL_SAFE": "true"})
-    second = run_router({"PROJECT_COMPONENT": "API Client", "PARALLEL_SAFE": "true"})
-    assert first.returncode == second.returncode == 0
-    first_group = [line for line in first.stdout.splitlines() if line.startswith("concurrency_group=")][0]
-    second_group = [line for line in second.stdout.splitlines() if line.startswith("concurrency_group=")][0]
-    assert first_group != second_group
+def test_unresolved_dependency_is_rejected():
+    result = run_router(dependencies=["portfolio-7"])
+    assert result.returncode == 1
+    assert output(result, "failure_category") == "dependency"
 
 
-def test_requires_approved_metadata():
-    result = run_router({"APPROVED_EXECUTION_METADATA": '{"approved": false}'})
-    assert result.returncode != 0
-    assert "approved" in result.stdout or "approved" in result.stderr
+def test_unsupported_contract_version_is_rejected():
+    result = run_router(contract_version="ai-sdlc-contract/v2")
+    assert result.returncode == 1
+    assert output(result, "failure_category") == "contract-validation"
+
+
+def test_duplicate_attempt_has_same_group_and_branch():
+    first, second = run_router(), run_router()
+    assert output(first, "concurrency_group") == output(second, "concurrency_group")
+    assert json.loads(output(first, "execution_input"))["requested_branch"] == json.loads(output(second, "execution_input"))["requested_branch"]
+
+
+def test_parallel_safe_execution_uses_attempt_boundary():
+    first = run_router(parallel_safe=True, task_id="attempt-a")
+    second = run_router(parallel_safe=True, task_id="attempt-b")
+    assert output(first, "concurrency_group") != output(second, "concurrency_group")
+    assert "-parallel-" in output(first, "concurrency_group")
+
+
+def test_non_parallel_safe_execution_uses_component_boundary():
+    first = run_router(task_id="attempt-a")
+    second = run_router(task_id="attempt-b")
+    assert output(first, "concurrency_group") == output(second, "concurrency_group")
+    assert "-serial-publication-output" in output(first, "concurrency_group")
+
+
+def test_draft_only_is_enforced():
+    payload = json.loads(output(run_router(), "execution_input"))
+    assert payload["draft_pr_only"] is True
+
+
+def test_correlation_id_is_propagated():
+    result = run_router(task_id="portfolio-8-attempt-9")
+    assert output(result, "correlation_id") == "portfolio-8-attempt-9"
+    assert json.loads(output(result, "execution_input"))["correlation_id"] == "portfolio-8-attempt-9"
+
+
+def test_authorization_requires_approved_codex_task():
+    assert output(run_router(status="proposed"), "failure_category") == "authorization"
+    assert output(run_router(executor="human"), "failure_category") == "authorization"
+
+
+def test_registry_validation_command_passes():
+    result = subprocess.run(
+        ["python3", "scripts/codex_router.py", "validate-registry"],
+        text=True, capture_output=True,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr

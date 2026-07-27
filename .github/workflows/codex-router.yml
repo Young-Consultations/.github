@@ -3,89 +3,43 @@ name: Organization Codex Task Router
 on:
   workflow_call:
     inputs:
-      source_issue:
-        description: Source portfolio task issue URL or owner/repo#number.
-        required: true
-        type: string
-      target_repository:
-        description: Target repository in owner/name form.
-        required: true
-        type: string
-      task_type:
-        description: Approved portfolio task type.
-        required: true
-        type: string
-      project_component:
-        description: Project or component concurrency boundary.
-        required: true
-        type: string
-      priority:
-        description: Portfolio priority label.
-        required: false
-        type: string
-        default: normal
-      parallel_safe:
-        description: Whether this task may run alongside same repository/component tasks.
-        required: false
-        type: boolean
-        default: false
-      dependency_status:
-        description: Dependency gate status. Must be satisfied, none, or waived.
-        required: true
-        type: string
-      approved_execution_metadata:
-        description: JSON metadata proving the task was approved by the portfolio intake process.
+      task_payload:
+        description: Canonical task-contract/v1 JSON produced by portfolio-tasks.
         required: true
         type: string
     secrets:
       CODEX_ROUTER_TOKEN:
-        description: Repository-scoped token or GitHub App token with permission to dispatch the target workflow.
+        description: Repository-scoped token or GitHub App token permitted to dispatch the registered workflow.
         required: true
     outputs:
       execution_result:
-        description: Normalized execution result.
+        description: Dispatch status or deterministic canonical rejection JSON.
         value: ${{ jobs.route.outputs.execution_result }}
-      target_repository:
-        description: Validated target repository.
-        value: ${{ jobs.route.outputs.target_repository }}
-      generated_branch:
-        description: Branch reported by the target execution workflow, when available.
-        value: ${{ jobs.route.outputs.generated_branch }}
-      draft_pr_url:
-        description: Draft PR URL reported by the target execution workflow, when available.
-        value: ${{ jobs.route.outputs.draft_pr_url }}
-      validation_result:
-        description: Router validation result.
-        value: ${{ jobs.route.outputs.validation_result }}
-      test_result:
-        description: Test result reported by target execution, when available.
-        value: ${{ jobs.route.outputs.test_result }}
+      correlation_id:
+        description: Correlation ID preserved from the canonical task ID.
+        value: ${{ jobs.route.outputs.correlation_id }}
+      failure_category:
+        description: Canonical failure category when validation or routing fails.
+        value: ${{ jobs.route.outputs.failure_category }}
       diagnostic_summary:
-        description: Sanitized diagnostic summary.
+        description: Sanitized deterministic routing diagnostic.
         value: ${{ jobs.route.outputs.diagnostic_summary }}
 
 permissions:
   contents: read
   actions: read
 
-concurrency:
-  group: codex-router-${{ inputs.target_repository }}-${{ inputs.parallel_safe && github.run_id || inputs.project_component }}
-  cancel-in-progress: false
-
 jobs:
   route:
-    name: Validate and dispatch approved Codex task
+    name: Validate and dispatch canonical Codex task
     runs-on: ubuntu-latest
     permissions:
       contents: read
       actions: read
     outputs:
       execution_result: ${{ steps.dispatch.outputs.execution_result || steps.validate.outputs.execution_result }}
-      target_repository: ${{ steps.validate.outputs.target_repository }}
-      generated_branch: ${{ steps.dispatch.outputs.generated_branch }}
-      draft_pr_url: ${{ steps.dispatch.outputs.draft_pr_url }}
-      validation_result: ${{ steps.validate.outputs.validation_result }}
-      test_result: ${{ steps.dispatch.outputs.test_result }}
+      correlation_id: ${{ steps.dispatch.outputs.correlation_id || steps.validate.outputs.correlation_id }}
+      failure_category: ${{ steps.dispatch.outputs.failure_category || steps.validate.outputs.failure_category }}
       diagnostic_summary: ${{ steps.dispatch.outputs.diagnostic_summary || steps.validate.outputs.diagnostic_summary }}
     steps:
       - name: Checkout organization policy
@@ -94,32 +48,22 @@ jobs:
           repository: Young-Consultations/.github
           persist-credentials: false
 
-      - name: Validate routing contract
+      - name: Install schema validator
+        run: python -m pip install --disable-pip-version-check --no-deps 'jsonschema>=4.18,<5'
+
+      - name: Validate repository registry
+        run: python3 scripts/codex_router.py validate-registry
+
+      - name: Validate task and build execution input
         id: validate
         env:
-          SOURCE_ISSUE: ${{ inputs.source_issue }}
-          TARGET_REPOSITORY: ${{ inputs.target_repository }}
-          TASK_TYPE: ${{ inputs.task_type }}
-          PROJECT_COMPONENT: ${{ inputs.project_component }}
-          PRIORITY: ${{ inputs.priority }}
-          PARALLEL_SAFE: ${{ inputs.parallel_safe }}
-          DEPENDENCY_STATUS: ${{ inputs.dependency_status }}
-          APPROVED_EXECUTION_METADATA: ${{ inputs.approved_execution_metadata }}
+          TASK_PAYLOAD: ${{ inputs.task_payload }}
         run: python3 scripts/codex_router.py validate
 
-      - name: Dispatch target execution workflow
+      - name: Dispatch canonical execution input
         id: dispatch
         env:
           GH_TOKEN: ${{ secrets.CODEX_ROUTER_TOKEN }}
-          SOURCE_ISSUE: ${{ inputs.source_issue }}
-          TARGET_REPOSITORY: ${{ steps.validate.outputs.target_repository }}
-          TASK_TYPE: ${{ inputs.task_type }}
-          PROJECT_COMPONENT: ${{ inputs.project_component }}
-          PRIORITY: ${{ inputs.priority }}
-          PARALLEL_SAFE: ${{ inputs.parallel_safe }}
-          DEPENDENCY_STATUS: ${{ inputs.dependency_status }}
-          APPROVED_EXECUTION_METADATA: ${{ inputs.approved_execution_metadata }}
+          EXECUTION_INPUT: ${{ steps.validate.outputs.execution_input }}
           WORKFLOW_REF: ${{ steps.validate.outputs.workflow_ref }}
-          CODEX_ENVIRONMENT: ${{ steps.validate.outputs.codex_environment }}
-          CONCURRENCY_GROUP: ${{ steps.validate.outputs.concurrency_group }}
         run: python3 scripts/codex_router.py dispatch
