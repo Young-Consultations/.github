@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Young-Consultations/.github/blob/main/contracts/execution-result.schema.json",
+  "title": "AI-SDLC Execution Result Contract",
+  "description": "Canonical result emitted by the Codex execution path.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version", "correlation_id", "execution_status", "target_repository",
+    "branch_name", "pull_request_url", "workflow_url", "validation_result", "test_result",
+    "failure_category", "failure_message", "started_at", "completed_at"
+  ],
+  "properties": {
+    "contract_version": { "const": "ai-sdlc-contract/v1" },
+    "correlation_id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
+    "execution_status": { "enum": ["accepted", "rejected", "queued", "running", "no-changes", "draft-pr-created", "blocked", "failed"] },
+    "target_repository": { "type": "string", "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})/[A-Za-z0-9._-]{1,100}$" },
+    "branch_name": { "type": ["string", "null"], "minLength": 1, "maxLength": 255 },
+    "pull_request_url": { "type": ["string", "null"], "format": "uri", "pattern": "^https://" },
+    "workflow_url": { "type": ["string", "null"], "format": "uri", "pattern": "^https://" },
+    "validation_result": { "enum": ["not-run", "passed", "failed"] },
+    "test_result": { "enum": ["not-run", "passed", "failed"] },
+    "failure_category": { "enum": ["none", "contract-validation", "authorization", "dependency", "repository-routing", "authentication", "codex-runtime", "no-changes", "validation", "tests", "publication", "timeout", "unknown"] },
+    "failure_message": { "type": ["string", "null"], "maxLength": 10000 },
+    "started_at": { "type": "string", "format": "date-time" },
+    "completed_at": { "type": ["string", "null"], "format": "date-time" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "failure_category": { "const": "none" } }, "required": ["failure_category"] },
+      "then": { "properties": { "failure_message": { "type": "null" } } },
+      "else": { "properties": { "failure_message": { "type": "string", "minLength": 1 } } }
+    },
+    {
+      "if": { "properties": { "execution_status": { "const": "draft-pr-created" } }, "required": ["execution_status"] },
+      "then": {
+        "properties": {
+          "branch_name": { "type": "string", "minLength": 1, "maxLength": 255 },
+          "pull_request_url": { "type": "string", "format": "uri", "pattern": "^https://" },
+          "failure_category": { "const": "none" }
+        }
+      }
+    }
+  ]
+}

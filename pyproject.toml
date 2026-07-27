@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ai-sdlc-contracts"
-version = "1.0.0"
+version = "1.0.1"
 description = "Validation helpers for the canonical AI-SDLC contracts"
 requires-python = ">=3.9"
 dependencies = ["jsonschema[format]>=4.18,<5"]
@@ -21,10 +21,8 @@ where = ["src"]
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 
-[tool.setuptools.data-files]
-"share/ai-sdlc-contracts/contracts" = [
-  "contracts/contract-version.txt",
-  "contracts/task-contract.schema.json",
-  "contracts/execution-input.schema.json",
-  "contracts/execution-result.schema.json",
+[tool.setuptools.package-data]
+ai_sdlc_contracts = [
+  "contracts/*.json",
+  "contracts/*.txt",
 ]

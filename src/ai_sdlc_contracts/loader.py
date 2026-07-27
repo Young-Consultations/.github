@@ -1,9 +1,9 @@
-"""Locate and load the canonical, repository-owned contract files."""
+"""Locate and load the canonical contract files."""
 
 import json
 import os
-import sys
 from functools import lru_cache
+from importlib.resources import files
 from pathlib import Path
 from typing import Any, Dict
 
@@ -16,31 +16,40 @@ SCHEMAS = {
 }
 
 
-def _contract_directory() -> Path:
+def _packaged_contract_directory():
+    """Return the package-resource directory containing the contracts."""
+    return files("ai_sdlc_contracts").joinpath("contracts")
+
+
+def _source_contract_directory() -> Path:
+    """Return the canonical directory when running from a source checkout."""
+    return Path(__file__).resolve().parents[2] / "contracts"
+
+
+def _read_contract_text(filename: str) -> str:
     override = os.environ.get("AI_SDLC_CONTRACT_DIR")
-    candidates = []
     if override:
-        candidates.append(Path(override))
-    candidates.append(Path(sys.prefix) / "share" / "ai-sdlc-contracts" / "contracts")
+        resources = (Path(override) / filename,)
+    else:
+        resources = (
+            _packaged_contract_directory().joinpath(filename),
+            _source_contract_directory() / filename,
+        )
 
-    # Support running directly from this repository without making discovery
-    # depend on the caller's working directory.  Installed packages use the
-    # data-files location above instead.
-    package_directory = Path(__file__).resolve().parent
-    if package_directory.parent.name == "src":
-        candidates.append(package_directory.parent.parent / "contracts")
-
-    for candidate in candidates:
-        if (candidate / "contract-version.txt").is_file():
-            return candidate
-    raise ContractSchemaLoadError("canonical contract directory could not be located")
+    for resource in resources:
+        try:
+            if resource.is_file():
+                return resource.read_text(encoding="utf-8")
+        except OSError:
+            continue
+    raise ContractSchemaLoadError("canonical contract resource could not be located")
 
 
 def load_contract_version() -> str:
     """Return the supported canonical contract version."""
     try:
-        version = (_contract_directory() / "contract-version.txt").read_text(encoding="utf-8").strip()
-    except OSError as exc:
+        version = _read_contract_text("contract-version.txt").strip()
+    except (OSError, UnicodeError) as exc:
         raise ContractSchemaLoadError("contract version could not be loaded") from exc
     if not version:
         raise ContractSchemaLoadError("contract version is empty")
@@ -52,8 +61,8 @@ def load_schema(kind: str) -> Dict[str, Any]:
     """Load a canonical JSON schema by payload kind."""
     try:
         filename = SCHEMAS[kind]
-        value = json.loads((_contract_directory() / filename).read_text(encoding="utf-8"))
-    except (KeyError, OSError, json.JSONDecodeError) as exc:
+        value = json.loads(_read_contract_text(filename))
+    except (KeyError, OSError, UnicodeError, json.JSONDecodeError) as exc:
         raise ContractSchemaLoadError("canonical contract schema could not be loaded") from exc
     if not isinstance(value, dict):
         raise ContractSchemaLoadError("canonical contract schema is not an object")
