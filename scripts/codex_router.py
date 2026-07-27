@@ -28,6 +28,26 @@ REGISTRY_FIELDS = {
 }
 
 
+def parse_workflow_ref(repository: str, workflow_ref: Any) -> tuple[str, str]:
+    """Return the workflow path and git ref from a registry workflow reference."""
+    prefix = f"{repository}/.github/workflows/"
+    if not isinstance(workflow_ref, str) or not workflow_ref.startswith(prefix):
+        reject("repository-routing", f"Registry entry {repository} has an invalid workflow_ref.")
+    remainder = workflow_ref[len(prefix):]
+    if remainder.count("@") != 1:
+        reject("repository-routing", f"Registry entry {repository} has an invalid workflow_ref.")
+    workflow_path, ref = remainder.split("@", 1)
+    if (
+        not workflow_path
+        or workflow_path.startswith("/")
+        or ".." in workflow_path.split("/")
+        or not workflow_path.endswith((".yml", ".yaml"))
+        or not ref.strip()
+    ):
+        reject("repository-routing", f"Registry entry {repository} has an invalid workflow_ref.")
+    return workflow_path, ref
+
+
 def output(name: str, value: Any) -> None:
     rendered = value if isinstance(value, str) else json.dumps(value, separators=(",", ":"), sort_keys=True)
     path = os.environ.get("GITHUB_OUTPUT")
@@ -89,9 +109,7 @@ def validate_registry() -> dict[str, Any]:
             reject("repository-routing", f"Registry entry {name} has invalid max_parallel_tasks.")
         if not isinstance(entry["allowed_task_types"], list) or not entry["allowed_task_types"] or not set(entry["allowed_task_types"]) <= supported_types:
             reject("repository-routing", f"Registry entry {name} has invalid allowed_task_types.")
-        expected_prefix = f"{name}/.github/workflows/"
-        if not isinstance(entry["workflow_ref"], str) or not entry["workflow_ref"].startswith(expected_prefix) or "@" not in entry["workflow_ref"]:
-            reject("repository-routing", f"Registry entry {name} has an invalid workflow_ref.")
+        parse_workflow_ref(name, entry["workflow_ref"])
         if not isinstance(entry["codex_environment"], str) or not entry["codex_environment"]:
             reject("repository-routing", f"Registry entry {name} has an invalid codex_environment.")
         if entry["contract_version"] != read_json(INPUT_SCHEMA)["properties"]["contract_version"]["const"]:
@@ -185,13 +203,27 @@ def dispatch() -> None:
     errors = list(Draft202012Validator(read_json(INPUT_SCHEMA)).iter_errors(execution))
     if errors:
         reject("contract-validation", f"Execution input validation failed: {errors[0].message}", correlation_id)
-    workflow_ref = os.environ["WORKFLOW_REF"]
-    workflow_path = workflow_ref.split("/.github/workflows/", 1)[-1].split("@", 1)[0]
-    ref = workflow_ref.rsplit("@", 1)[-1]
-    cmd = ["gh", "workflow", "run", workflow_path, "--repo", execution["target_repository"], "--ref", ref]
-    for key, value in execution.items():
-        rendered = str(value).lower() if isinstance(value, bool) else ("" if value is None else str(value))
-        cmd.extend(["-f", f"{key}={rendered}"])
+    concurrency_group = execution.get("concurrency_group")
+    if not isinstance(concurrency_group, str) or not concurrency_group.strip():
+        reject("contract-validation", "Execution input requires a non-empty concurrency_group.", correlation_id)
+
+    repositories = validate_registry()
+    target_repository = execution["target_repository"]
+    entry = repositories.get(target_repository)
+    if entry is None:
+        reject("repository-routing", f"Repository {target_repository} is not registered.", correlation_id)
+    workflow_ref = os.environ.get("WORKFLOW_REF", "")
+    if workflow_ref != entry["workflow_ref"]:
+        reject("repository-routing", "Workflow reference does not match the target registry entry.", correlation_id)
+    workflow_path, ref = parse_workflow_ref(target_repository, workflow_ref)
+    payload = json.dumps(execution, separators=(",", ":"), sort_keys=True)
+    cmd = [
+        "gh", "workflow", "run", workflow_path,
+        "--repo", target_repository,
+        "--ref", ref,
+        "-f", f"execution_input_json={payload}",
+        "-f", f"concurrency_group={concurrency_group}",
+    ]
     try:
         subprocess.run(cmd, check=True, text=True, capture_output=True)
     except (OSError, subprocess.CalledProcessError) as exc:
