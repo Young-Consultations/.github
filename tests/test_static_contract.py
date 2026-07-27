@@ -1,5 +1,12 @@
 import json
+import re
 from pathlib import Path
+
+import yaml
+
+
+WORKFLOWS = Path(".github/workflows")
+CONTRACT_WORKFLOW = WORKFLOWS / "ai-sdlc-contract-tests.yml"
 
 
 def test_registry_json_syntax_and_required_fields():
@@ -35,11 +42,52 @@ def test_portfolio_tasks_registration_contract():
 
 
 def test_workflows_do_not_use_pull_request_target_or_merge():
-    for workflow in Path(".github/workflows").glob("*.yml"):
+    for workflow in WORKFLOWS.glob("*.yml"):
         text = workflow.read_text(encoding="utf-8")
         assert "pull_request_target" not in text
         assert "gh pr merge" not in text
         assert "--auto" not in text
+
+
+def test_workflow_yaml_syntax():
+    for workflow in WORKFLOWS.glob("*.yml"):
+        assert yaml.safe_load(workflow.read_text(encoding="utf-8")) is not None
+
+
+def test_contract_json_syntax():
+    for path in Path("contracts").rglob("*.json"):
+        json.loads(path.read_text(encoding="utf-8"))
+
+
+def test_third_party_actions_are_pinned_to_full_shas():
+    action = re.compile(r"^\s*uses:\s*([^\s#]+)", re.MULTILINE)
+    for workflow in WORKFLOWS.glob("*.yml"):
+        for reference in action.findall(workflow.read_text(encoding="utf-8")):
+            owner, _, version = reference.partition("@")
+            if owner.startswith("Young-Consultations/"):
+                continue
+            assert re.fullmatch(r"[0-9a-f]{40}", version), (workflow, reference)
+
+
+def test_contract_workflow_is_read_only_and_has_no_execution_path():
+    text = CONTRACT_WORKFLOW.read_text(encoding="utf-8")
+    assert text.startswith("name: AI-SDLC Contract Tests\n")
+    assert re.search(r"^permissions:\n  contents: read$", text, re.MULTILINE)
+    assert "contents: write" not in text
+    assert "actions: write" not in text
+    assert "pull-requests: write" not in text
+    assert "issues: write" not in text
+    assert "secrets." not in text
+    for forbidden in (
+        "pull_request_target",
+        "codex_router.py dispatch",
+        "gh workflow run",
+        "repository_dispatch",
+        "gh issue",
+        "gh pr create",
+        "git push",
+    ):
+        assert forbidden not in text
 
 
 def test_router_uses_least_privilege_permissions():

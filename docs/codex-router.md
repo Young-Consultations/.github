@@ -39,3 +39,24 @@ The token should be a repository-scoped token or GitHub App installation token a
 ## Registry changes
 
 Every registration contains only shared policy keys: `enabled`, `workflow_ref`, `allowed_task_types`, `codex_environment`, `max_parallel_tasks`, `draft_pr_only`, and `contract_version`. Run `python3 scripts/codex_router.py validate-registry` in CI whenever registry or router policy changes. Repository differences belong only in this registry; aliases and target-specific parsing are prohibited.
+
+## Contract verification gate
+
+`AI-SDLC Contract Tests` is the single canonical read-only gate for shared
+schemas and examples, the installed Python validation library, organization
+router contracts, registry contracts, integration boundaries, and static
+contract security checks. It supersedes the former `Router contract tests`
+check. Update branch protection after the rename to require the new workflow's
+job checks; do not retain the old check name as a duplicate compatibility path.
+
+Verification moves outward from contracts toward execution and must occur in
+this order:
+
+1. `AI-SDLC Contract Tests`
+2. `Router smoke test`
+3. `Execute approved Codex task`
+4. full ChatGPT-to-draft-PR end-to-end tests
+
+The first stage cannot execute Codex, dispatch a repository, mutate an issue,
+create a branch, or open a pull request. The smoke and execution workflows are
+intentionally retained as separate execution-level stages.
