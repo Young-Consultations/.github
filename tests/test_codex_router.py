@@ -3,6 +3,7 @@ import os
 import subprocess
 
 import pytest
+from jsonschema import Draft202012Validator
 
 
 BASE_TASK = {
@@ -24,18 +25,36 @@ BASE_TASK = {
 }
 
 
-def run_router(**changes):
+def run_router(*, github_output=None, **changes):
     task = {**BASE_TASK, **changes}
-    env = {**os.environ, "TASK_PAYLOAD": json.dumps(task)}
-    return subprocess.run(
+    env = {key: value for key, value in os.environ.items() if key != "GITHUB_OUTPUT"}
+    env["TASK_PAYLOAD"] = json.dumps(task)
+    if github_output is not None:
+        env["GITHUB_OUTPUT"] = os.fspath(github_output)
+    result = subprocess.run(
         ["python3", "scripts/codex_router.py", "validate"], env=env,
         text=True, capture_output=True,
     )
+    result.github_output_path = github_output
+    return result
 
 
 def output(result, key):
     prefix = f"{key}="
-    return next(line[len(prefix):] for line in result.stdout.splitlines() if line.startswith(prefix))
+    for line in result.stdout.splitlines():
+        if line.startswith(prefix):
+            return line[len(prefix):]
+    raise AssertionError(
+        f"Missing router output {key!r}.\n"
+        f"stdout:\n{result.stdout}\n"
+        f"stderr:\n{result.stderr}\n"
+        "GitHub output file configured: "
+        f"{getattr(result, 'github_output_path', None) is not None}"
+    )
+
+
+def file_outputs(path):
+    return dict(line.split("=", 1) for line in path.read_text(encoding="utf-8").splitlines())
 
 
 @pytest.mark.parametrize(
@@ -131,6 +150,68 @@ def test_correlation_id_is_propagated():
 def test_authorization_requires_approved_codex_task():
     assert output(run_router(status="proposed"), "failure_category") == "authorization"
     assert output(run_router(executor="human"), "failure_category") == "authorization"
+
+
+def test_valid_task_writes_contract_to_github_output_file(tmp_path):
+    github_output = tmp_path / "github-output"
+    result = run_router(github_output=github_output)
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "execution_input=" not in result.stdout
+    outputs = file_outputs(github_output)
+    assert outputs["validation_result"] == "passed"
+    assert outputs["target_repository"] == BASE_TASK["target_repository"]
+    assert outputs["workflow_ref"]
+    assert outputs["concurrency_group"]
+    assert outputs["correlation_id"] == BASE_TASK["task_id"]
+    execution_input = json.loads(outputs["execution_input"])
+    schema = json.loads(open("contracts/execution-input.schema.json", encoding="utf-8").read())
+    Draft202012Validator(schema).validate(execution_input)
+
+
+def test_rejection_writes_canonical_result_to_github_output_file(tmp_path):
+    github_output = tmp_path / "github-output"
+    result = run_router(
+        github_output=github_output,
+        target_repository="Young-Consultations/unknown",
+    )
+
+    assert result.returncode == 1
+    assert "failure_category=" not in result.stdout
+    outputs = file_outputs(github_output)
+    assert outputs["failure_category"] == "repository-routing"
+    assert outputs["validation_result"] == "failed"
+    assert json.loads(outputs["execution_result"]) == {
+        "correlation_id": BASE_TASK["task_id"],
+        "execution_status": "rejected",
+        "failure_category": "repository-routing",
+        "failure_message": (
+            "Repository Young-Consultations/unknown is not registered."
+        ),
+    }
+
+
+def test_output_transport_does_not_change_router_semantics(tmp_path, monkeypatch):
+    monkeypatch.setenv("GITHUB_STEP_SUMMARY", str(tmp_path / "step-summary"))
+    stdout_result = run_router()
+    github_output = tmp_path / "github-output"
+    file_result = run_router(github_output=github_output)
+
+    assert stdout_result.returncode == file_result.returncode == 0
+    file_values = file_outputs(github_output)
+    keys = (
+        "execution_input",
+        "validation_result",
+        "target_repository",
+        "workflow_ref",
+        "codex_environment",
+        "concurrency_group",
+        "correlation_id",
+        "diagnostic_summary",
+    )
+    assert {key: output(stdout_result, key) for key in keys} == {
+        key: file_values[key] for key in keys
+    }
 
 
 def test_registry_validation_command_passes():
