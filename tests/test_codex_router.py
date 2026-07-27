@@ -5,6 +5,8 @@ import subprocess
 import pytest
 from jsonschema import Draft202012Validator
 
+from scripts import codex_router
+
 
 BASE_TASK = {
     "contract_version": "ai-sdlc-contract/v1",
@@ -230,3 +232,105 @@ def test_repository_specific_configuration_is_registry_only():
         "Young-Consultations/portfolio-tasks",
     ):
         assert repository not in router
+
+
+def execution_for(repository, task_type):
+    result = run_router(target_repository=repository, task_type=task_type)
+    assert result.returncode == 0, result.stdout + result.stderr
+    return json.loads(output(result, "execution_input"))
+
+
+@pytest.mark.parametrize(
+    ("repository", "task_type"),
+    [
+        ("Young-Consultations/portfolio-tasks", "repository-maintenance"),
+        ("Young-Consultations/consulting-playbook", "documentation"),
+        ("Young-Consultations/slugger", "automation"),
+    ],
+)
+def test_dispatch_uses_canonical_json_transport_for_every_repository(
+    repository, task_type, monkeypatch,
+):
+    execution = execution_for(repository, task_type)
+    registry = json.loads(open("config/codex-repositories.json", encoding="utf-8").read())
+    workflow_ref = registry["repositories"][repository]["workflow_ref"]
+    calls = []
+
+    monkeypatch.setenv("EXECUTION_INPUT", json.dumps(execution))
+    monkeypatch.setenv("WORKFLOW_REF", workflow_ref)
+    monkeypatch.delenv("GITHUB_OUTPUT", raising=False)
+    monkeypatch.setattr(codex_router.subprocess, "run", lambda cmd, **kwargs: calls.append((cmd, kwargs)))
+
+    codex_router.dispatch()
+
+    cmd, kwargs = calls[0]
+    fields = [cmd[index + 1] for index, value in enumerate(cmd) if value == "-f"]
+    assert len(fields) == 2
+    assert [field.split("=", 1)[0] for field in fields] == [
+        "execution_input_json", "concurrency_group",
+    ]
+    transported = json.loads(fields[0].split("=", 1)[1])
+    assert transported == execution
+    assert isinstance(transported["parallel_safe"], bool)
+    assert transported["correlation_id"] == execution["correlation_id"]
+    assert transported["requested_branch"] == execution["requested_branch"]
+    assert transported["target_repository"] == repository
+    assert fields[1] == f"concurrency_group={execution['concurrency_group']}"
+    assert kwargs == {"check": True, "text": True, "capture_output": True}
+
+
+def test_portfolio_tasks_dispatch_command_matches_workflow_interface(monkeypatch):
+    repository = "Young-Consultations/portfolio-tasks"
+    execution = execution_for(repository, "repository-maintenance")
+    monkeypatch.setenv("EXECUTION_INPUT", json.dumps(execution))
+    monkeypatch.setenv(
+        "WORKFLOW_REF",
+        f"{repository}/.github/workflows/codex-execute.yml@main",
+    )
+    monkeypatch.delenv("GITHUB_OUTPUT", raising=False)
+    commands = []
+    monkeypatch.setattr(codex_router.subprocess, "run", lambda cmd, **kwargs: commands.append(cmd))
+
+    codex_router.dispatch()
+
+    assert commands[0][:8] == [
+        "gh", "workflow", "run", "codex-execute.yml", "--repo", repository,
+        "--ref", "main",
+    ]
+    assert commands[0][8::2] == ["-f", "-f"]
+
+
+def test_dispatch_rejects_invalid_execution_without_running_gh(monkeypatch):
+    execution = execution_for("Young-Consultations/slugger", "automation")
+    execution["parallel_safe"] = "false"
+    monkeypatch.setenv("EXECUTION_INPUT", json.dumps(execution))
+    monkeypatch.setenv(
+        "WORKFLOW_REF",
+        "Young-Consultations/slugger/.github/workflows/codex-execute.yml@main",
+    )
+    monkeypatch.delenv("GITHUB_OUTPUT", raising=False)
+    monkeypatch.setattr(
+        codex_router.subprocess,
+        "run",
+        lambda *args, **kwargs: pytest.fail("gh must not run for invalid input"),
+    )
+
+    with pytest.raises(SystemExit):
+        codex_router.dispatch()
+
+
+def test_github_422_dispatch_failure_is_publication(monkeypatch, capsys):
+    execution = execution_for("Young-Consultations/slugger", "automation")
+    monkeypatch.setenv("EXECUTION_INPUT", json.dumps(execution))
+    monkeypatch.setenv(
+        "WORKFLOW_REF",
+        "Young-Consultations/slugger/.github/workflows/codex-execute.yml@main",
+    )
+    monkeypatch.delenv("GITHUB_OUTPUT", raising=False)
+    failure = subprocess.CalledProcessError(1, ["gh"], stderr="HTTP 422: Unexpected inputs provided")
+    monkeypatch.setattr(codex_router.subprocess, "run", lambda *args, **kwargs: (_ for _ in ()).throw(failure))
+
+    with pytest.raises(SystemExit):
+        codex_router.dispatch()
+
+    assert "failure_category=publication" in capsys.readouterr().out
