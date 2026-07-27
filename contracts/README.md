@@ -6,6 +6,12 @@ This directory is the canonical, implementation-neutral interface for moving a t
 
 The Young-Consultations `.github` repository owns these schemas. Changes are reviewed and released here before a producer or consumer adopts them. The plain-text [`contract-version.txt`](contract-version.txt) is the authoritative current version; every schema fixes `contract_version` to the same value.
 
+The Python distribution includes byte-for-byte copies of these files under
+`ai_sdlc_contracts/contracts`. The validation-library tests compare the two
+locations so a release fails before a packaged copy can drift from this
+canonical directory. Installed clients load those copies as package resources,
+independently of their installation prefix or current working directory.
+
 | Artifact | Purpose |
 | --- | --- |
 | `task-contract.schema.json` | Planning and approved-task record shared across task sources |

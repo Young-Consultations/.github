@@ -42,22 +42,41 @@ def test_load_contract_version():
     assert load_contract_version() == "ai-sdlc-contract/v1"
 
 
-def test_installed_contract_discovery_ignores_working_directory(tmp_path, monkeypatch):
-    installed_package = tmp_path / "prefix/lib/python3.9/site-packages/ai_sdlc_contracts"
-    installed_package.mkdir(parents=True)
-    bundled_contracts = tmp_path / "prefix/share/ai-sdlc-contracts/contracts"
-    bundled_contracts.mkdir(parents=True)
-    (bundled_contracts / "contract-version.txt").write_text("bundled-version\n", encoding="utf-8")
-
-    unrelated_contracts = tmp_path / "project/contracts"
-    unrelated_contracts.mkdir(parents=True)
-    (unrelated_contracts / "contract-version.txt").write_text("unrelated-version\n", encoding="utf-8")
-
-    monkeypatch.setattr(loader, "__file__", str(installed_package / "loader.py"))
-    monkeypatch.setattr(loader.sys, "prefix", str(tmp_path / "prefix"))
-    monkeypatch.chdir(tmp_path / "project")
+def test_packaged_contract_discovery_ignores_prefix_and_working_directory(tmp_path, monkeypatch):
+    packaged_contracts = tmp_path / "site-packages/ai_sdlc_contracts/contracts"
+    packaged_contracts.mkdir(parents=True)
+    (packaged_contracts / "contract-version.txt").write_text("bundled-version\n", encoding="utf-8")
+    monkeypatch.setattr(loader, "files", lambda package: packaged_contracts.parent)
+    monkeypatch.setattr(loader, "__file__", str(tmp_path / "installed/ai_sdlc_contracts/loader.py"))
+    monkeypatch.chdir(tmp_path)
 
     assert loader.load_contract_version() == "bundled-version"
+
+
+def test_explicit_contract_directory_override(tmp_path, monkeypatch):
+    override = tmp_path / "override"
+    override.mkdir()
+    (override / "contract-version.txt").write_text("override-version\n", encoding="utf-8")
+    monkeypatch.setenv("AI_SDLC_CONTRACT_DIR", str(override))
+
+    assert loader.load_contract_version() == "override-version"
+
+
+def test_missing_packaged_resources_raise_schema_load_error(tmp_path, monkeypatch):
+    monkeypatch.setattr(loader, "files", lambda package: tmp_path / "missing-package")
+    monkeypatch.setattr(loader, "__file__", str(tmp_path / "installed/ai_sdlc_contracts/loader.py"))
+    loader.load_schema.cache_clear()
+
+    with pytest.raises(loader.ContractSchemaLoadError, match="could not be located"):
+        loader.load_schema("task")
+
+
+def test_packaged_contracts_match_canonical_contracts():
+    canonical = Path("contracts")
+    packaged = Path("src/ai_sdlc_contracts/contracts")
+    filenames = {"contract-version.txt", *loader.SCHEMAS.values()}
+    for filename in filenames:
+        assert (packaged / filename).read_bytes() == (canonical / filename).read_bytes()
 
 
 @pytest.mark.parametrize(

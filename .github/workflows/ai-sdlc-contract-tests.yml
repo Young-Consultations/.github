@@ -77,8 +77,46 @@ jobs:
         run: python -m pip install . pytest
       - name: Run validation-library tests
         run: python -m pytest tests/test_ai_sdlc_contracts.py --junitxml=reports/library.xml
-      - name: Verify installed CLI against canonical examples
+      - name: Build and inspect wheel resources
+        shell: bash
         run: |
+          set -euo pipefail
+          python -m pip install build
+          python -m build
+          python -m zipfile -l dist/*.whl | tee wheel-contents.txt
+          for resource in \
+            ai_sdlc_contracts/contracts/contract-version.txt \
+            ai_sdlc_contracts/contracts/task-contract.schema.json \
+            ai_sdlc_contracts/contracts/execution-input.schema.json \
+            ai_sdlc_contracts/contracts/execution-result.schema.json; do
+            grep -F "$resource" wheel-contents.txt
+          done
+      - name: Verify wheel in a clean virtual environment outside checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m venv "$RUNNER_TEMP/contracts-venv"
+          "$RUNNER_TEMP/contracts-venv/bin/python" -m pip install dist/*.whl
+          cd "$RUNNER_TEMP"
+          "$RUNNER_TEMP/contracts-venv/bin/python" -c \
+            'from ai_sdlc_contracts import load_contract_version; assert load_contract_version() == "ai-sdlc-contract/v1"'
+          "$RUNNER_TEMP/contracts-venv/bin/python" -m ai_sdlc_contracts validate-task "$GITHUB_WORKSPACE/contracts/examples/valid-task.json"
+          "$RUNNER_TEMP/contracts-venv/bin/python" -m ai_sdlc_contracts validate-input "$GITHUB_WORKSPACE/contracts/examples/valid-execution-input.json"
+          "$RUNNER_TEMP/contracts-venv/bin/python" -m ai_sdlc_contracts validate-result "$GITHUB_WORKSPACE/contracts/examples/valid-execution-result.json"
+      - name: Verify explicit user installation outside checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PYTHONUSERBASE="$RUNNER_TEMP/contracts-user-base"
+          python -m pip uninstall --yes ai-sdlc-contracts
+          python -m pip install --user --no-deps dist/*.whl
+          cd "$RUNNER_TEMP"
+          python -m ai_sdlc_contracts validate-task "$GITHUB_WORKSPACE/contracts/examples/valid-task.json"
+          python -m ai_sdlc_contracts validate-input "$GITHUB_WORKSPACE/contracts/examples/valid-execution-input.json"
+          python -m ai_sdlc_contracts validate-result "$GITHUB_WORKSPACE/contracts/examples/valid-execution-result.json"
+      - name: Verify editable install against canonical examples
+        run: |
+          python -m pip install --editable .
           python -m ai_sdlc_contracts validate-task contracts/examples/valid-task.json
           python -m ai_sdlc_contracts validate-input contracts/examples/valid-execution-input.json
           python -m ai_sdlc_contracts validate-result contracts/examples/valid-execution-result.json
