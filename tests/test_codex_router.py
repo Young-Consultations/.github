@@ -139,3 +139,13 @@ def test_registry_validation_command_passes():
         text=True, capture_output=True,
     )
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_repository_specific_configuration_is_registry_only():
+    router = open("scripts/codex_router.py", encoding="utf-8").read()
+    for repository in (
+        "Young-Consultations/slugger",
+        "Young-Consultations/consulting-playbook",
+        "Young-Consultations/portfolio-tasks",
+    ):
+        assert repository not in router
