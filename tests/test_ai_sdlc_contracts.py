@@ -10,6 +10,7 @@ import pytest
 from ai_sdlc_contracts import (
     ContractValidationError,
     UnsupportedContractVersionError,
+    loader,
     load_contract_version,
     validate_execution_input,
     validate_execution_result,
@@ -39,6 +40,24 @@ def test_valid_payloads(name, validator):
 
 def test_load_contract_version():
     assert load_contract_version() == "ai-sdlc-contract/v1"
+
+
+def test_installed_contract_discovery_ignores_working_directory(tmp_path, monkeypatch):
+    installed_package = tmp_path / "prefix/lib/python3.9/site-packages/ai_sdlc_contracts"
+    installed_package.mkdir(parents=True)
+    bundled_contracts = tmp_path / "prefix/share/ai-sdlc-contracts/contracts"
+    bundled_contracts.mkdir(parents=True)
+    (bundled_contracts / "contract-version.txt").write_text("bundled-version\n", encoding="utf-8")
+
+    unrelated_contracts = tmp_path / "project/contracts"
+    unrelated_contracts.mkdir(parents=True)
+    (unrelated_contracts / "contract-version.txt").write_text("unrelated-version\n", encoding="utf-8")
+
+    monkeypatch.setattr(loader, "__file__", str(installed_package / "loader.py"))
+    monkeypatch.setattr(loader.sys, "prefix", str(tmp_path / "prefix"))
+    monkeypatch.chdir(tmp_path / "project")
+
+    assert loader.load_contract_version() == "bundled-version"
 
 
 @pytest.mark.parametrize(

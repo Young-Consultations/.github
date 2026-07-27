@@ -21,9 +21,15 @@ def _contract_directory() -> Path:
     candidates = []
     if override:
         candidates.append(Path(override))
-    candidates.extend(parent / "contracts" for parent in Path(__file__).resolve().parents)
-    candidates.extend(parent / "contracts" for parent in Path.cwd().resolve().parents)
     candidates.append(Path(sys.prefix) / "share" / "ai-sdlc-contracts" / "contracts")
+
+    # Support running directly from this repository without making discovery
+    # depend on the caller's working directory.  Installed packages use the
+    # data-files location above instead.
+    package_directory = Path(__file__).resolve().parent
+    if package_directory.parent.name == "src":
+        candidates.append(package_directory.parent.parent / "contracts")
+
     for candidate in candidates:
         if (candidate / "contract-version.txt").is_file():
             return candidate
