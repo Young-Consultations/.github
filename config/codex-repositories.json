@@ -2,51 +2,30 @@
   "repositories": {
     "Young-Consultations/slugger": {
       "enabled": true,
-      "test_only": false,
-      "allowed_task_types": ["automation", "bugfix", "documentation", "feature", "refactor", "test"],
+      "workflow_ref": "Young-Consultations/slugger/.github/workflows/codex-execute.yml@main",
+      "allowed_task_types": ["automation", "bug-fix", "documentation", "feature", "testing"],
       "codex_environment": "slugger-codex-production",
       "max_parallel_tasks": 2,
-      "component_concurrency": {
-        "policy": "component",
-        "description": "Serializes work by normalized project/component when a task is not parallel-safe."
-      },
-      "execution_workflow": {
-        "workflow_ref": "Young-Consultations/slugger/.github/workflows/codex-execute.yml@main",
-        "boundary": "canonical-slugger-execution-workflow",
-        "draft_pr_only": true
-      }
+      "draft_pr_only": true,
+      "contract_version": "ai-sdlc-contract/v1"
     },
     "Young-Consultations/consulting-playbook": {
       "enabled": true,
-      "test_only": false,
-      "allowed_task_types": ["automation", "documentation", "feature", "refactor", "test"],
-      "codex_environment": "consulting-playbook-codex-placeholder",
+      "workflow_ref": "Young-Consultations/consulting-playbook/.github/workflows/codex-execute.yml@main",
+      "allowed_task_types": ["automation", "documentation", "feature", "testing"],
+      "codex_environment": "consulting-playbook-codex",
       "max_parallel_tasks": 1,
-      "component_concurrency": {
-        "policy": "component",
-        "description": "Placeholder policy; target repository owns its implementation workflow."
-      },
-      "execution_workflow": {
-        "workflow_ref": "Young-Consultations/consulting-playbook/.github/workflows/codex-execute.yml@main",
-        "boundary": "repository-specific-caller-boundary",
-        "draft_pr_only": true
-      }
+      "draft_pr_only": true,
+      "contract_version": "ai-sdlc-contract/v1"
     },
     "Young-Consultations/portfolio-tasks": {
       "enabled": true,
-      "test_only": false,
+      "workflow_ref": "Young-Consultations/portfolio-tasks/.github/workflows/codex-execute.yml@main",
       "allowed_task_types": ["automation", "backlog-governance", "ci-cd", "documentation", "repository-maintenance"],
       "codex_environment": "portfolio-tasks-codex-production",
       "max_parallel_tasks": 1,
-      "component_concurrency": {
-        "policy": "component",
-        "description": "Serializes non-parallel-safe portfolio governance and repository maintenance work by normalized component."
-      },
-      "execution_workflow": {
-        "workflow_ref": "Young-Consultations/portfolio-tasks/.github/workflows/codex-execute.yml@main",
-        "boundary": "portfolio-tasks-execution-workflow",
-        "draft_pr_only": true
-      }
+      "draft_pr_only": true,
+      "contract_version": "ai-sdlc-contract/v1"
     }
   }
 }

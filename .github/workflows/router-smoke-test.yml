@@ -3,24 +3,9 @@ name: Router smoke test
 on:
   workflow_dispatch:
     inputs:
-      source_issue:
-        description: Portfolio task issue reference
+      task_payload:
+        description: Canonical task-contract/v1 JSON for a non-production smoke task
         required: true
-        type: string
-      target_repository:
-        description: Registered target repository
-        required: true
-        default: Young-Consultations/consulting-playbook
-        type: string
-      task_type:
-        description: Registered task type
-        required: true
-        default: documentation
-        type: string
-      project_component:
-        description: Component concurrency key
-        required: true
-        default: router-smoke-test
         type: string
 
 permissions:
@@ -34,13 +19,6 @@ jobs:
       contents: read
       actions: read
     with:
-      source_issue: ${{ inputs.source_issue }}
-      target_repository: ${{ inputs.target_repository }}
-      task_type: ${{ inputs.task_type }}
-      project_component: ${{ inputs.project_component }}
-      priority: normal
-      parallel_safe: false
-      dependency_status: satisfied
-      approved_execution_metadata: ${{ vars.APPROVED_CODEX_METADATA_JSON }}
+      task_payload: ${{ inputs.task_payload }}
     secrets:
       CODEX_ROUTER_TOKEN: ${{ secrets.CODEX_ROUTER_TOKEN }}
