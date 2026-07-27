@@ -7,8 +7,8 @@
   "additionalProperties": false,
   "required": [
     "contract_version", "correlation_id", "source_issue", "target_repository", "task_type",
-    "priority", "executor", "parallel_safe", "draft_pr_only", "instructions",
-    "requested_branch", "timeout_minutes"
+    "project", "priority", "executor", "parallel_safe", "draft_pr_only", "instructions",
+    "requested_branch", "concurrency_group", "timeout_minutes"
   ],
   "properties": {
     "contract_version": { "const": "ai-sdlc-contract/v1" },
@@ -16,6 +16,7 @@
     "source_issue": { "$ref": "#/$defs/issueReference" },
     "target_repository": { "$ref": "#/$defs/repository" },
     "task_type": { "enum": ["automation", "backlog-governance", "ci-cd", "documentation", "repository-maintenance", "feature", "bug-fix", "testing", "security"] },
+    "project": { "type": "string", "minLength": 1, "maxLength": 128 },
     "priority": { "enum": ["p0", "p1", "p2", "p3"] },
     "executor": { "const": "codex" },
     "parallel_safe": { "type": "boolean" },
@@ -24,6 +25,11 @@
     "requested_branch": {
       "type": ["string", "null"],
       "pattern": "^(?!/)(?!.*(?:\\.\\.|//|@\\{|\\\\))[A-Za-z0-9._/-]+(?<![/.])$",
+      "maxLength": 255
+    },
+    "concurrency_group": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]*$",
       "maxLength": 255
     },
     "timeout_minutes": { "type": "integer", "minimum": 1, "maximum": 360 }

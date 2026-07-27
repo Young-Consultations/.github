@@ -17,7 +17,7 @@ Rejected routes return a deterministic JSON result and one of: `contract-validat
 
 ## Concurrency
 
-Concurrency keys incorporate the normalized target repository, source issue, parallel-safety mode, and a policy boundary. Parallel-safe work uses the correlation ID boundary. Non-parallel-safe work uses the task project/component boundary. Duplicate payloads therefore receive the same group and branch, while explicitly parallel-safe attempts may proceed independently.
+Concurrency keys incorporate the normalized target repository, source issue, parallel-safety mode, and a policy boundary. Parallel-safe work uses the correlation ID boundary. Non-parallel-safe work uses the task project/component boundary. The validation job exposes this key and the dispatch job applies it with `cancel-in-progress: false`, so conflicting dispatches are serialized. Duplicate payloads therefore receive the same group and branch, while explicitly parallel-safe attempts may proceed independently. The canonical execution input also carries `project`, allowing the target execution workflow to preserve the same component boundary.
 
 ## Caller
 

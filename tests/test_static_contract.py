@@ -54,3 +54,11 @@ def test_router_checkout_uses_policy_repository():
     text = Path(".github/workflows/codex-router.yml").read_text(encoding="utf-8")
     assert "repository: Young-Consultations/.github" in text
     assert "persist-credentials: false" in text
+
+
+def test_router_installs_validator_dependencies_and_enforces_concurrency():
+    text = Path(".github/workflows/codex-router.yml").read_text(encoding="utf-8")
+    assert "--no-deps" not in text
+    assert "concurrency_group: ${{ steps.validate.outputs.concurrency_group }}" in text
+    assert "group: ${{ needs.route.outputs.concurrency_group }}" in text
+    assert "cancel-in-progress: false" in text

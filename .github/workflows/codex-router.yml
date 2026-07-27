@@ -14,16 +14,19 @@ on:
     outputs:
       execution_result:
         description: Dispatch status or deterministic canonical rejection JSON.
-        value: ${{ jobs.route.outputs.execution_result }}
+        value: ${{ jobs.dispatch.outputs.execution_result || jobs.route.outputs.execution_result }}
       correlation_id:
         description: Correlation ID preserved from the canonical task ID.
-        value: ${{ jobs.route.outputs.correlation_id }}
+        value: ${{ jobs.dispatch.outputs.correlation_id || jobs.route.outputs.correlation_id }}
       failure_category:
         description: Canonical failure category when validation or routing fails.
-        value: ${{ jobs.route.outputs.failure_category }}
+        value: ${{ jobs.dispatch.outputs.failure_category || jobs.route.outputs.failure_category }}
       diagnostic_summary:
         description: Sanitized deterministic routing diagnostic.
-        value: ${{ jobs.route.outputs.diagnostic_summary }}
+        value: ${{ jobs.dispatch.outputs.diagnostic_summary || jobs.route.outputs.diagnostic_summary }}
+      concurrency_group:
+        description: Deterministic concurrency boundary applied to dispatch.
+        value: ${{ jobs.route.outputs.concurrency_group }}
 
 permissions:
   contents: read
@@ -31,16 +34,19 @@ permissions:
 
 jobs:
   route:
-    name: Validate and dispatch canonical Codex task
+    name: Validate canonical Codex task
     runs-on: ubuntu-latest
     permissions:
       contents: read
       actions: read
     outputs:
-      execution_result: ${{ steps.dispatch.outputs.execution_result || steps.validate.outputs.execution_result }}
-      correlation_id: ${{ steps.dispatch.outputs.correlation_id || steps.validate.outputs.correlation_id }}
-      failure_category: ${{ steps.dispatch.outputs.failure_category || steps.validate.outputs.failure_category }}
-      diagnostic_summary: ${{ steps.dispatch.outputs.diagnostic_summary || steps.validate.outputs.diagnostic_summary }}
+      execution_result: ${{ steps.validate.outputs.execution_result }}
+      correlation_id: ${{ steps.validate.outputs.correlation_id }}
+      failure_category: ${{ steps.validate.outputs.failure_category }}
+      diagnostic_summary: ${{ steps.validate.outputs.diagnostic_summary }}
+      execution_input: ${{ steps.validate.outputs.execution_input }}
+      workflow_ref: ${{ steps.validate.outputs.workflow_ref }}
+      concurrency_group: ${{ steps.validate.outputs.concurrency_group }}
     steps:
       - name: Checkout organization policy
         uses: actions/checkout@v4
@@ -49,7 +55,7 @@ jobs:
           persist-credentials: false
 
       - name: Install schema validator
-        run: python -m pip install --disable-pip-version-check --no-deps 'jsonschema>=4.18,<5'
+        run: python -m pip install --disable-pip-version-check 'jsonschema>=4.18,<5'
 
       - name: Validate repository registry
         run: python3 scripts/codex_router.py validate-registry
@@ -60,10 +66,35 @@ jobs:
           TASK_PAYLOAD: ${{ inputs.task_payload }}
         run: python3 scripts/codex_router.py validate
 
+  dispatch:
+    name: Dispatch canonical Codex task
+    needs: route
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+    concurrency:
+      group: ${{ needs.route.outputs.concurrency_group }}
+      cancel-in-progress: false
+    outputs:
+      execution_result: ${{ steps.dispatch.outputs.execution_result }}
+      correlation_id: ${{ steps.dispatch.outputs.correlation_id }}
+      failure_category: ${{ steps.dispatch.outputs.failure_category }}
+      diagnostic_summary: ${{ steps.dispatch.outputs.diagnostic_summary }}
+    steps:
+      - name: Checkout organization policy
+        uses: actions/checkout@v4
+        with:
+          repository: Young-Consultations/.github
+          persist-credentials: false
+
+      - name: Install schema validator
+        run: python -m pip install --disable-pip-version-check 'jsonschema>=4.18,<5'
+
       - name: Dispatch canonical execution input
         id: dispatch
         env:
           GH_TOKEN: ${{ secrets.CODEX_ROUTER_TOKEN }}
-          EXECUTION_INPUT: ${{ steps.validate.outputs.execution_input }}
-          WORKFLOW_REF: ${{ steps.validate.outputs.workflow_ref }}
+          EXECUTION_INPUT: ${{ needs.route.outputs.execution_input }}
+          WORKFLOW_REF: ${{ needs.route.outputs.workflow_ref }}
         run: python3 scripts/codex_router.py dispatch

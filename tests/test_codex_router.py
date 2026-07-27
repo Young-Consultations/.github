@@ -52,10 +52,11 @@ def test_registered_routes_emit_one_execution_contract(repository, task_type):
     payload = json.loads(output(result, "execution_input"))
     assert set(payload) == {
         "contract_version", "correlation_id", "source_issue", "target_repository",
-        "task_type", "priority", "executor", "parallel_safe", "draft_pr_only",
-        "instructions", "requested_branch", "timeout_minutes",
+        "task_type", "project", "priority", "executor", "parallel_safe", "draft_pr_only",
+        "instructions", "requested_branch", "concurrency_group", "timeout_minutes",
     }
     assert payload["target_repository"] == repository
+    assert payload["project"] == BASE_TASK["project"]
 
 
 def test_unknown_repository_is_canonical_routing_rejection():
@@ -113,6 +114,7 @@ def test_non_parallel_safe_execution_uses_component_boundary():
     second = run_router(task_id="attempt-b")
     assert output(first, "concurrency_group") == output(second, "concurrency_group")
     assert "-serial-publication-output" in output(first, "concurrency_group")
+    assert json.loads(output(first, "execution_input"))["concurrency_group"] == output(first, "concurrency_group")
 
 
 def test_draft_only_is_enforced():

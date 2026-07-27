@@ -140,28 +140,30 @@ def validate() -> dict[str, Any]:
     if task["contract_version"] != entry["contract_version"]:
         reject("contract-validation", "Task contract version is not supported by the target.", correlation_id)
 
+    issue = slug(task["source_issue"])
+    boundary = slug(correlation_id if task["parallel_safe"] else task["project"])
+    mode = "parallel" if task["parallel_safe"] else "serial"
+    group = f"codex-{slug(target)}-{issue}-{mode}-{boundary}"
     execution = {
         "contract_version": entry["contract_version"],
         "correlation_id": correlation_id,
         "source_issue": task["source_issue"],
         "target_repository": target,
         "task_type": task["task_type"],
+        "project": task["project"],
         "priority": task["priority"],
         "executor": task["executor"],
         "parallel_safe": task["parallel_safe"],
         "draft_pr_only": entry["draft_pr_only"],
         "instructions": task["instructions"],
         "requested_branch": f"codex/{slug(correlation_id)}",
+        "concurrency_group": group,
         "timeout_minutes": 60,
     }
     errors = list(Draft202012Validator(read_json(INPUT_SCHEMA)).iter_errors(execution))
     if errors:
         reject("contract-validation", f"Execution input validation failed: {errors[0].message}", correlation_id)
 
-    issue = slug(task["source_issue"])
-    boundary = slug(correlation_id if task["parallel_safe"] else task["project"])
-    mode = "parallel" if task["parallel_safe"] else "serial"
-    group = f"codex-{slug(target)}-{issue}-{mode}-{boundary}"
     values = {
         "execution_result": "validated", "validation_result": "passed",
         "target_repository": target, "workflow_ref": entry["workflow_ref"],
