@@ -3,17 +3,6 @@ name: AI-SDLC Contract Tests
 on:
   workflow_dispatch:
   pull_request:
-    paths:
-      - '.github/workflows/**'
-      - 'config/**'
-      - 'contracts/**'
-      - 'docs/**'
-      - 'scripts/codex_router.py'
-      - 'src/ai_sdlc_contracts/**'
-      - 'tests/**'
-      - 'README.md'
-      - 'pyproject.toml'
-      - 'requirements-dev.txt'
   push:
     branches: [main]
     paths:

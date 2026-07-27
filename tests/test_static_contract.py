@@ -54,6 +54,13 @@ def test_workflow_yaml_syntax():
         assert yaml.safe_load(workflow.read_text(encoding="utf-8")) is not None
 
 
+def test_contract_workflow_runs_for_every_pull_request():
+    workflow = yaml.load(
+        CONTRACT_WORKFLOW.read_text(encoding="utf-8"), Loader=yaml.BaseLoader
+    )
+    assert workflow["on"]["pull_request"] in (None, "")
+
+
 def test_contract_json_syntax():
     for path in Path("contracts").rglob("*.json"):
         json.loads(path.read_text(encoding="utf-8"))
