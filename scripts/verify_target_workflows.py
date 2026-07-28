@@ -45,6 +45,11 @@ class GithubSafeLoader(yaml.SafeLoader):
     """Safe YAML loader which does not interpret GitHub's `on` key as boolean."""
 
 
+def debug(message: str) -> None:
+    """Emit CI-visible diagnostics without including credentials."""
+    print(f"[target-workflow-verifier] {message}", file=sys.stderr, flush=True)
+
+
 # PyYAML implements YAML 1.1, where "on" is a boolean. GitHub uses YAML 1.2.
 GithubSafeLoader.yaml_implicit_resolvers = {
     key: [item for item in values if item[0] != "tag:yaml.org,2002:bool"]
@@ -132,15 +137,22 @@ def fetch_workflow(repository: str, path: str, ref: str, token: str | None = Non
     headers = {"Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28"}
     if token:
         headers["Authorization"] = f"Bearer {token}"
+    debug(f"requesting {url} (authentication: {'configured' if token else 'not configured'})")
     try:
         with urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=30) as response:
             payload = json.load(response)
     except (urllib.error.URLError, json.JSONDecodeError, OSError) as exc:
-        raise CompatibilityError(f"workflow is unavailable at registered ref: {getattr(exc, 'reason', exc)}") from exc
+        status = f"HTTP {exc.code}: " if isinstance(exc, urllib.error.HTTPError) else ""
+        raise CompatibilityError(
+            f"workflow is unavailable at registered ref ({url}): "
+            f"{status}{getattr(exc, 'reason', exc)}"
+        ) from exc
     try:
         # GitHub's Contents API wraps Base64 content across multiple lines.
         encoded_content = "".join(payload["content"].split())
-        return base64.b64decode(encoded_content, validate=True).decode("utf-8")
+        source = base64.b64decode(encoded_content, validate=True).decode("utf-8")
+        debug(f"received {len(source.encode('utf-8'))} decoded bytes for {repository}/{path}@{ref}")
+        return source
     except (KeyError, TypeError, ValueError, UnicodeDecodeError) as exc:
         raise CompatibilityError("GitHub returned invalid workflow content") from exc
 
@@ -149,8 +161,10 @@ def verify_registry(repositories: dict[str, dict[str, Any]], token: str | None) 
     report = []
     for repository, entry in repositories.items():
         if not entry["enabled"]:
+            debug(f"skipping disabled target {repository}")
             continue
         workflow_repository, path, ref = parse_workflow_ref(entry["workflow_ref"])
+        debug(f"checking {repository}: {path}@{ref}")
         row = {"repository": repository, "workflow": path, "ref": ref,
                "contract_version": entry["contract_version"], "transport_interface": "unknown", "result": "pass"}
         try:
@@ -159,6 +173,7 @@ def verify_registry(repositories: dict[str, dict[str, Any]], token: str | None) 
                 row["result"] = "pass (warning: movable ref)"
         except CompatibilityError as exc:
             row["result"] = f"fail: {exc}"
+        debug(f"{repository}: {row['result']} ({row['transport_interface']})")
         report.append(row)
     return report
 
@@ -175,8 +190,9 @@ def write_outputs(report: list[dict[str, str]], report_path: Path) -> None:
     if summary:
         with open(summary, "a", encoding="utf-8") as stream:
             stream.write("\n".join(lines) + "\n")
-    else:
-        print("\n".join(lines))
+        debug(f"appended compatibility table to {summary}")
+    # Keep the result visible in the job log even when Actions also has a step summary.
+    print("\n".join(lines), flush=True)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -187,6 +203,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         repositories = load_registry(args.registry)
+        debug(f"loaded {len(repositories)} registry entries from {args.registry}")
         if args.fixtures_only:
             fixture = ROOT / "tests/fixtures/target_workflows/portfolio-tasks-codex-execute.yml"
             interface = verify_interface(fixture.read_text(encoding="utf-8"))
@@ -196,7 +213,9 @@ def main(argv: list[str] | None = None) -> int:
             token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
             report = verify_registry(repositories, token)
         write_outputs(report, args.report)
-        return int(any(row["result"].startswith("fail") for row in report))
+        failed = sum(row["result"].startswith("fail") for row in report)
+        debug(f"wrote report to {args.report}; checked={len(report)}, failed={failed}")
+        return int(bool(failed))
     except (CompatibilityError, OSError) as exc:
         print(f"compatibility verification failed: {exc}", file=sys.stderr)
         return 1

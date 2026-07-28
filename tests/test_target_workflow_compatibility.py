@@ -114,3 +114,33 @@ def test_fetch_workflow_accepts_line_wrapped_contents_api_payload():
         assert checker.fetch_workflow(
             "org/repo", ".github/workflows/codex-execute.yml", "fixed-ref", "fake-token"
         ) == CANONICAL
+
+
+def test_main_keeps_diagnostics_and_results_visible_with_actions_summary(tmp_path, capsys):
+    summary = tmp_path / "summary.md"
+    report = tmp_path / "report.json"
+    registry_path = registry(tmp_path, {"org/repo": entry()})
+
+    with patch.dict(checker.os.environ, {"GITHUB_STEP_SUMMARY": str(summary)}):
+        assert checker.main([
+            "--fixtures-only", "--registry", str(registry_path), "--report", str(report)
+        ]) == 0
+
+    captured = capsys.readouterr()
+    assert "AI-SDLC target compatibility" in captured.out
+    assert "loaded 1 registry entries" in captured.err
+    assert "checked=1, failed=0" in captured.err
+    assert "AI-SDLC target compatibility" in summary.read_text(encoding="utf-8")
+
+
+def test_fetch_failure_reports_http_status_and_url():
+    error = checker.urllib.error.HTTPError(
+        "https://api.github.test/workflow", 404, "Not Found", {}, None
+    )
+
+    with patch.object(checker.urllib.request, "urlopen", side_effect=error), pytest.raises(
+        checker.CompatibilityError, match=r"HTTP 404: Not Found"
+    ) as raised:
+        checker.fetch_workflow("org/repo", ".github/workflows/codex-execute.yml", "missing")
+
+    assert "api.github.com/repos/org/repo/contents/" in str(raised.value)
