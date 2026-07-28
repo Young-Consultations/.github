@@ -17,6 +17,7 @@ independently of their installation prefix or current working directory.
 | `task-contract.schema.json` | Planning and approved-task record shared across task sources |
 | `execution-input.schema.json` | Request submitted to the single Codex execution path |
 | `execution-result.schema.json` | Machine-readable state or terminal outcome from that path |
+| `v1/` | Immutable version 1 schemas retained for pinned consumers during migration |
 | `examples/` | Complete payloads for producer/consumer fixtures and integration tests |
 
 All objects are closed with `additionalProperties: false`. An unrecognized field therefore fails validation rather than being silently discarded. This is deliberate: there is no v1 compatibility reason to permit extension fields.
@@ -45,6 +46,13 @@ Versions use the namespace `ai-sdlc-contract/vN`, where `N` is the major contrac
 * **Version mismatch is a hard failure.** Consumers never coerce an older or newer payload. They select the matching schema or reject it as `contract-validation`.
 
 During a major-version migration, producers may generate old and new payloads at separate boundaries, but a single payload is valid for exactly one version. Changes to examples and automated positive and negative validation tests accompany every contract change.
+
+The root schemas and examples currently publish `ai-sdlc-contract/v2`. Version 2
+introduces the required execution mode and the `verified` execution result. The
+original closed version 1 schemas remain under [`v1/`](v1/) so existing producers
+and consumers can continue validating version 1 payloads while they coordinate
+their migration. The router and repository registry migrate together and emit
+only version 2 execution payloads.
 
 ## Local validation
 

@@ -1,5 +1,5 @@
 {
-  "contract_version": "ai-sdlc-contract/v1",
+  "contract_version": "ai-sdlc-contract/v2",
   "correlation_id": "portfolio-142-docs-run-1",
   "source_issue": "Young-Consultations/portfolio-tasks#142",
   "target_repository": "Young-Consultations/consulting-playbook",

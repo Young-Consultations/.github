@@ -39,7 +39,7 @@ def test_valid_payloads(name, validator):
 
 
 def test_load_contract_version():
-    assert load_contract_version() == "ai-sdlc-contract/v1"
+    assert load_contract_version() == "ai-sdlc-contract/v2"
 
 
 def test_packaged_contract_discovery_ignores_prefix_and_working_directory(tmp_path, monkeypatch):
@@ -77,6 +77,7 @@ def test_packaged_contracts_match_canonical_contracts():
     filenames = {"contract-version.txt", *loader.SCHEMAS.values()}
     for filename in filenames:
         assert (packaged / filename).read_bytes() == (canonical / filename).read_bytes()
+        assert (packaged / "v1" / filename).read_bytes() == (canonical / "v1" / filename).read_bytes()
 
 
 @pytest.mark.parametrize(

@@ -1,22 +1,21 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/Young-Consultations/.github/blob/main/contracts/execution-input.schema.json",
+  "$id": "https://github.com/Young-Consultations/.github/blob/main/contracts/v1/execution-input.schema.json",
   "title": "AI-SDLC Execution Input Contract",
   "description": "Canonical request to the single Codex execution path.",
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "contract_version", "correlation_id", "source_issue", "target_repository", "task_type", "execution_mode",
+    "contract_version", "correlation_id", "source_issue", "target_repository", "task_type",
     "project", "priority", "executor", "parallel_safe", "draft_pr_only", "instructions",
     "requested_branch", "concurrency_group", "timeout_minutes"
   ],
   "properties": {
-    "contract_version": { "const": "ai-sdlc-contract/v2" },
+    "contract_version": { "const": "ai-sdlc-contract/v1" },
     "correlation_id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
     "source_issue": { "$ref": "#/$defs/issueReference" },
     "target_repository": { "$ref": "#/$defs/repository" },
     "task_type": { "enum": ["automation", "backlog-governance", "ci-cd", "documentation", "repository-maintenance", "feature", "bug-fix", "testing", "security"] },
-    "execution_mode": { "type": "string", "enum": ["verify", "implement"] },
     "project": { "type": "string", "minLength": 1, "maxLength": 128 },
     "priority": { "enum": ["p0", "p1", "p2", "p3"] },
     "executor": { "const": "codex" },

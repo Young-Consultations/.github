@@ -9,7 +9,7 @@ from scripts import codex_router
 
 
 BASE_TASK = {
-    "contract_version": "ai-sdlc-contract/v1",
+    "contract_version": "ai-sdlc-contract/v2",
     "task_id": "portfolio-8-attempt-1",
     "source_issue": "Young-Consultations/portfolio-tasks#8",
     "status": "approved",
@@ -133,7 +133,7 @@ def test_unresolved_dependency_is_rejected():
 
 
 def test_unsupported_contract_version_is_rejected():
-    result = run_router(contract_version="ai-sdlc-contract/v2")
+    result = run_router(contract_version="ai-sdlc-contract/v1")
     assert result.returncode == 1
     assert output(result, "failure_category") == "contract-validation"
 

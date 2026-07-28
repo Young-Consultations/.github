@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/Young-Consultations/.github/blob/main/contracts/execution-result.schema.json",
+  "$id": "https://github.com/Young-Consultations/.github/blob/main/contracts/v1/execution-result.schema.json",
   "title": "AI-SDLC Execution Result Contract",
   "description": "Canonical result emitted by the Codex execution path.",
   "type": "object",
@@ -11,9 +11,9 @@
     "failure_category", "failure_message", "started_at", "completed_at"
   ],
   "properties": {
-    "contract_version": { "const": "ai-sdlc-contract/v2" },
+    "contract_version": { "const": "ai-sdlc-contract/v1" },
     "correlation_id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
-    "execution_status": { "enum": ["accepted", "rejected", "queued", "running", "verified", "no-changes", "draft-pr-created", "blocked", "failed"] },
+    "execution_status": { "enum": ["accepted", "rejected", "queued", "running", "no-changes", "draft-pr-created", "blocked", "failed"] },
     "target_repository": { "type": "string", "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})/[A-Za-z0-9._-]{1,100}$" },
     "branch_name": { "type": ["string", "null"], "minLength": 1, "maxLength": 255 },
     "pull_request_url": { "type": ["string", "null"], "format": "uri", "pattern": "^https://" },
@@ -26,18 +26,6 @@
     "completed_at": { "type": ["string", "null"], "format": "date-time" }
   },
   "allOf": [
-    {
-      "if": { "properties": { "execution_status": { "const": "verified" } }, "required": ["execution_status"] },
-      "then": {
-        "properties": {
-          "branch_name": { "type": "null" },
-          "pull_request_url": { "type": "null" },
-          "validation_result": { "const": "passed" },
-          "test_result": { "const": "passed" },
-          "failure_category": { "const": "none" }
-        }
-      }
-    },
     {
       "if": { "properties": { "failure_category": { "const": "none" } }, "required": ["failure_category"] },
       "then": { "properties": { "failure_message": { "type": "null" } } },

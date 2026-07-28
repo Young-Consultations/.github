@@ -7,7 +7,7 @@
       "codex_environment": "slugger-codex-production",
       "max_parallel_tasks": 2,
       "draft_pr_only": true,
-      "contract_version": "ai-sdlc-contract/v1"
+      "contract_version": "ai-sdlc-contract/v2"
     },
     "Young-Consultations/consulting-playbook": {
       "enabled": true,
@@ -16,7 +16,7 @@
       "codex_environment": "consulting-playbook-codex",
       "max_parallel_tasks": 1,
       "draft_pr_only": true,
-      "contract_version": "ai-sdlc-contract/v1"
+      "contract_version": "ai-sdlc-contract/v2"
     },
     "Young-Consultations/portfolio-tasks": {
       "enabled": true,
@@ -25,7 +25,7 @@
       "codex_environment": "portfolio-tasks-codex-production",
       "max_parallel_tasks": 1,
       "draft_pr_only": true,
-      "contract_version": "ai-sdlc-contract/v1"
+      "contract_version": "ai-sdlc-contract/v2"
     }
   }
 }
