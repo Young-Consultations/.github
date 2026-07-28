@@ -29,8 +29,9 @@ The intended flow is:
 
 1. Planning creates a task conforming to `task-contract.schema.json`.
 2. The approved task is projected into `execution-input.schema.json` without creating an alternate execution path.
-3. Codex accepts only `executor: codex` and `draft_pr_only: true`, and may publish a draft pull request only.
-4. The execution system reports progress or a terminal outcome using `execution-result.schema.json`.
+3. The required `execution_mode` is `implement` for production work or `verify` for read-only integration verification. It is never inferred from instructions.
+4. Implement mode accepts only `executor: codex` and `draft_pr_only: true`, and may publish a draft pull request only. Verify mode must not invoke Codex or create a branch or pull request.
+5. The execution system reports progress or a terminal outcome using `execution-result.schema.json`; `verified` intentionally has null branch and pull-request fields.
 
 The schemas neither authorize a repository nor route to it. Repository allowlists and authorization remain policy owned by the executing system. These contracts do not permit automatic merge behavior.
 

@@ -7,6 +7,11 @@ on:
         description: Canonical task-contract/v1 JSON produced by portfolio-tasks.
         required: true
         type: string
+      execution_mode:
+        description: Explicit canonical execution mode; production defaults to implementation.
+        required: false
+        type: string
+        default: implement
     secrets:
       CODEX_ROUTER_TOKEN:
         description: Repository-scoped token or GitHub App token permitted to dispatch the registered workflow.
@@ -64,6 +69,7 @@ jobs:
         id: validate
         env:
           TASK_PAYLOAD: ${{ inputs.task_payload }}
+          EXECUTION_MODE: ${{ inputs.execution_mode }}
         run: python3 scripts/codex_router.py validate
 
   dispatch:

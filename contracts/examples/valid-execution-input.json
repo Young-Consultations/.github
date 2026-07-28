@@ -4,6 +4,7 @@
   "source_issue": "Young-Consultations/portfolio-tasks#142",
   "target_repository": "Young-Consultations/consulting-playbook",
   "task_type": "documentation",
+  "execution_mode": "implement",
   "project": "consulting-playbook",
   "priority": "p2",
   "executor": "codex",

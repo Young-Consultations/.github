@@ -88,6 +88,23 @@ def test_execution_input_requires_codex_executor():
         validator.validate(instance)
 
 
+@pytest.mark.parametrize("mode", ["verify", "implement"])
+def test_execution_input_accepts_canonical_execution_modes(mode):
+    validator, instance = case("input")
+    instance["execution_mode"] = mode
+    validator.validate(instance)
+
+
+def test_execution_input_rejects_invalid_or_missing_execution_mode():
+    validator, instance = case("input")
+    instance["execution_mode"] = "dry-run"
+    with pytest.raises(ValidationError):
+        validator.validate(instance)
+    instance.pop("execution_mode")
+    with pytest.raises(ValidationError):
+        validator.validate(instance)
+
+
 @pytest.mark.parametrize("name", CASES)
 @pytest.mark.parametrize("repository", ["missing-owner", "/repo", "owner/", "owner/repo/extra", "owner repo/name"])
 def test_malformed_repository_names_fail(name, repository):
@@ -121,3 +138,22 @@ def test_failure_category_requires_message():
     instance["failure_category"] = "tests"
     with pytest.raises(ValidationError):
         validator.validate(instance)
+
+
+def test_verified_result_requires_passed_checks_and_no_publication():
+    validator, instance = case("result")
+    instance = load_json(
+        CONTRACTS / "examples" / "valid-verification-result.json"
+    )
+    validator.validate(instance)
+
+    for field, value in (
+        ("branch_name", "codex/not-allowed"),
+        ("pull_request_url", "https://github.com/example/repo/pull/1"),
+        ("validation_result", "failed"),
+        ("test_result", "not-run"),
+    ):
+        invalid = copy.deepcopy(instance)
+        invalid[field] = value
+        with pytest.raises(ValidationError):
+            validator.validate(invalid)

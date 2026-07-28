@@ -20,5 +20,6 @@ jobs:
       actions: read
     with:
       task_payload: ${{ inputs.task_payload }}
+      execution_mode: verify
     secrets:
       CODEX_ROUTER_TOKEN: ${{ secrets.CODEX_ROUTER_TOKEN }}

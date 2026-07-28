@@ -6,7 +6,7 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "contract_version", "correlation_id", "source_issue", "target_repository", "task_type",
+    "contract_version", "correlation_id", "source_issue", "target_repository", "task_type", "execution_mode",
     "project", "priority", "executor", "parallel_safe", "draft_pr_only", "instructions",
     "requested_branch", "concurrency_group", "timeout_minutes"
   ],
@@ -16,6 +16,7 @@
     "source_issue": { "$ref": "#/$defs/issueReference" },
     "target_repository": { "$ref": "#/$defs/repository" },
     "task_type": { "enum": ["automation", "backlog-governance", "ci-cd", "documentation", "repository-maintenance", "feature", "bug-fix", "testing", "security"] },
+    "execution_mode": { "type": "string", "enum": ["verify", "implement"] },
     "project": { "type": "string", "minLength": 1, "maxLength": 128 },
     "priority": { "enum": ["p0", "p1", "p2", "p3"] },
     "executor": { "const": "codex" },

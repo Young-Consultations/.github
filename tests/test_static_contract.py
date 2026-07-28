@@ -117,3 +117,11 @@ def test_router_installs_validator_dependencies_and_enforces_concurrency():
     assert "concurrency_group: ${{ steps.validate.outputs.concurrency_group }}" in text
     assert "group: ${{ needs.route.outputs.concurrency_group }}" in text
     assert "cancel-in-progress: false" in text
+
+
+def test_smoke_and_production_routes_select_modes_explicitly():
+    router = Path(".github/workflows/codex-router.yml").read_text(encoding="utf-8")
+    smoke = Path(".github/workflows/router-smoke-test.yml").read_text(encoding="utf-8")
+    assert "default: implement" in router
+    assert "EXECUTION_MODE: ${{ inputs.execution_mode }}" in router
+    assert "execution_mode: verify" in smoke
