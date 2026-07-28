@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       task_payload:
-        description: Canonical task-contract/v1 JSON produced by portfolio-tasks.
+        description: Canonical task-contract/v2 JSON produced by portfolio-tasks.
         required: true
         type: string
       execution_mode:
