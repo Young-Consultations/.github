@@ -1,0 +1,21 @@
+name: Codex Execute
+on:
+  workflow_dispatch:
+    inputs:
+      execution_input_json:
+        required: false
+        type: string
+      execution_input_artifact:
+        required: false
+        type: string
+      execution_input_run_id:
+        required: false
+        type: string
+      concurrency_group:
+        required: true
+        type: string
+jobs:
+  execute:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo verified
