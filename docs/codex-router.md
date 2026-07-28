@@ -59,9 +59,29 @@ this order:
 
 1. `AI-SDLC Contract Tests`
 2. `Router smoke test`
-3. `Execute approved Codex task`
+3. registered target-repository execution
 4. full ChatGPT-to-draft-PR end-to-end tests
 
 The first stage cannot execute Codex, dispatch a repository, mutate an issue,
 create a branch, or open a pull request. The smoke and execution workflows are
 intentionally retained as separate execution-level stages.
+
+## Workflow inventory and ownership boundary
+
+The organization repository owns these active workflows:
+
+- `ai-sdlc-contract-tests.yml` validates schemas, the shared Python validator,
+  registry policy, router behavior, and static contract boundaries;
+- `codex-router.yml` is the only organization dispatch boundary; and
+- `router-smoke-test.yml` exercises the router with read-only verification.
+
+`Young-Consultations/.github` also owns the canonical schemas, shared Python
+validator, and repository registry. It does not contain a target
+`codex-execute.yml` and does not execute repository changes.
+
+Registered target repositories (`portfolio-tasks`, `consulting-playbook`, and
+`slugger`) own their executor workflows. Each target consumes the canonical
+`execution-input/v2` payload through `execution_input_json` (plus the transport
+`concurrency_group`), performs verification or Codex implementation, and emits
+`execution-result/v2`. Registry `codex_environment` values remain internal
+organization routing configuration and are not independent workflow inputs.

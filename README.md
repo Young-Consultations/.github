@@ -39,13 +39,14 @@ Production-path verification proceeds in this order:
 
 1. **AI-SDLC Contract Tests**
 2. **Router smoke test**
-3. **Execute approved Codex task**
+3. Registered target-repository execution
 4. Full ChatGPT-to-draft-PR end-to-end tests
 
 The contract workflow performs no dispatch, Codex execution, issue mutation,
 branch creation, or pull-request publication. The router smoke test remains a
-separate execution-level test, and the production router and approved-task
-execution workflows remain independent.
+separate execution-level test. The organization repository has no
+`codex-execute.yml`: the organization router is its only dispatch boundary,
+and execution workflows are owned by registered target repositories.
 
 The reusable router defaults to canonical `execution_mode: implement` for
 production calls. The smoke workflow explicitly sends `execution_mode: verify`,
@@ -53,3 +54,15 @@ which tells a conforming target to finish after authorization and read-only
 validation. A successful verification intentionally invokes no Codex runtime,
 does not require repository changes, and creates neither a branch nor a pull
 request.
+
+## Platform and execution ownership
+
+`Young-Consultations/.github` is the organization AI-SDLC platform repository.
+It owns the canonical schemas, shared Python validator, repository registry,
+organization router, and contract tests. It validates and routes work but does
+not execute repository changes.
+
+Registered target repositories—including `portfolio-tasks`,
+`consulting-playbook`, and `slugger`—own their `codex-execute.yml` workflows.
+Those workflows consume `execution-input/v2`, perform verification or Codex
+implementation in the target repository, and emit `execution-result/v2`.
