@@ -138,7 +138,9 @@ def fetch_workflow(repository: str, path: str, ref: str, token: str | None = Non
     except (urllib.error.URLError, json.JSONDecodeError, OSError) as exc:
         raise CompatibilityError(f"workflow is unavailable at registered ref: {getattr(exc, 'reason', exc)}") from exc
     try:
-        return base64.b64decode(payload["content"], validate=True).decode("utf-8")
+        # GitHub's Contents API wraps Base64 content across multiple lines.
+        encoded_content = "".join(payload["content"].split())
+        return base64.b64decode(encoded_content, validate=True).decode("utf-8")
     except (KeyError, TypeError, ValueError, UnicodeDecodeError) as exc:
         raise CompatibilityError("GitHub returned invalid workflow content") from exc
 

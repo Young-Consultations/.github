@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import base64
 import importlib.util
+import io
 import json
 from pathlib import Path
 from unittest.mock import patch
@@ -102,3 +104,13 @@ def test_network_fetch_is_mocked_for_success(tmp_path):
         report = checker.verify_registry(entries, "fake-token")
     fetch.assert_called_once_with("org/repo", ".github/workflows/codex-execute.yml", "main", "fake-token")
     assert report[0]["result"] == "pass (warning: movable ref)"
+
+
+def test_fetch_workflow_accepts_line_wrapped_contents_api_payload():
+    content = base64.encodebytes(CANONICAL.encode("utf-8")).decode("ascii")
+    response = io.BytesIO(json.dumps({"content": content}).encode("utf-8"))
+
+    with patch.object(checker.urllib.request, "urlopen", return_value=response):
+        assert checker.fetch_workflow(
+            "org/repo", ".github/workflows/codex-execute.yml", "fixed-ref", "fake-token"
+        ) == CANONICAL
