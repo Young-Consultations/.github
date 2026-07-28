@@ -6,7 +6,7 @@ The organization router is a policy boundary between canonical planning output a
 
 The reusable `.github/workflows/codex-router.yml` accepts only `task_payload` plus the narrowly scoped dispatch secret. The router:
 
-1. validates `ai-sdlc-contract/v1`, approval status, the `codex` executor, and an empty dependency list;
+1. validates `ai-sdlc-contract/v2`, approval status, the `codex` executor, and an empty dependency list;
 2. authorizes the target and task type against `config/codex-repositories.json`;
 3. constructs and schema-validates one execution input;
 4. dispatches the registered workflow with one canonical JSON input containing `execution_mode` and the other execution-contract fields, plus its concurrency transport input.

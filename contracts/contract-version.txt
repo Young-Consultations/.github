@@ -1,1 +1,1 @@
-ai-sdlc-contract/v1
+ai-sdlc-contract/v2

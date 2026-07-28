@@ -11,7 +11,7 @@
     "failure_category", "failure_message", "started_at", "completed_at"
   ],
   "properties": {
-    "contract_version": { "const": "ai-sdlc-contract/v1" },
+    "contract_version": { "const": "ai-sdlc-contract/v2" },
     "correlation_id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
     "execution_status": { "enum": ["accepted", "rejected", "queued", "running", "verified", "no-changes", "draft-pr-created", "blocked", "failed"] },
     "target_repository": { "type": "string", "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})/[A-Za-z0-9._-]{1,100}$" },

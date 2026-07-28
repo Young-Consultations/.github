@@ -1,5 +1,5 @@
 {
-  "contract_version": "ai-sdlc-contract/v1",
+  "contract_version": "ai-sdlc-contract/v2",
   "task_id": "portfolio-142-docs",
   "source_issue": "Young-Consultations/portfolio-tasks#142",
   "status": "approved",

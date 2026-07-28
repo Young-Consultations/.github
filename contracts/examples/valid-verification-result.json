@@ -1,5 +1,5 @@
 {
-  "contract_version": "ai-sdlc-contract/v1",
+  "contract_version": "ai-sdlc-contract/v2",
   "correlation_id": "router-smoke-003",
   "execution_status": "verified",
   "target_repository": "Young-Consultations/portfolio-tasks",

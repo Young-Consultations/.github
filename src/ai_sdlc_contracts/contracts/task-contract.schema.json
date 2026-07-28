@@ -11,7 +11,7 @@
     "risk", "scope", "instructions", "created_by"
   ],
   "properties": {
-    "contract_version": { "const": "ai-sdlc-contract/v1" },
+    "contract_version": { "const": "ai-sdlc-contract/v2" },
     "task_id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
     "source_issue": { "$ref": "#/$defs/issueReference" },
     "status": { "enum": ["proposed", "approved", "queued", "running", "draft-pr", "blocked", "done", "failed"] },
