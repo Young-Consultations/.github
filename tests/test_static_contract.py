@@ -7,6 +7,13 @@ import yaml
 
 WORKFLOWS = Path(".github/workflows")
 CONTRACT_WORKFLOW = WORKFLOWS / "ai-sdlc-contract-tests.yml"
+ROUTER_WORKFLOW = WORKFLOWS / "codex-router.yml"
+ORGANIZATION_REPOSITORY = "Young-Consultations/.github"
+OBSOLETE_EXECUTOR_INPUTS = {
+    "project_component",
+    "dependency_status",
+    "codex_environment",
+}
 
 
 def test_registry_json_syntax_and_required_fields():
@@ -22,7 +29,47 @@ def test_registry_json_syntax_and_required_fields():
         assert entry["max_parallel_tasks"] >= 1, name
         assert entry["draft_pr_only"] is True, name
         assert entry["workflow_ref"].startswith(f"{name}/.github/workflows/"), name
+        assert name != ORGANIZATION_REPOSITORY
+        assert entry["workflow_ref"] == (
+            f"{name}/.github/workflows/codex-execute.yml@main"
+        ), name
         assert entry["contract_version"] == "ai-sdlc-contract/v2", name
+
+
+def test_organization_repository_has_no_target_executor():
+    assert not (WORKFLOWS / "codex-execute.yml").exists()
+    assert {
+        "ai-sdlc-contract-tests.yml",
+        "codex-router.yml",
+        "router-smoke-test.yml",
+    }.issubset({path.name for path in WORKFLOWS.glob("*.yml")})
+
+
+def test_router_is_the_only_organization_dispatch_boundary():
+    dispatchers = []
+    for workflow in WORKFLOWS.glob("*.yml"):
+        text = workflow.read_text(encoding="utf-8")
+        has_dispatch = any(
+            marker in text
+            for marker in (
+                "codex_router.py dispatch",
+                "gh workflow run",
+                "repository_dispatch",
+            )
+        )
+        if has_dispatch:
+            dispatchers.append(workflow)
+    assert dispatchers == [ROUTER_WORKFLOW]
+
+
+def test_active_workflows_do_not_expose_obsolete_executor_inputs():
+    for workflow in WORKFLOWS.glob("*.yml"):
+        document = yaml.load(workflow.read_text(encoding="utf-8"), Loader=yaml.BaseLoader)
+        triggers = document.get("on", {}) or {}
+        for trigger_name in ("workflow_call", "workflow_dispatch"):
+            trigger = triggers.get(trigger_name, {}) or {}
+            inputs = set((trigger.get("inputs", {}) or {}).keys())
+            assert inputs.isdisjoint(OBSOLETE_EXECUTOR_INPUTS), (workflow, inputs)
 
 
 def test_portfolio_tasks_registration_contract():
