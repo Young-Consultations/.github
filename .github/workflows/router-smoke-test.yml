@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       task_payload:
-        description: Canonical task-contract/v1 JSON for a non-production smoke task
+        description: Canonical task-contract/v2 JSON for a non-production smoke task
         required: true
         type: string
 
@@ -20,5 +20,6 @@ jobs:
       actions: read
     with:
       task_payload: ${{ inputs.task_payload }}
+      execution_mode: verify
     secrets:
       CODEX_ROUTER_TOKEN: ${{ secrets.CODEX_ROUTER_TOKEN }}

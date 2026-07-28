@@ -140,6 +140,9 @@ def validate() -> dict[str, Any]:
     repositories = validate_registry()
     task = load_task()
     correlation_id = task["task_id"]
+    execution_mode = os.environ.get("EXECUTION_MODE", "implement")
+    if execution_mode not in {"verify", "implement"}:
+        reject("contract-validation", "Execution mode must be verify or implement.", correlation_id)
     if task["status"] not in {"approved", "queued"}:
         reject("authorization", "Task status is not approved for execution.", correlation_id)
     if task["executor"] != "codex":
@@ -168,6 +171,7 @@ def validate() -> dict[str, Any]:
         "source_issue": task["source_issue"],
         "target_repository": target,
         "task_type": task["task_type"],
+        "execution_mode": execution_mode,
         "project": task["project"],
         "priority": task["priority"],
         "executor": task["executor"],

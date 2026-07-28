@@ -69,9 +69,21 @@ def test_unknown_fields_fail(name):
 @pytest.mark.parametrize("name", CASES)
 def test_mismatched_contract_versions_fail(name):
     validator, instance = case(name)
-    instance["contract_version"] = "ai-sdlc-contract/v2"
+    instance["contract_version"] = "ai-sdlc-contract/v1"
     with pytest.raises(ValidationError):
         validator.validate(instance)
+
+
+def test_v1_schemas_remain_available_and_unchanged_by_v2_features():
+    archived = CONTRACTS / "v1"
+    assert (archived / "contract-version.txt").read_text(encoding="utf-8").strip() == "ai-sdlc-contract/v1"
+
+    input_schema = load_json(archived / "execution-input.schema.json")
+    result_schema = load_json(archived / "execution-result.schema.json")
+    assert "execution_mode" not in input_schema["properties"]
+    assert "verified" not in result_schema["properties"]["execution_status"]["enum"]
+    assert input_schema["properties"]["contract_version"]["const"] == "ai-sdlc-contract/v1"
+    assert result_schema["properties"]["contract_version"]["const"] == "ai-sdlc-contract/v1"
 
 
 def test_codex_input_cannot_disable_draft_pr_only():
@@ -84,6 +96,23 @@ def test_codex_input_cannot_disable_draft_pr_only():
 def test_execution_input_requires_codex_executor():
     validator, instance = case("input")
     instance["executor"] = "human"
+    with pytest.raises(ValidationError):
+        validator.validate(instance)
+
+
+@pytest.mark.parametrize("mode", ["verify", "implement"])
+def test_execution_input_accepts_canonical_execution_modes(mode):
+    validator, instance = case("input")
+    instance["execution_mode"] = mode
+    validator.validate(instance)
+
+
+def test_execution_input_rejects_invalid_or_missing_execution_mode():
+    validator, instance = case("input")
+    instance["execution_mode"] = "dry-run"
+    with pytest.raises(ValidationError):
+        validator.validate(instance)
+    instance.pop("execution_mode")
     with pytest.raises(ValidationError):
         validator.validate(instance)
 
@@ -121,3 +150,22 @@ def test_failure_category_requires_message():
     instance["failure_category"] = "tests"
     with pytest.raises(ValidationError):
         validator.validate(instance)
+
+
+def test_verified_result_requires_passed_checks_and_no_publication():
+    validator, instance = case("result")
+    instance = load_json(
+        CONTRACTS / "examples" / "valid-verification-result.json"
+    )
+    validator.validate(instance)
+
+    for field, value in (
+        ("branch_name", "codex/not-allowed"),
+        ("pull_request_url", "https://github.com/example/repo/pull/1"),
+        ("validation_result", "failed"),
+        ("test_result", "not-run"),
+    ):
+        invalid = copy.deepcopy(instance)
+        invalid[field] = value
+        with pytest.raises(ValidationError):
+            validator.validate(invalid)

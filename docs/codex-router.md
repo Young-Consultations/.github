@@ -6,10 +6,15 @@ The organization router is a policy boundary between canonical planning output a
 
 The reusable `.github/workflows/codex-router.yml` accepts only `task_payload` plus the narrowly scoped dispatch secret. The router:
 
-1. validates `ai-sdlc-contract/v1`, approval status, the `codex` executor, and an empty dependency list;
+1. validates `ai-sdlc-contract/v2`, approval status, the `codex` executor, and an empty dependency list;
 2. authorizes the target and task type against `config/codex-repositories.json`;
 3. constructs and schema-validates one execution input;
-4. dispatches the registered workflow with exactly these standard inputs: `contract_version`, `correlation_id`, `source_issue`, `target_repository`, `task_type`, `priority`, `executor`, `parallel_safe`, `draft_pr_only`, `instructions`, `requested_branch`, and `timeout_minutes`.
+4. dispatches the registered workflow with one canonical JSON input containing `execution_mode` and the other execution-contract fields, plus its concurrency transport input.
+
+The reusable router defaults `execution_mode` to `implement`. The router smoke
+workflow explicitly selects `verify`; the router never derives the mode from
+task type or natural-language instructions. Both modes retain normal contract,
+registry, authorization, correlation, target, and concurrency validation.
 
 `task_id` becomes the unchanged execution `correlation_id`. The requested branch is deterministically derived from it, so retrying the same attempt cannot request multiple draft-PR branches. Draft-only execution is mandatory; this workflow cannot merge.
 

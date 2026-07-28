@@ -9,7 +9,7 @@ from scripts import codex_router
 
 
 BASE_TASK = {
-    "contract_version": "ai-sdlc-contract/v1",
+    "contract_version": "ai-sdlc-contract/v2",
     "task_id": "portfolio-8-attempt-1",
     "source_issue": "Young-Consultations/portfolio-tasks#8",
     "status": "approved",
@@ -27,10 +27,14 @@ BASE_TASK = {
 }
 
 
-def run_router(*, github_output=None, **changes):
+def run_router(*, github_output=None, execution_mode=None, **changes):
     task = {**BASE_TASK, **changes}
     env = {key: value for key, value in os.environ.items() if key != "GITHUB_OUTPUT"}
     env["TASK_PAYLOAD"] = json.dumps(task)
+    if execution_mode is not None:
+        env["EXECUTION_MODE"] = execution_mode
+    else:
+        env.pop("EXECUTION_MODE", None)
     if github_output is not None:
         env["GITHUB_OUTPUT"] = os.fspath(github_output)
     result = subprocess.run(
@@ -75,9 +79,26 @@ def test_registered_routes_emit_one_execution_contract(repository, task_type):
         "contract_version", "correlation_id", "source_issue", "target_repository",
         "task_type", "project", "priority", "executor", "parallel_safe", "draft_pr_only",
         "instructions", "requested_branch", "concurrency_group", "timeout_minutes",
+        "execution_mode",
     }
     assert payload["target_repository"] == repository
     assert payload["project"] == BASE_TASK["project"]
+    assert payload["execution_mode"] == "implement"
+
+
+def test_router_emits_explicit_verify_mode_without_inspecting_instructions():
+    result = run_router(
+        execution_mode="verify",
+        instructions="Implement everything and create a pull request.",
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert json.loads(output(result, "execution_input"))["execution_mode"] == "verify"
+
+
+def test_invalid_execution_mode_is_rejected():
+    result = run_router(execution_mode="dry-run")
+    assert result.returncode == 1
+    assert output(result, "failure_category") == "contract-validation"
 
 
 def test_unknown_repository_is_canonical_routing_rejection():
@@ -112,7 +133,7 @@ def test_unresolved_dependency_is_rejected():
 
 
 def test_unsupported_contract_version_is_rejected():
-    result = run_router(contract_version="ai-sdlc-contract/v2")
+    result = run_router(contract_version="ai-sdlc-contract/v1")
     assert result.returncode == 1
     assert output(result, "failure_category") == "contract-validation"
 

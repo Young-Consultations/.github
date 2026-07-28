@@ -47,7 +47,7 @@ jobs:
         run: |
           set -euo pipefail
           version="$(cat contracts/contract-version.txt)"
-          test "$version" = 'ai-sdlc-contract/v1'
+          test "$version" = 'ai-sdlc-contract/v2'
           echo "value=$version" >> "$GITHUB_OUTPUT"
       - name: Run canonical schema tests
         run: python -m pytest tests/test_contract_schemas.py --junitxml=reports/schema.xml
@@ -99,7 +99,7 @@ jobs:
           "$RUNNER_TEMP/contracts-venv/bin/python" -m pip install dist/*.whl
           cd "$RUNNER_TEMP"
           "$RUNNER_TEMP/contracts-venv/bin/python" -c \
-            'from ai_sdlc_contracts import load_contract_version; assert load_contract_version() == "ai-sdlc-contract/v1"'
+            'from ai_sdlc_contracts import load_contract_version; assert load_contract_version() == "ai-sdlc-contract/v2"'
           "$RUNNER_TEMP/contracts-venv/bin/python" -m ai_sdlc_contracts validate-task "$GITHUB_WORKSPACE/contracts/examples/valid-task.json"
           "$RUNNER_TEMP/contracts-venv/bin/python" -m ai_sdlc_contracts validate-input "$GITHUB_WORKSPACE/contracts/examples/valid-execution-input.json"
           "$RUNNER_TEMP/contracts-venv/bin/python" -m ai_sdlc_contracts validate-result "$GITHUB_WORKSPACE/contracts/examples/valid-execution-result.json"

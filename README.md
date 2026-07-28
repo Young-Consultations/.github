@@ -46,3 +46,10 @@ The contract workflow performs no dispatch, Codex execution, issue mutation,
 branch creation, or pull-request publication. The router smoke test remains a
 separate execution-level test, and the production router and approved-task
 execution workflows remain independent.
+
+The reusable router defaults to canonical `execution_mode: implement` for
+production calls. The smoke workflow explicitly sends `execution_mode: verify`,
+which tells a conforming target to finish after authorization and read-only
+validation. A successful verification intentionally invokes no Codex runtime,
+does not require repository changes, and creates neither a branch nor a pull
+request.
