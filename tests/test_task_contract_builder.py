@@ -54,6 +54,33 @@ def test_missing_required_field(heading, message):
         )
 
 
+@pytest.mark.parametrize("heading", ["Execution status", "Status"])
+def test_missing_execution_status_is_not_implicitly_approved(heading):
+    payload = issue()
+    payload["body"] = payload["body"].replace(
+        "## Execution status\napproved", f"## {heading}\n"
+    )
+    with pytest.raises(TaskContractBuildError, match="execution status or status"):
+        build_task_contract_from_issue(
+            source_repository=SOURCE,
+            issue=payload,
+            execution_mode=ExecutionMode.IMPLEMENT,
+        )
+
+
+def test_status_alias_is_accepted_when_explicit():
+    payload = issue()
+    payload["body"] = payload["body"].replace(
+        "## Execution status\napproved", "## Status\nqueued"
+    )
+    contract = build_task_contract_from_issue(
+        source_repository=SOURCE,
+        issue=payload,
+        execution_mode=ExecutionMode.IMPLEMENT,
+    )
+    assert contract["status"] == "queued"
+
+
 def test_unsupported_task_type():
     payload = issue()
     payload["body"] = payload["body"].replace(

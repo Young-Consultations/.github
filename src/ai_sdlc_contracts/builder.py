@@ -90,6 +90,17 @@ def _required(fields: Mapping[str, str], name: str) -> str:
     return value
 
 
+def _execution_status(fields: Mapping[str, str]) -> str:
+    """Return an explicitly supplied execution status from a supported field."""
+    for name in ("execution status", "status"):
+        value = fields.get(name, "").strip()
+        if value:
+            return _scalar(value).lower()
+    raise TaskContractBuildError(
+        "missing required structured field: execution status or status"
+    )
+
+
 def _scalar(value: str) -> str:
     """Remove common Markdown list/inline-code decoration from a scalar."""
     first = next((line.strip() for line in value.splitlines() if line.strip()), "")
@@ -152,9 +163,7 @@ def build_task_contract_from_issue(
     if task_type not in _TASK_TYPES:
         raise TaskContractBuildError("unsupported task type")
 
-    status = _scalar(
-        fields.get("execution status", fields.get("status", "approved"))
-    ).lower()
+    status = _execution_status(fields)
     instruction_parts = [fields.get("instructions", title)]
     for name in (
         "constraints",
