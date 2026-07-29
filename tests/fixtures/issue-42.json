@@ -1,0 +1,11 @@
+{
+  "body": "## Target repository\nYoung-Consultations/consulting-playbook\n\n## Executor\ncodex\n\n## Task type\ndocumentation\n\n## Priority\np1\n\n## Execution status\napproved\n\n## Project\nconsulting-playbook\n\n## Parallel safe\nyes\n\n## Dependencies\nnone\n\n## Risk\nlow\n\n## Scope\nsmall\n\n## Instructions\nDocument the approved consulting workflow and open a draft pull request.\n\n## Constraints\n- Do not change runtime behavior.\n\n## Acceptance criteria\n- The guide contains a complete example.\n\n## Testing requirements\n- Run the documentation checks.\n\n## Definition of done\n- A focused draft pull request is open.\n\n## Created by\nchatgpt-planning",
+  "html_url": "https://github.com/Young-Consultations/portfolio-tasks/issues/42",
+  "labels": [
+    {"name": "status:approved"},
+    {"name": "executor:codex"}
+  ],
+  "number": 42,
+  "state": "open",
+  "title": "Document the approved consulting workflow"
+}

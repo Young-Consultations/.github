@@ -169,3 +169,17 @@ def test_cli_accepts_valid_examples(command):
     )
     assert result.returncode == 0
     assert result.stdout == "valid\n"
+
+
+def test_cli_invalid_json_preserves_exit_code_two(tmp_path):
+    payload = tmp_path / "malformed.json"
+    payload.write_text("{", encoding="utf-8")
+    result = subprocess.run(
+        [sys.executable, "-m", "ai_sdlc_contracts", "validate-task", str(payload)],
+        capture_output=True,
+        text=True,
+        env=dict(os.environ, PYTHONPATH="src"),
+        check=False,
+    )
+    assert result.returncode == 2
+    assert result.stderr == "error: payload file could not be read as JSON\n"
