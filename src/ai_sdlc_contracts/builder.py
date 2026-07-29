@@ -40,6 +40,12 @@ _FIELD_NAMES = {
     "dependencies",
     "risk",
     "scope",
+    "objective",
+    "current behavior",
+    "required behavior",
+    "in-scope files",
+    "out-of-scope files",
+    "architectural constraints",
     "constraints",
     "acceptance criteria",
     "testing requirements",
@@ -164,15 +170,35 @@ def build_task_contract_from_issue(
         raise TaskContractBuildError("unsupported task type")
 
     status = _execution_status(fields)
-    instruction_parts = [fields.get("instructions", title)]
-    for name in (
+    intent_sections = (
+        "objective",
+        "current behavior",
+        "required behavior",
+        "in-scope files",
+        "out-of-scope files",
+        "architectural constraints",
+    )
+    trailing_sections = (
         "constraints",
         "acceptance criteria",
         "testing requirements",
         "definition of done",
-    ):
-        if fields.get(name):
-            instruction_parts.append(f"{name.title()}:\n{fields[name]}")
+    )
+    # Extended issue templates are rendered as a lossless, structured
+    # implementation specification so downstream AI executors see every part.
+    if any(fields.get(name) for name in intent_sections):
+        instruction_parts = []
+        if fields.get("instructions"):
+            instruction_parts.append(f"## Instructions\n{fields['instructions']}")
+        for name in (*intent_sections, *trailing_sections):
+            if fields.get(name):
+                instruction_parts.append(f"## {name.title()}\n{fields[name]}")
+    else:
+        # Retain the byte-for-byte instruction format used by legacy issues.
+        instruction_parts = [fields.get("instructions", title)]
+        for name in trailing_sections:
+            if fields.get(name):
+                instruction_parts.append(f"{name.title()}:\n{fields[name]}")
     contract: Dict[str, object] = {
         "contract_version": load_contract_version(),
         "task_id": f"{source_repository.replace('/', '-')}-{number}",

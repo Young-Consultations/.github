@@ -37,6 +37,64 @@ def test_builds_valid_approved_documentation_contract(mode):
     assert "Definition Of Done:" in contract["instructions"]
 
 
+def test_preserves_complete_structured_issue_intent_in_order_without_truncation():
+    payload = issue()
+    sections = [
+        ("Instructions", "Implement the complete requested change."),
+        ("Objective", "Preserve the entire issue specification."),
+        ("Current Behavior", "The final structured sections are silently dropped."),
+        ("Required Behavior", "Forward every section to the executor."),
+        ("In-Scope Files", "- src/ai_sdlc_contracts/builder.py"),
+        ("Out-of-Scope Files", "- contracts/task-contract.schema.json"),
+        (
+            "Architectural Constraints",
+            "Keep the schema, payload, routing, and workflow interfaces unchanged.",
+        ),
+        ("Constraints", "Do not flatten the specification."),
+        ("Acceptance Criteria", "All structured intent reaches Codex."),
+        ("Testing Requirements", "Run the complete validation suite."),
+        (
+            "Definition of Done",
+            "The final sentinel text remains present: END-OF-ISSUE-49.",
+        ),
+    ]
+    payload["body"] = "\n\n".join(
+        [
+            "## Target repository\nYoung-Consultations/consulting-playbook",
+            "## Task type\nbug-fix",
+            "## Execution status\napproved",
+            *(f"## {heading}\n{content}" for heading, content in sections),
+        ]
+    )
+
+    contract = build_task_contract_from_issue(
+        source_repository=SOURCE,
+        issue=payload,
+        execution_mode=ExecutionMode.IMPLEMENT,
+    )
+    expected = "\n\n".join(
+        f"## {heading.title()}\n{content}" for heading, content in sections
+    )
+    assert contract["instructions"] == expected
+    assert contract["instructions"].endswith("END-OF-ISSUE-49.")
+
+
+def test_legacy_issue_instruction_assembly_is_unchanged():
+    payload = issue()
+    contract = build_task_contract_from_issue(
+        source_repository=SOURCE,
+        issue=payload,
+        execution_mode=ExecutionMode.IMPLEMENT,
+    )
+    assert contract["instructions"] == (
+        "Document the approved consulting workflow and open a draft pull request.\n\n"
+        "Constraints:\n- Do not change runtime behavior.\n\n"
+        "Acceptance Criteria:\n- The guide contains a complete example.\n\n"
+        "Testing Requirements:\n- Run the documentation checks.\n\n"
+        "Definition Of Done:\n- A focused draft pull request is open."
+    )
+
+
 @pytest.mark.parametrize(
     ("heading", "message"),
     [("Target repository", "target repository"), ("Task type", "task type")],
