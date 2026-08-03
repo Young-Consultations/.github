@@ -1,0 +1,20 @@
+{
+  "release_version": "2.1.0",
+  "tag": "ai-sdlc-v2.1.0",
+  "contract_package_version": "2.1.0",
+  "contract_payload_version": "ai-sdlc-contract/v2",
+  "schema_version": "ai-sdlc-contract/v2",
+  "registry_format_version": 1,
+  "router_interface_version": "2.1.0",
+  "router_workflow": ".github/workflows/codex-router.yml",
+  "registry": "config/codex-repositories.json",
+  "supported_targets": [
+    "Young-Consultations/consulting-playbook",
+    "Young-Consultations/portfolio-tasks",
+    "Young-Consultations/slugger"
+  ],
+  "previous_known_good": {
+    "release_version": "pre-versioning",
+    "commit_sha": "6c04b73b036f00a16e2d638fd8c73dcbb21a7eba"
+  }
+}

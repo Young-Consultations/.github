@@ -10,6 +10,8 @@ on:
       - 'config/**'
       - 'contracts/**'
       - 'docs/**'
+      - 'release/**'
+      - 'scripts/validate_release.py'
       - 'scripts/codex_router.py'
       - 'src/ai_sdlc_contracts/**'
       - 'tests/**'
@@ -181,7 +183,9 @@ jobs:
           set -euo pipefail
           find contracts -type f -name '*.json' -print0 | xargs -0 -n1 python -m json.tool >/dev/null
       - name: Run static security and integration-boundary tests
-        run: python -m pytest tests/test_static_contract.py --junitxml=reports/static.xml
+        run: python -m pytest tests/test_static_contract.py tests/test_release_lifecycle.py --junitxml=reports/static.xml
+      - name: Validate coherent release manifest
+        run: python scripts/validate_release.py
       - name: Check patch whitespace
         run: |
           git diff --check

@@ -1,4 +1,5 @@
 {
+  "registry_format_version": 1,
   "repositories": {
     "Young-Consultations/slugger": {
       "enabled": true,

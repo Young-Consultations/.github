@@ -32,6 +32,7 @@ Read these sources in order:
 5. [Organization router workflow](.github/workflows/codex-router.yml) — reusable organization routing boundary.
 6. [AI-SDLC contract tests](.github/workflows/ai-sdlc-contract-tests.yml) — canonical read-only contract, schema, registry, router, integration-boundary, and security verification.
 7. [Router smoke test](.github/workflows/router-smoke-test.yml) — execution-level verification of the organization router.
+8. [Control-plane releases](docs/releases.md) — canonical versioning, release, upgrade, deprecation, and rollback procedure.
 
 ### Ownership boundary
 

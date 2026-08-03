@@ -25,7 +25,7 @@ def workflow(inputs: str) -> str:
 
 def registry(tmp_path: Path, entries: dict) -> Path:
     path = tmp_path / "registry.json"
-    path.write_text(json.dumps({"repositories": entries}), encoding="utf-8")
+    path.write_text(json.dumps({"registry_format_version": 1, "repositories": entries}), encoding="utf-8")
     return path
 
 
