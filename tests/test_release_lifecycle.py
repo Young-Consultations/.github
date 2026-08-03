@@ -14,7 +14,7 @@ def test_current_release_is_coherent_and_immutable():
 def test_mutable_router_reference_is_rejected(tmp_path):
     for path in (
         "release/release-manifest.json", "contracts/contract-version.txt",
-        "config/codex-repositories.json", "pyproject.toml",
+        "config/codex-repositories.json", "pyproject.toml", "README.md",
     ):
         destination = tmp_path / path
         destination.parent.mkdir(parents=True, exist_ok=True)
@@ -33,7 +33,7 @@ def test_previous_known_good_is_a_restorable_commit():
     sha = manifest["previous_known_good"]["commit_sha"]
     assert len(sha) == 40
     result = subprocess.run(
-        ["git", "cat-file", "-e", f"{sha}^{commit}"],
+        ["git", "cat-file", "-e", f"{sha}^{{commit}}"],
         cwd=ROOT,
         capture_output=True,
         check=False,
