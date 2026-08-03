@@ -9,6 +9,7 @@ on:
       - 'config/codex-repositories.json'
       - 'scripts/verify_target_workflows.py'
       - 'tests/test_target_workflow_compatibility.py'
+      - 'release/release-manifest.json'
       - '.github/workflows/target-workflow-compatibility.yml'
 
 permissions:

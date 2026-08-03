@@ -1,7 +1,8 @@
 {
+  "registry_format_version": 1,
   "repositories": {
     "Young-Consultations/slugger": {
-      "enabled": true,
+      "enabled": false,
       "workflow_ref": "Young-Consultations/slugger/.github/workflows/codex-execute.yml@main",
       "allowed_task_types": ["automation", "bug-fix", "documentation", "feature", "testing"],
       "codex_environment": "slugger-codex-production",
@@ -10,7 +11,7 @@
       "contract_version": "ai-sdlc-contract/v2"
     },
     "Young-Consultations/consulting-playbook": {
-      "enabled": true,
+      "enabled": false,
       "workflow_ref": "Young-Consultations/consulting-playbook/.github/workflows/codex-execute.yml@main",
       "allowed_task_types": ["automation", "documentation", "feature", "testing"],
       "codex_environment": "consulting-playbook-codex",

@@ -18,6 +18,7 @@ OBSOLETE_EXECUTOR_INPUTS = {
 
 def test_registry_json_syntax_and_required_fields():
     data = json.loads(Path("config/codex-repositories.json").read_text(encoding="utf-8"))
+    assert data["registry_format_version"] == 1
     repos = data["repositories"]
     assert "Young-Consultations/slugger" in repos
     assert "Young-Consultations/consulting-playbook" in repos

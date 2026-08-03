@@ -75,6 +75,8 @@ def load_registry(path: Path = REGISTRY) -> dict[str, dict[str, Any]]:
     except (OSError, json.JSONDecodeError) as exc:
         raise CompatibilityError(f"registry cannot be loaded: {exc}") from exc
     repositories = data.get("repositories") if isinstance(data, dict) else None
+    if not isinstance(data, dict) or data.get("registry_format_version") != 1:
+        raise CompatibilityError("unsupported registry_format_version")
     if not isinstance(repositories, dict):
         raise CompatibilityError("registry must contain a repositories mapping")
     for repository, entry in repositories.items():

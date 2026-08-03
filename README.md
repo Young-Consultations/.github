@@ -1,5 +1,9 @@
 # .github
 
+The router, reusable interface, schemas, registry, and Python package are
+released as one immutable compatibility unit. See [release, upgrade,
+deprecation, and rollback procedures](docs/releases.md).
+
 ## AI-SDLC contract validation
 
 This repository publishes `ai-sdlc-contracts`, a small Python library backed

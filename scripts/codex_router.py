@@ -92,6 +92,8 @@ def validate_registry() -> dict[str, Any]:
     except (OSError, json.JSONDecodeError) as exc:
         reject("repository-routing", f"Registry cannot be loaded: {exc}")
     repositories = data.get("repositories")
+    if data.get("registry_format_version") != 1:
+        reject("repository-routing", "Registry must declare supported registry_format_version 1.")
     if not isinstance(repositories, dict) or not repositories:
         reject("repository-routing", "Registry must contain a non-empty repositories mapping.")
     supported_types = set(read_json(TASK_SCHEMA)["$defs"]["taskType"]["enum"])

@@ -17,7 +17,7 @@ BASE_TASK = {
     "project": "Publication Output",
     "priority": "p2",
     "task_type": "automation",
-    "target_repository": "Young-Consultations/slugger",
+    "target_repository": "Young-Consultations/portfolio-tasks",
     "parallel_safe": False,
     "dependencies": [],
     "risk": "low",
@@ -67,8 +67,6 @@ def file_outputs(path):
     ("repository", "task_type"),
     [
         ("Young-Consultations/portfolio-tasks", "repository-maintenance"),
-        ("Young-Consultations/consulting-playbook", "documentation"),
-        ("Young-Consultations/slugger", "automation"),
     ],
 )
 def test_registered_routes_emit_one_execution_contract(repository, task_type):
@@ -265,8 +263,6 @@ def execution_for(repository, task_type):
     ("repository", "task_type"),
     [
         ("Young-Consultations/portfolio-tasks", "repository-maintenance"),
-        ("Young-Consultations/consulting-playbook", "documentation"),
-        ("Young-Consultations/slugger", "automation"),
     ],
 )
 def test_dispatch_uses_canonical_json_transport_for_every_repository(
@@ -322,12 +318,12 @@ def test_portfolio_tasks_dispatch_command_matches_workflow_interface(monkeypatch
 
 
 def test_dispatch_rejects_invalid_execution_without_running_gh(monkeypatch):
-    execution = execution_for("Young-Consultations/slugger", "automation")
+    execution = execution_for("Young-Consultations/portfolio-tasks", "automation")
     execution["parallel_safe"] = "false"
     monkeypatch.setenv("EXECUTION_INPUT", json.dumps(execution))
     monkeypatch.setenv(
         "WORKFLOW_REF",
-        "Young-Consultations/slugger/.github/workflows/codex-execute.yml@main",
+        "Young-Consultations/portfolio-tasks/.github/workflows/codex-execute.yml@main",
     )
     monkeypatch.delenv("GITHUB_OUTPUT", raising=False)
     monkeypatch.setattr(
@@ -341,11 +337,11 @@ def test_dispatch_rejects_invalid_execution_without_running_gh(monkeypatch):
 
 
 def test_github_422_dispatch_failure_is_publication(monkeypatch, capsys):
-    execution = execution_for("Young-Consultations/slugger", "automation")
+    execution = execution_for("Young-Consultations/portfolio-tasks", "automation")
     monkeypatch.setenv("EXECUTION_INPUT", json.dumps(execution))
     monkeypatch.setenv(
         "WORKFLOW_REF",
-        "Young-Consultations/slugger/.github/workflows/codex-execute.yml@main",
+        "Young-Consultations/portfolio-tasks/.github/workflows/codex-execute.yml@main",
     )
     monkeypatch.delenv("GITHUB_OUTPUT", raising=False)
     failure = subprocess.CalledProcessError(1, ["gh"], stderr="HTTP 422: Unexpected inputs provided")

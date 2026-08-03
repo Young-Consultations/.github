@@ -29,7 +29,7 @@ Concurrency keys incorporate the normalized target repository, source issue, par
 ```yaml
 jobs:
   route:
-    uses: Young-Consultations/.github/.github/workflows/codex-router.yml@main
+    uses: Young-Consultations/.github/.github/workflows/codex-router.yml@ai-sdlc-v2.1.0
     permissions:
       contents: read
       actions: read
@@ -40,6 +40,10 @@ jobs:
 ```
 
 The token should be a repository-scoped token or GitHub App installation token able to dispatch only registered target workflows.
+
+The tag is an immutable release pin. See [control-plane releases](releases.md)
+for the compatibility model, upgrades, deprecation, and rollback. Never replace
+this pin with a branch name.
 
 ## Registry changes
 
