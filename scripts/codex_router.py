@@ -42,6 +42,7 @@ def parse_workflow_ref(repository: str, workflow_ref: Any) -> tuple[str, str]:
         or workflow_path.startswith("/")
         or ".." in workflow_path.split("/")
         or not workflow_path.endswith((".yml", ".yaml"))
+        or workflow_path in {"codex-router.yml", "router-smoke-test.yml", "issue-to-codex.yml"}
         or not ref.strip()
     ):
         reject("repository-routing", f"Registry entry {repository} has an invalid workflow_ref.")

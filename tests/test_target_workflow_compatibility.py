@@ -23,6 +23,16 @@ def workflow(inputs: str) -> str:
     return "on:\n  workflow_dispatch:\n    inputs:\n" + inputs
 
 
+def canonical_inputs(extra: str = "") -> str:
+    return (
+        "      execution_input_json: {required: false, type: string}\n"
+        "      execution_input_artifact: {required: false, type: string}\n"
+        "      execution_input_run_id: {required: false, type: string}\n"
+        "      concurrency_group: {required: true, type: string}\n"
+        + extra
+    )
+
+
 def registry(tmp_path: Path, entries: dict) -> Path:
     path = tmp_path / "registry.json"
     path.write_text(json.dumps({"registry_format_version": 1, "repositories": entries}), encoding="utf-8")
@@ -34,23 +44,25 @@ def entry(repo: str = "org/repo", **changes):
         "enabled": True,
         "workflow_ref": f"{repo}/.github/workflows/codex-execute.yml@main",
         "contract_version": checker.CANONICAL_VERSION,
+        "draft_pr_only": True,
+        "max_parallel_tasks": 1,
     }
     value.update(changes)
     return value
 
 
 def test_canonical_portfolio_tasks_interface():
-    assert checker.verify_interface(CANONICAL) == "direct JSON + optional artifact"
+    assert checker.verify_interface(CANONICAL) == "canonical v2 JSON + artifact transport"
 
 
 @pytest.mark.parametrize(
     ("source", "message"),
     [
         (workflow("      concurrency_group: {required: true, type: string}\n"), "missing execution_input_json"),
-        (workflow("      execution_input_json: {required: false, type: string}\n"), "missing concurrency_group"),
-        (workflow("      execution_input_json: {required: false, type: string}\n      concurrency_group: {required: false, type: string}\n"), "required must be true"),
-        (workflow("      execution_input_json: {required: false, type: boolean}\n      concurrency_group: {required: true, type: string}\n"), "must have type string"),
-        (workflow("      execution_input_json: {required: false, type: string}\n      concurrency_group: {required: true, type: string}\n      correlation_id: {required: true, type: string}\n"), "must not be required separately"),
+        (workflow("      execution_input_json: {required: false, type: string}\n      execution_input_artifact: {required: false, type: string}\n      execution_input_run_id: {required: false, type: string}\n"), "missing concurrency_group"),
+        (workflow("      execution_input_json: {required: false, type: string}\n      execution_input_artifact: {required: false, type: string}\n      execution_input_run_id: {required: false, type: string}\n      concurrency_group: {required: false, type: string}\n"), "required must be true"),
+        (workflow("      execution_input_json: {required: false, type: boolean}\n      execution_input_artifact: {required: false, type: string}\n      execution_input_run_id: {required: false, type: string}\n      concurrency_group: {required: true, type: string}\n"), "must have type string"),
+        (workflow(canonical_inputs("      extra_required: {required: true, type: string}\n")), "incompatible required"),
     ],
 )
 def test_incompatible_interfaces(source, message):
@@ -60,8 +72,8 @@ def test_incompatible_interfaces(source, message):
 
 def test_obsolete_field_by_field_workflow_rejected():
     fields = "".join(f"      {name}: {{required: true, type: string}}\n" for name in checker.CONTRACT_FIELDS)
-    source = workflow("      execution_input_json: {required: false, type: string}\n      concurrency_group: {required: true, type: string}\n" + fields)
-    with pytest.raises(checker.CompatibilityError, match="contract fields"):
+    source = workflow(canonical_inputs(fields))
+    with pytest.raises(checker.CompatibilityError, match="obsolete v1"):
         checker.verify_interface(source)
 
 
@@ -78,7 +90,7 @@ def test_malformed_workflow_ref(reference):
 
 
 def test_disabled_registry_entry_is_skipped(tmp_path):
-    path = registry(tmp_path, {"org/repo": entry(enabled=False, workflow_ref="not parsed")})
+    path = registry(tmp_path, {"org/repo": entry(enabled=False)})
     entries = checker.load_registry(path)
     with patch.object(checker, "fetch_workflow") as fetch:
         assert checker.verify_registry(entries, None) == []
@@ -144,3 +156,82 @@ def test_fetch_failure_reports_http_status_and_url():
         checker.fetch_workflow("org/repo", ".github/workflows/codex-execute.yml", "missing")
 
     assert "api.github.com/repos/org/repo/contents/" in str(raised.value)
+
+
+def test_all_canonical_router_inputs_must_be_declared():
+    source = workflow("      execution_input_json: {required: false, type: string}\n      concurrency_group: {required: true, type: string}\n")
+    with pytest.raises(checker.CompatibilityError, match="missing execution_input_artifact"):
+        checker.verify_interface(source)
+
+
+def test_incompatible_required_input_is_rejected():
+    source = workflow(
+        "      execution_input_json: {required: false, type: string}\n"
+        "      execution_input_artifact: {required: false, type: string}\n"
+        "      execution_input_run_id: {required: false, type: string}\n"
+        "      concurrency_group: {required: true, type: string}\n"
+        "      extra_required: {required: true, type: string}\n"
+    )
+    with pytest.raises(checker.CompatibilityError, match="incompatible required"):
+        checker.verify_interface(source)
+
+
+def test_issue_to_codex_cannot_be_registered(tmp_path):
+    path = registry(tmp_path, {"org/repo": entry(workflow_ref="org/repo/.github/workflows/issue-to-codex.yml@main")})
+    with pytest.raises(checker.CompatibilityError, match="obsolete workflow_ref"):
+        checker.load_registry(path)
+
+
+def test_draft_only_must_remain_true(tmp_path):
+    path = registry(tmp_path, {"org/repo": entry(draft_pr_only=False)})
+    with pytest.raises(checker.CompatibilityError, match="draft-only"):
+        checker.load_registry(path)
+
+
+def test_deterministic_concurrency_policy_is_required(tmp_path):
+    path = registry(tmp_path, {"org/repo": entry(max_parallel_tasks=0)})
+    with pytest.raises(checker.CompatibilityError, match="deterministic concurrency"):
+        checker.load_registry(path)
+
+
+def test_duplicate_repository_registration_is_rejected(tmp_path):
+    path = tmp_path / "registry.json"
+    path.write_text(
+        '{"registry_format_version":1,"repositories":{"org/repo":'
+        + json.dumps(entry())
+        + ',"org/repo":'
+        + json.dumps(entry())
+        + '}}',
+        encoding="utf-8",
+    )
+    with pytest.raises(checker.CompatibilityError, match="duplicate JSON key"):
+        checker.load_registry(path)
+
+
+def test_one_incompatible_target_does_not_block_unrelated_target(tmp_path):
+    entries = checker.load_registry(registry(tmp_path, {"org/good": entry("org/good"), "org/bad": entry("org/bad")}))
+    def fake_fetch(repo, path, ref, token):
+        if repo == "org/bad":
+            return workflow("      execution_input_json: {required: false, type: string}\n")
+        return CANONICAL
+    with patch.object(checker, "fetch_workflow", side_effect=fake_fetch):
+        report = checker.verify_registry(entries, None)
+    assert report[0]["result"] == "pass (warning: movable ref)"
+    assert report[1]["result"].startswith("fail:")
+
+
+def test_api_diagnostics_are_sanitized():
+    error = checker.urllib.error.URLError("Authorization:Bearer ghp_secret123 token=ghp_secret123")
+    with patch.object(checker.urllib.request, "urlopen", side_effect=error), pytest.raises(checker.CompatibilityError) as raised:
+        checker.fetch_workflow("org/repo", ".github/workflows/codex-execute.yml", "main", "ghp_secret123")
+    message = str(raised.value)
+    assert "ghp_secret123" not in message
+    assert "Authorization" not in message or "[redacted]" in message
+
+
+def test_migrated_target_entries_use_v2_and_expected_paths():
+    entries = checker.load_registry(ROOT / "config/codex-repositories.json")
+    assert entries["Young-Consultations/slugger"]["contract_version"] == checker.CANONICAL_VERSION
+    assert entries["Young-Consultations/consulting-playbook"]["contract_version"] == checker.CANONICAL_VERSION
+    assert entries["Young-Consultations/slugger"]["workflow_ref"] == "Young-Consultations/slugger/.github/workflows/codex-execute.yml@main"
+    assert entries["Young-Consultations/consulting-playbook"]["workflow_ref"] == "Young-Consultations/consulting-playbook/.github/workflows/codex-execute.yml@main"

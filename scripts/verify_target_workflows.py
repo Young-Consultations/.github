@@ -14,7 +14,10 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
-import yaml
+try:
+    import yaml
+except ModuleNotFoundError:  # pragma: no cover - exercised in minimal local environments
+    yaml = None  # type: ignore[assignment]
 
 ROOT = Path(__file__).resolve().parents[1]
 REGISTRY = ROOT / "config/codex-repositories.json"
@@ -41,8 +44,11 @@ class CompatibilityError(ValueError):
     """An actionable registry or target compatibility failure."""
 
 
-class GithubSafeLoader(yaml.SafeLoader):
-    """Safe YAML loader which does not interpret GitHub's `on` key as boolean."""
+if yaml is not None:
+    class GithubSafeLoader(yaml.SafeLoader):
+        """Safe YAML loader which does not interpret GitHub's `on` key as boolean."""
+else:
+    GithubSafeLoader = None  # type: ignore[assignment]
 
 
 def debug(message: str) -> None:
@@ -51,13 +57,14 @@ def debug(message: str) -> None:
 
 
 # PyYAML implements YAML 1.1, where "on" is a boolean. GitHub uses YAML 1.2.
-GithubSafeLoader.yaml_implicit_resolvers = {
-    key: [item for item in values if item[0] != "tag:yaml.org,2002:bool"]
-    for key, values in yaml.SafeLoader.yaml_implicit_resolvers.items()
-}
-GithubSafeLoader.add_implicit_resolver(
-    "tag:yaml.org,2002:bool", re.compile(r"^(?:true|false)$", re.IGNORECASE), list("tTfF")
-)
+if yaml is not None and GithubSafeLoader is not None:
+    GithubSafeLoader.yaml_implicit_resolvers = {
+        key: [item for item in values if item[0] != "tag:yaml.org,2002:bool"]
+        for key, values in yaml.SafeLoader.yaml_implicit_resolvers.items()
+    }
+    GithubSafeLoader.add_implicit_resolver(
+        "tag:yaml.org,2002:bool", re.compile(r"^(?:true|false)$", re.IGNORECASE), list("tTfF")
+    )
 
 
 def parse_workflow_ref(value: Any) -> tuple[str, str, str]:
@@ -69,10 +76,19 @@ def parse_workflow_ref(value: Any) -> tuple[str, str, str]:
     return match.group("repository"), path, match.group("ref")
 
 
+def _reject_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise CompatibilityError(f"duplicate JSON key: {key}")
+        result[key] = value
+    return result
+
+
 def load_registry(path: Path = REGISTRY) -> dict[str, dict[str, Any]]:
     try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
+        data = json.loads(path.read_text(encoding="utf-8"), object_pairs_hook=_reject_duplicate_keys)
+    except (OSError, json.JSONDecodeError, CompatibilityError) as exc:
         raise CompatibilityError(f"registry cannot be loaded: {exc}") from exc
     repositories = data.get("repositories") if isinstance(data, dict) else None
     if not isinstance(data, dict) or data.get("registry_format_version") != 1:
@@ -82,16 +98,76 @@ def load_registry(path: Path = REGISTRY) -> dict[str, dict[str, Any]]:
     for repository, entry in repositories.items():
         if not isinstance(entry, dict) or not isinstance(entry.get("enabled"), bool):
             raise CompatibilityError(f"invalid registry entry: {repository}")
-        if entry["enabled"]:
-            workflow_repository, _, _ = parse_workflow_ref(entry.get("workflow_ref"))
-            if workflow_repository != repository:
-                raise CompatibilityError(f"{repository}: workflow_ref repository mismatch")
-            if entry.get("contract_version") != CANONICAL_VERSION:
-                raise CompatibilityError(f"{repository}: contract-version mismatch")
+        if entry.get("draft_pr_only") is not True:
+            raise CompatibilityError(f"{repository}: draft-only publication required")
+        if not isinstance(entry.get("max_parallel_tasks"), int) or entry["max_parallel_tasks"] < 1:
+            raise CompatibilityError(f"{repository}: deterministic concurrency policy required")
+        workflow_repository, workflow_path, _ = parse_workflow_ref(entry.get("workflow_ref"))
+        if workflow_repository != repository:
+            raise CompatibilityError(f"{repository}: workflow_ref repository mismatch")
+        if workflow_path in {".github/workflows/codex-router.yml", ".github/workflows/router-smoke-test.yml", ".github/workflows/issue-to-codex.yml"}:
+            raise CompatibilityError(f"{repository}: obsolete workflow_ref is not allowed")
+        if entry.get("contract_version") != CANONICAL_VERSION:
+            raise CompatibilityError(f"{repository}: contract-version mismatch")
     return repositories
 
 
+def _parse_scalar(value: str) -> Any:
+    value = value.strip().strip('"\'')
+    if value.lower() == "true":
+        return True
+    if value.lower() == "false":
+        return False
+    return value
+
+
+def _parse_inline_mapping(value: str) -> dict[str, Any]:
+    value = value.strip()
+    if not (value.startswith("{") and value.endswith("}")):
+        return {}
+    result: dict[str, Any] = {}
+    for item in value[1:-1].split(","):
+        if ":" not in item:
+            continue
+        key, raw = item.split(":", 1)
+        result[key.strip()] = _parse_scalar(raw)
+    return result
+
+
+def _parse_workflow_without_yaml(source: str) -> dict[str, Any]:
+    inputs: dict[str, Any] = {}
+    in_inputs = False
+    current: str | None = None
+    has_dispatch = "workflow_dispatch:" in source
+    for line in source.splitlines():
+        stripped = line.strip()
+        if stripped == "inputs:":
+            in_inputs = True
+            continue
+        if not in_inputs or not stripped or stripped.startswith("#"):
+            continue
+        indent = len(line) - len(line.lstrip(" "))
+        if indent <= 4 and not stripped.startswith(("required:", "type:")):
+            current = None
+            if not stripped.endswith(":"):
+                in_inputs = False
+            continue
+        if stripped.endswith(":") and not stripped.startswith(("required:", "type:")):
+            current = stripped[:-1]
+            inputs[current] = {}
+        elif ":" in stripped and not stripped.startswith(("required:", "type:")):
+            name, raw = stripped.split(":", 1)
+            current = name.strip()
+            inputs[current] = _parse_inline_mapping(raw)
+        elif current and ":" in stripped:
+            key, raw = stripped.split(":", 1)
+            inputs[current][key.strip()] = _parse_scalar(raw)
+    return {"on": {"workflow_dispatch": {"inputs": inputs}}} if has_dispatch else {"on": {}}
+
+
 def parse_workflow(source: str) -> dict[str, Any]:
+    if yaml is None:
+        return _parse_workflow_without_yaml(source)
     try:
         document = yaml.load(source, Loader=GithubSafeLoader)
     except yaml.YAMLError as exc:
@@ -110,12 +186,10 @@ def verify_interface(source: str) -> str:
     inputs = dispatch.get("inputs")
     if not isinstance(inputs, dict):
         raise CompatibilityError("workflow_dispatch.inputs is missing")
-    for name in ("execution_input_json", "concurrency_group"):
+    for name in EXPECTED_INPUTS:
         if name not in inputs:
             raise CompatibilityError(f"missing {name}")
     for name, (required, input_type) in EXPECTED_INPUTS.items():
-        if name not in inputs:  # Artifact inputs are optional declarations.
-            continue
         definition = inputs[name]
         if not isinstance(definition, dict):
             raise CompatibilityError(f"{name} definition must be a mapping")
@@ -126,11 +200,15 @@ def verify_interface(source: str) -> str:
             raise CompatibilityError(f"{name}.required must be {str(required).lower()}")
     obsolete = sorted(
         name for name in CONTRACT_FIELDS
-        if isinstance(inputs.get(name), dict) and inputs[name].get("required") is True
+        if name in inputs
     )
     if obsolete:
-        raise CompatibilityError("contract fields must not be required separately: " + ", ".join(obsolete))
-    return "direct JSON" + (" + optional artifact" if all(x in inputs for x in EXPECTED_INPUTS) else "")
+        raise CompatibilityError("obsolete v1 field-by-field interface is not allowed: " + ", ".join(obsolete))
+    required_names = {name for name, definition in inputs.items() if isinstance(definition, dict) and definition.get("required") is True}
+    incompatible_required = sorted(required_names - {"concurrency_group"})
+    if incompatible_required:
+        raise CompatibilityError("incompatible required workflow_dispatch inputs: " + ", ".join(incompatible_required))
+    return "canonical v2 JSON + artifact transport"
 
 
 def fetch_workflow(repository: str, path: str, ref: str, token: str | None = None) -> str:
@@ -145,9 +223,12 @@ def fetch_workflow(repository: str, path: str, ref: str, token: str | None = Non
             payload = json.load(response)
     except (urllib.error.URLError, json.JSONDecodeError, OSError) as exc:
         status = f"HTTP {exc.code}: " if isinstance(exc, urllib.error.HTTPError) else ""
+        safe_reason = str(getattr(exc, "reason", exc))
+        safe_reason = re.sub(r"gh[pousr]_[A-Za-z0-9_]+", "[redacted-token]", safe_reason)
+        safe_reason = re.sub(r"(?i)(authorization|token|secret|password)[:=][^\s,]+", r"\1=[redacted]", safe_reason)
         raise CompatibilityError(
             f"workflow is unavailable at registered ref ({url}): "
-            f"{status}{getattr(exc, 'reason', exc)}"
+            f"{status}{safe_reason}"
         ) from exc
     try:
         # GitHub's Contents API wraps Base64 content across multiple lines.
@@ -159,16 +240,21 @@ def fetch_workflow(repository: str, path: str, ref: str, token: str | None = Non
         raise CompatibilityError("GitHub returned invalid workflow content") from exc
 
 
-def verify_registry(repositories: dict[str, dict[str, Any]], token: str | None) -> list[dict[str, str]]:
+def verify_registry(
+    repositories: dict[str, dict[str, Any]], token: str | None, selected_repository: str | None = None
+) -> list[dict[str, str]]:
     report = []
     for repository, entry in repositories.items():
-        if not entry["enabled"]:
+        if selected_repository is not None and repository != selected_repository:
+            continue
+        if not entry["enabled"] and selected_repository is None:
             debug(f"skipping disabled target {repository}")
             continue
         workflow_repository, path, ref = parse_workflow_ref(entry["workflow_ref"])
         debug(f"checking {repository}: {path}@{ref}")
         row = {"repository": repository, "workflow": path, "ref": ref,
-               "contract_version": entry["contract_version"], "transport_interface": "unknown", "result": "pass"}
+               "contract_version": entry["contract_version"], "draft_pr_only": str(entry["draft_pr_only"]).lower(),
+               "transport_interface": "unknown", "result": "pass"}
         try:
             row["transport_interface"] = verify_interface(fetch_workflow(workflow_repository, path, ref, token))
             if ref in {"main", "master"}:
@@ -202,6 +288,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--registry", type=Path, default=REGISTRY)
     parser.add_argument("--report", type=Path, default=ROOT / "reports/target-workflow-compatibility.json")
     parser.add_argument("--fixtures-only", action="store_true", help="validate the canonical local target fixture without network access")
+    parser.add_argument("--repository", help="validate one registered repository, including when it is disabled")
     args = parser.parse_args(argv)
     try:
         repositories = load_registry(args.registry)
@@ -210,10 +297,12 @@ def main(argv: list[str] | None = None) -> int:
             fixture = ROOT / "tests/fixtures/target_workflows/portfolio-tasks-codex-execute.yml"
             interface = verify_interface(fixture.read_text(encoding="utf-8"))
             report = [{"repository": "Young-Consultations/portfolio-tasks", "workflow": ".github/workflows/codex-execute.yml",
-                       "ref": "fixture", "contract_version": CANONICAL_VERSION, "transport_interface": interface, "result": "pass"}]
+                       "ref": "fixture", "contract_version": CANONICAL_VERSION, "draft_pr_only": "true", "transport_interface": interface, "result": "pass"}]
         else:
             token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
-            report = verify_registry(repositories, token)
+            if args.repository and args.repository not in repositories:
+                raise CompatibilityError(f"{args.repository}: repository is not registered")
+            report = verify_registry(repositories, token, args.repository)
         write_outputs(report, args.report)
         failed = sum(row["result"].startswith("fail") for row in report)
         debug(f"wrote report to {args.report}; checked={len(report)}, failed={failed}")
