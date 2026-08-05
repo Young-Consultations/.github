@@ -89,3 +89,25 @@ Registered target repositories (`portfolio-tasks`, `consulting-playbook`, and
 `concurrency_group`), performs verification or Codex implementation, and emits
 `execution-result/v2`. Registry `codex_environment` values remain internal
 organization routing configuration and are not independent workflow inputs.
+
+## Sole shared control-plane authority
+
+`Young-Consultations/.github` is the only supported cross-repository Codex
+router and the only shared authority for AI-SDLC schemas, contract packages,
+registry policy, routing validation, correlation and failure contracts,
+compatibility tests, release policy, rollback policy, and deprecation policy.
+Target repositories must not register local production routers as an alternate
+control plane.
+
+Slugger no longer authorizes production Codex runs from a local
+`codex-ready`/`issue-to-codex.yml` issue path. `consulting-playbook` no longer
+consumes schemas from `portfolio-tasks`. Both repositories consume the
+canonical `ai-sdlc-contract/v2` contracts from this repository.
+
+Enabled targets must pass read-only target-workflow compatibility verification
+before they are enabled in `config/codex-repositories.json`. Disabling one
+target is the fail-closed rollback lever for that target and must not affect
+other registered targets. If a shared router, package, schema, registry
+contract, or compatibility behavior release must be rolled back, disable the
+impacted registry entry where needed and restore the previous immutable release
+pin according to `docs/releases.md`.

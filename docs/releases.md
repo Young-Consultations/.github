@@ -73,6 +73,10 @@ separate repository pull request with the new tag (or reviewed merge SHA).
 Cross-repository edits are intentionally not combined here. Release approval
 must record those three consumer PRs or confirm that no router call exists.
 
+## Current compatibility update
+
+Strengthening read-only target compatibility verification changes shared control-plane compatibility behavior. Prepare the next immutable PATCH release through this documented process before consumers pin the updated behavior; do not move or rewrite `ai-sdlc-v2.1.0`. Registry-only enablement would not require a new release, but this change is broader than registry enablement.
+
 ## Rollback
 
 Stop new dispatches through the normal approval control, then change each
