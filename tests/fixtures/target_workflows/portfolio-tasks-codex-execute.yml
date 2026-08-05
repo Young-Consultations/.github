@@ -14,8 +14,20 @@ on:
       concurrency_group:
         required: true
         type: string
+concurrency:
+  group: ${{ inputs.concurrency_group }}
+  cancel-in-progress: false
 jobs:
   execute:
     runs-on: ubuntu-latest
     steps:
-      - run: echo verified
+      - name: Parse canonical delivery_id
+        run: |
+          echo '${{ inputs.execution_input_json }}' > execution-input.json
+          # preflight: find deterministic branch codex/${delivery_id} and existing PRs before Codex.
+          # ownership marker: <!-- ai-sdlc-delivery-id: ${delivery_id} -->
+          # validate draft PR ownership marker, fail-closed on marker mismatch, non-draft, closed/merged,
+          # multiple draft PRs, branch owned by another delivery_id, or ambiguous target state.
+          # create-race: after branch or PR conflict, re-query and reuse exactly one valid draft PR.
+          # canonical result includes delivery_id and duplicate-reused when reusing existing publication.
+          echo verified

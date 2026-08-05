@@ -13,5 +13,6 @@
   "instructions": "Document the approved consulting workflow and open a draft pull request.",
   "requested_branch": "codex/portfolio-142-docs",
   "concurrency_group": "codex-young-consultations-consulting-playbook-portfolio-142-parallel-portfolio-142-docs-run-1",
-  "timeout_minutes": 30
+  "timeout_minutes": 30,
+  "delivery_id": "portfolio-142-docs-run-1"
 }

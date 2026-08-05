@@ -38,6 +38,20 @@ def test_valid_payloads(name, validator):
     assert validator(example(name)) is None
 
 
+def test_delivery_id_is_required_and_propagated_in_execution_contracts():
+    payload = example("execution-input")
+    assert payload["delivery_id"] == payload["correlation_id"]
+    payload.pop("delivery_id")
+    with pytest.raises(ContractValidationError, match=r"\$"):
+        validate_execution_input(payload)
+
+    result = example("execution-result")
+    assert result["delivery_id"] == result["correlation_id"]
+    result.pop("delivery_id")
+    with pytest.raises(ContractValidationError, match=r"\$"):
+        validate_execution_result(result)
+
+
 def test_load_contract_version():
     assert load_contract_version() == "ai-sdlc-contract/v2"
 

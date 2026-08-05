@@ -74,7 +74,7 @@ def test_registered_routes_emit_one_execution_contract(repository, task_type):
     assert result.returncode == 0, result.stdout + result.stderr
     payload = json.loads(output(result, "execution_input"))
     assert set(payload) == {
-        "contract_version", "correlation_id", "source_issue", "target_repository",
+        "contract_version", "correlation_id", "delivery_id", "source_issue", "target_repository",
         "task_type", "project", "priority", "executor", "parallel_safe", "draft_pr_only",
         "instructions", "requested_branch", "concurrency_group", "timeout_minutes",
         "execution_mode",
@@ -82,6 +82,7 @@ def test_registered_routes_emit_one_execution_contract(repository, task_type):
     assert payload["target_repository"] == repository
     assert payload["project"] == BASE_TASK["project"]
     assert payload["execution_mode"] == "implement"
+    assert payload["delivery_id"] == BASE_TASK["task_id"]
 
 
 def test_router_emits_explicit_verify_mode_without_inspecting_instructions():
@@ -204,6 +205,7 @@ def test_rejection_writes_canonical_result_to_github_output_file(tmp_path):
     assert outputs["validation_result"] == "failed"
     assert json.loads(outputs["execution_result"]) == {
         "correlation_id": BASE_TASK["task_id"],
+        "delivery_id": BASE_TASK["task_id"],
         "execution_status": "rejected",
         "failure_category": "repository-routing",
         "failure_message": (
@@ -228,6 +230,7 @@ def test_output_transport_does_not_change_router_semantics(tmp_path, monkeypatch
         "codex_environment",
         "concurrency_group",
         "correlation_id",
+        "delivery_id",
         "diagnostic_summary",
     )
     assert {key: output(stdout_result, key) for key in keys} == {

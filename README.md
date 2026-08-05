@@ -70,3 +70,11 @@ Registered target repositories—including `portfolio-tasks`,
 `consulting-playbook`, and `slugger`—own their `codex-execute.yml` workflows.
 Those workflows consume `execution-input/v2`, perform verification or Codex
 implementation in the target repository, and emit `execution-result/v2`.
+
+## Delivery guarantee
+
+The control plane uses at-least-once delivery plus target-side idempotency. The
+guarantee is exactly-once externally visible publication effects for one
+canonical `delivery_id`: at most one managed deterministic branch and one open
+managed draft PR. It intentionally does not claim transactional exactly-once
+Codex execution.

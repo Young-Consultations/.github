@@ -6,25 +6,89 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "contract_version", "correlation_id", "source_issue", "target_repository", "task_type", "execution_mode",
-    "project", "priority", "executor", "parallel_safe", "draft_pr_only", "instructions",
-    "requested_branch", "concurrency_group", "timeout_minutes"
+    "contract_version",
+    "correlation_id",
+    "delivery_id",
+    "source_issue",
+    "target_repository",
+    "task_type",
+    "execution_mode",
+    "project",
+    "priority",
+    "executor",
+    "parallel_safe",
+    "draft_pr_only",
+    "instructions",
+    "requested_branch",
+    "concurrency_group",
+    "timeout_minutes"
   ],
   "properties": {
-    "contract_version": { "const": "ai-sdlc-contract/v2" },
-    "correlation_id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
-    "source_issue": { "$ref": "#/$defs/issueReference" },
-    "target_repository": { "$ref": "#/$defs/repository" },
-    "task_type": { "enum": ["automation", "backlog-governance", "ci-cd", "documentation", "repository-maintenance", "feature", "bug-fix", "testing", "security"] },
-    "execution_mode": { "type": "string", "enum": ["verify", "implement"] },
-    "project": { "type": "string", "minLength": 1, "maxLength": 128 },
-    "priority": { "enum": ["p0", "p1", "p2", "p3"] },
-    "executor": { "const": "codex" },
-    "parallel_safe": { "type": "boolean" },
-    "draft_pr_only": { "const": true },
-    "instructions": { "type": "string", "minLength": 1, "maxLength": 50000 },
+    "contract_version": {
+      "const": "ai-sdlc-contract/v2"
+    },
+    "correlation_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+    },
+    "source_issue": {
+      "$ref": "#/$defs/issueReference"
+    },
+    "target_repository": {
+      "$ref": "#/$defs/repository"
+    },
+    "task_type": {
+      "enum": [
+        "automation",
+        "backlog-governance",
+        "ci-cd",
+        "documentation",
+        "repository-maintenance",
+        "feature",
+        "bug-fix",
+        "testing",
+        "security"
+      ]
+    },
+    "execution_mode": {
+      "type": "string",
+      "enum": [
+        "verify",
+        "implement"
+      ]
+    },
+    "project": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "priority": {
+      "enum": [
+        "p0",
+        "p1",
+        "p2",
+        "p3"
+      ]
+    },
+    "executor": {
+      "const": "codex"
+    },
+    "parallel_safe": {
+      "type": "boolean"
+    },
+    "draft_pr_only": {
+      "const": true
+    },
+    "instructions": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 50000
+    },
     "requested_branch": {
-      "type": ["string", "null"],
+      "type": [
+        "string",
+        "null"
+      ],
       "pattern": "^(?!/)(?!.*(?:\\.\\.|//|@\\{|\\\\))[A-Za-z0-9._/-]+(?<![/.])$",
       "maxLength": 255
     },
@@ -33,10 +97,24 @@
       "pattern": "^[a-z0-9][a-z0-9._-]*$",
       "maxLength": 255
     },
-    "timeout_minutes": { "type": "integer", "minimum": 1, "maximum": 360 }
+    "timeout_minutes": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 360
+    },
+    "delivery_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+    }
   },
   "$defs": {
-    "repository": { "type": "string", "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})/[A-Za-z0-9._-]{1,100}$" },
-    "issueReference": { "type": "string", "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})/[A-Za-z0-9._-]{1,100}#[1-9][0-9]*$" }
+    "repository": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})/[A-Za-z0-9._-]{1,100}$"
+    },
+    "issueReference": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})/[A-Za-z0-9._-]{1,100}#[1-9][0-9]*$"
+    }
   }
 }

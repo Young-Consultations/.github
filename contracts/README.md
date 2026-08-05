@@ -63,3 +63,17 @@ python -m pytest tests/test_contract_schemas.py
 ```
 
 The tests use `jsonschema` with format checking, validate all examples, and protect required fields, enums, closed objects, version matching, Codex draft-only execution, repository names, and issue references.
+
+## Delivery identity and idempotency
+
+`execution-input/v2` and `execution-result/v2` include required `delivery_id`.
+It is the immutable idempotency key for one logical approved task. Current v2
+producers set it to the deterministic task identity (`task_id`); they must not
+use workflow run IDs, run attempts, timestamps, or random UUIDs. Rebuilding the
+same approved task produces the same value, while materially different logical
+work must use a different task identity or be rejected if it attempts to reuse
+an existing `delivery_id` with different immutable fields.
+
+`correlation_id` remains an observability field and is not an attempt-specific
+identity. Consumers must copy `delivery_id` into every canonical execution
+result, including `duplicate-reused` and `ambiguous-rejected` terminal outcomes.

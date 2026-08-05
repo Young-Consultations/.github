@@ -46,13 +46,21 @@ def entry(repo: str = "org/repo", **changes):
         "contract_version": checker.CANONICAL_VERSION,
         "draft_pr_only": True,
         "max_parallel_tasks": 1,
+        "idempotency": {
+            "branch_identity": "delivery_id",
+            "ownership_marker": "ai-sdlc-delivery-id",
+            "requires_preflight": True,
+            "requires_fail_closed_reuse": True,
+            "requires_create_race_requery": True,
+            "terminal_reuse_status": "duplicate-reused",
+        },
     }
     value.update(changes)
     return value
 
 
 def test_canonical_portfolio_tasks_interface():
-    assert checker.verify_interface(CANONICAL) == "canonical v2 JSON + artifact transport"
+    assert checker.verify_interface(CANONICAL) == "canonical v2 JSON + idempotent consumer"
 
 
 @pytest.mark.parametrize(

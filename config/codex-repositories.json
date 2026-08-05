@@ -4,29 +4,70 @@
     "Young-Consultations/slugger": {
       "enabled": false,
       "workflow_ref": "Young-Consultations/slugger/.github/workflows/codex-execute.yml@main",
-      "allowed_task_types": ["automation", "bug-fix", "documentation", "feature", "testing"],
+      "allowed_task_types": [
+        "automation",
+        "bug-fix",
+        "documentation",
+        "feature",
+        "testing"
+      ],
       "codex_environment": "slugger-codex-production",
       "max_parallel_tasks": 2,
       "draft_pr_only": true,
-      "contract_version": "ai-sdlc-contract/v2"
+      "contract_version": "ai-sdlc-contract/v2",
+      "idempotency": {
+        "branch_identity": "delivery_id",
+        "ownership_marker": "ai-sdlc-delivery-id",
+        "requires_preflight": true,
+        "requires_fail_closed_reuse": true,
+        "requires_create_race_requery": true,
+        "terminal_reuse_status": "duplicate-reused"
+      }
     },
     "Young-Consultations/consulting-playbook": {
       "enabled": false,
       "workflow_ref": "Young-Consultations/consulting-playbook/.github/workflows/codex-execute.yml@main",
-      "allowed_task_types": ["automation", "documentation", "feature", "testing"],
+      "allowed_task_types": [
+        "automation",
+        "documentation",
+        "feature",
+        "testing"
+      ],
       "codex_environment": "consulting-playbook-codex",
       "max_parallel_tasks": 1,
       "draft_pr_only": true,
-      "contract_version": "ai-sdlc-contract/v2"
+      "contract_version": "ai-sdlc-contract/v2",
+      "idempotency": {
+        "branch_identity": "delivery_id",
+        "ownership_marker": "ai-sdlc-delivery-id",
+        "requires_preflight": true,
+        "requires_fail_closed_reuse": true,
+        "requires_create_race_requery": true,
+        "terminal_reuse_status": "duplicate-reused"
+      }
     },
     "Young-Consultations/portfolio-tasks": {
       "enabled": true,
       "workflow_ref": "Young-Consultations/portfolio-tasks/.github/workflows/codex-execute.yml@main",
-      "allowed_task_types": ["automation", "backlog-governance", "ci-cd", "documentation", "repository-maintenance"],
+      "allowed_task_types": [
+        "automation",
+        "backlog-governance",
+        "ci-cd",
+        "documentation",
+        "repository-maintenance"
+      ],
       "codex_environment": "portfolio-tasks-codex-production",
       "max_parallel_tasks": 1,
       "draft_pr_only": true,
-      "contract_version": "ai-sdlc-contract/v2"
+      "contract_version": "ai-sdlc-contract/v2",
+      "idempotency": {
+        "branch_identity": "delivery_id",
+        "ownership_marker": "ai-sdlc-delivery-id",
+        "requires_preflight": true,
+        "requires_fail_closed_reuse": true,
+        "requires_create_race_requery": true,
+        "terminal_reuse_status": "duplicate-reused"
+      }
     }
   }
 }

@@ -47,7 +47,7 @@ this pin with a branch name.
 
 ## Registry changes
 
-Every registration contains only shared policy keys: `enabled`, `workflow_ref`, `allowed_task_types`, `codex_environment`, `max_parallel_tasks`, `draft_pr_only`, and `contract_version`. Run `python3 scripts/codex_router.py validate-registry` in CI whenever registry or router policy changes. Repository differences belong only in this registry; aliases and target-specific parsing are prohibited.
+Every registration contains only shared policy keys: `enabled`, `workflow_ref`, `allowed_task_types`, `codex_environment`, `max_parallel_tasks`, `draft_pr_only`, `contract_version`, and `idempotency`. Run `python3 scripts/codex_router.py validate-registry` in CI whenever registry or router policy changes. Repository differences belong only in this registry; aliases and target-specific parsing are prohibited.
 
 ## Contract verification gate
 
@@ -111,3 +111,55 @@ other registered targets. If a shared router, package, schema, registry
 contract, or compatibility behavior release must be rolled back, disable the
 impacted registry entry where needed and restore the previous immutable release
 pin according to `docs/releases.md`.
+
+## At-least-once delivery and idempotent publication
+
+The router and target workflows provide **at-least-once delivery with idempotent
+consumers**. They do not implement a transactional exactly-once execution
+protocol. GitHub `workflow_dispatch` can accept a dispatch even when the router
+loses the acknowledgement, and Actions concurrency only serializes jobs in the
+same group; it does not suppress a later sequential duplicate.
+
+Each canonical execution input therefore carries an immutable `delivery_id`.
+For v2 this value is the logical `task_id`, preserved separately from
+`correlation_id` so tracing and idempotency semantics are explicit. The router
+must preserve the same `delivery_id`, `correlation_id`, target repository,
+requested branch, concurrency group, contract version, and immutable
+instructions for redelivery. If a router-side delivery ledger is configured, a
+repeated immutable payload is reported as `duplicate-delivery`; the same
+`delivery_id` with altered immutable fields is rejected fail-closed.
+
+Target repositories are the final safety boundary. A compatible
+`codex-execute.yml` must derive its branch from `delivery_id`, perform preflight
+PR/branch discovery before Codex execution or publication, publish only a draft
+PR containing a machine-readable `ai-sdlc-delivery-id` marker, reuse exactly one
+valid existing managed draft PR, recover create races by re-querying after
+conflict, and fail closed on multiple matches, marker mismatch, non-draft or
+closed/merged PRs, or a matching branch owned by another delivery. Canonical
+results must include `delivery_id` and report whether the target executed,
+returned `duplicate-reused`, rejected ambiguity, or failed.
+
+Operator recovery for ambiguous state is manual: inspect all branches and PRs
+with the `ai-sdlc-delivery-id` marker, close or relabel invalid duplicates,
+preserve at most one open managed draft PR and one deterministic branch for the
+canonical delivery, then redeliver the unchanged task.
+
+```mermaid
+sequenceDiagram
+  participant Issue as portfolio-tasks source issue
+  participant Router as organization router
+  participant Target as target codex-execute workflow
+  participant Pub as deterministic branch/draft PR
+  participant Result as canonical execution result
+  Issue->>Router: approved task-contract/v2
+  Router->>Router: derive delivery_id, correlation_id, branch, concurrency
+  Router->>Target: workflow_dispatch execution-input/v2
+  Target->>Target: preflight by delivery_id and ownership marker
+  Target->>Pub: create or reuse codex/{delivery_id} draft PR
+  Target->>Result: execution-result/v2 includes delivery_id
+  Note over Router,Target: If dispatch ack is lost, source redelivers same task
+  Issue->>Router: redelivered same logical task
+  Router->>Target: same delivery_id and immutable input
+  Target->>Pub: finds existing managed draft PR
+  Target->>Result: duplicate-reused terminal no-op
+```

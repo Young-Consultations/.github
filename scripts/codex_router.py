@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import hashlib
 import subprocess
 import sys
 from pathlib import Path
@@ -24,7 +25,7 @@ FAILURE_CATEGORIES = {
 }
 REGISTRY_FIELDS = {
     "enabled", "workflow_ref", "allowed_task_types", "codex_environment",
-    "max_parallel_tasks", "draft_pr_only", "contract_version",
+    "max_parallel_tasks", "draft_pr_only", "contract_version", "idempotency",
 }
 
 
@@ -70,6 +71,7 @@ def reject(category: str, message: str, correlation_id: str = "unknown") -> NoRe
         category = "unknown"
     result = {
         "correlation_id": correlation_id,
+        "delivery_id": correlation_id,
         "execution_status": "rejected",
         "failure_category": category,
         "failure_message": sanitize(message),
@@ -115,6 +117,9 @@ def validate_registry() -> dict[str, Any]:
         parse_workflow_ref(name, entry["workflow_ref"])
         if not isinstance(entry["codex_environment"], str) or not entry["codex_environment"]:
             reject("repository-routing", f"Registry entry {name} has an invalid codex_environment.")
+        idempotency = entry.get("idempotency")
+        if not isinstance(idempotency, dict) or idempotency.get("branch_identity") != "delivery_id" or idempotency.get("ownership_marker") != "ai-sdlc-delivery-id" or idempotency.get("requires_preflight") is not True or idempotency.get("requires_fail_closed_reuse") is not True or idempotency.get("requires_create_race_requery") is not True or idempotency.get("terminal_reuse_status") != "duplicate-reused":
+            reject("repository-routing", f"Registry entry {name} lacks required target idempotency policy.")
         if entry["contract_version"] != read_json(INPUT_SCHEMA)["properties"]["contract_version"]["const"]:
             reject("repository-routing", f"Registry entry {name} has an unsupported contract_version.")
     return repositories
@@ -143,6 +148,7 @@ def validate() -> dict[str, Any]:
     repositories = validate_registry()
     task = load_task()
     correlation_id = task["task_id"]
+    delivery_id = task["task_id"]
     execution_mode = os.environ.get("EXECUTION_MODE", "implement")
     if execution_mode not in {"verify", "implement"}:
         reject("contract-validation", "Execution mode must be verify or implement.", correlation_id)
@@ -171,6 +177,7 @@ def validate() -> dict[str, Any]:
     execution = {
         "contract_version": entry["contract_version"],
         "correlation_id": correlation_id,
+        "delivery_id": delivery_id,
         "source_issue": task["source_issue"],
         "target_repository": target,
         "task_type": task["task_type"],
@@ -181,7 +188,7 @@ def validate() -> dict[str, Any]:
         "parallel_safe": task["parallel_safe"],
         "draft_pr_only": entry["draft_pr_only"],
         "instructions": task["instructions"],
-        "requested_branch": f"codex/{slug(correlation_id)}",
+        "requested_branch": f"codex/{slug(delivery_id)}",
         "concurrency_group": group,
         "timeout_minutes": 60,
     }
@@ -193,7 +200,7 @@ def validate() -> dict[str, Any]:
         "execution_result": "validated", "validation_result": "passed",
         "target_repository": target, "workflow_ref": entry["workflow_ref"],
         "codex_environment": entry["codex_environment"], "concurrency_group": group,
-        "execution_input": execution, "correlation_id": correlation_id,
+        "execution_input": execution, "correlation_id": correlation_id, "delivery_id": delivery_id,
         "diagnostic_summary": "Canonical task accepted and execution input validated.",
     }
     for key, value in values.items():
@@ -207,6 +214,7 @@ def dispatch() -> None:
     except (KeyError, json.JSONDecodeError) as exc:
         reject("contract-validation", f"Validated execution input is unavailable: {exc}")
     correlation_id = str(execution.get("correlation_id", "unknown"))
+    delivery_id = str(execution.get("delivery_id", correlation_id))
     errors = list(Draft202012Validator(read_json(INPUT_SCHEMA)).iter_errors(execution))
     if errors:
         reject("contract-validation", f"Execution input validation failed: {errors[0].message}", correlation_id)
@@ -223,6 +231,29 @@ def dispatch() -> None:
     if workflow_ref != entry["workflow_ref"]:
         reject("repository-routing", "Workflow reference does not match the target registry entry.", correlation_id)
     workflow_path, ref = parse_workflow_ref(target_repository, workflow_ref)
+    immutable = {key: execution[key] for key in (
+        "contract_version", "delivery_id", "correlation_id", "source_issue",
+        "target_repository", "requested_branch", "concurrency_group", "instructions",
+    )}
+    fingerprint = hashlib.sha256(json.dumps(immutable, separators=(",", ":"), sort_keys=True).encode()).hexdigest()
+    ledger_path = os.environ.get("ROUTER_DELIVERY_LEDGER")
+    if ledger_path:
+        ledger_file = Path(ledger_path)
+        try:
+            ledger = json.loads(ledger_file.read_text(encoding="utf-8")) if ledger_file.exists() else {}
+        except (OSError, json.JSONDecodeError) as exc:
+            reject("publication", f"Router delivery ledger cannot be read safely: {exc}", correlation_id)
+        existing = ledger.get(delivery_id)
+        if existing and existing.get("fingerprint") != fingerprint:
+            reject("contract-validation", "Delivery ID was reused with different immutable payload fields.", correlation_id)
+        if existing:
+            output("execution_result", "duplicate-delivery")
+            output("routing_status", "duplicate-delivery")
+            output("correlation_id", correlation_id)
+            output("delivery_id", delivery_id)
+            output("generated_branch", execution["requested_branch"])
+            output("diagnostic_summary", "Duplicate canonical delivery matched prior immutable routing metadata.")
+            return
     payload = json.dumps(execution, separators=(",", ":"), sort_keys=True)
     cmd = [
         "gh", "workflow", "run", workflow_path,
@@ -236,8 +267,17 @@ def dispatch() -> None:
     except (OSError, subprocess.CalledProcessError) as exc:
         detail = getattr(exc, "stderr", None) or getattr(exc, "stdout", None) or str(exc)
         reject("publication", f"Target workflow dispatch failed: {detail}", correlation_id)
+    if ledger_path:
+        ledger[delivery_id] = {"fingerprint": fingerprint, "target_repository": target_repository, "requested_branch": execution["requested_branch"]}
+        try:
+            ledger_file.parent.mkdir(parents=True, exist_ok=True)
+            ledger_file.write_text(json.dumps(ledger, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        except OSError as exc:
+            reject("publication", f"Router delivery ledger cannot be written safely: {exc}", correlation_id)
     output("execution_result", "dispatched")
+    output("routing_status", "dispatched")
     output("correlation_id", correlation_id)
+    output("delivery_id", delivery_id)
     output("generated_branch", execution["requested_branch"])
     output("diagnostic_summary", "Canonical execution input dispatched to the registered workflow.")
 
