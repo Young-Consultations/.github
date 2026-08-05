@@ -23,6 +23,9 @@ on:
       correlation_id:
         description: Correlation ID preserved from the canonical task ID.
         value: ${{ jobs.dispatch.outputs.correlation_id || jobs.route.outputs.correlation_id }}
+      delivery_id:
+        description: Immutable canonical delivery identity for idempotent targets.
+        value: ${{ jobs.dispatch.outputs.delivery_id || jobs.route.outputs.delivery_id }}
       failure_category:
         description: Canonical failure category when validation or routing fails.
         value: ${{ jobs.dispatch.outputs.failure_category || jobs.route.outputs.failure_category }}
@@ -47,6 +50,7 @@ jobs:
     outputs:
       execution_result: ${{ steps.validate.outputs.execution_result }}
       correlation_id: ${{ steps.validate.outputs.correlation_id }}
+      delivery_id: ${{ steps.validate.outputs.delivery_id }}
       failure_category: ${{ steps.validate.outputs.failure_category }}
       diagnostic_summary: ${{ steps.validate.outputs.diagnostic_summary }}
       execution_input: ${{ steps.validate.outputs.execution_input }}
@@ -86,6 +90,7 @@ jobs:
     outputs:
       execution_result: ${{ steps.dispatch.outputs.execution_result }}
       correlation_id: ${{ steps.dispatch.outputs.correlation_id }}
+      delivery_id: ${{ steps.dispatch.outputs.delivery_id }}
       failure_category: ${{ steps.dispatch.outputs.failure_category }}
       diagnostic_summary: ${{ steps.dispatch.outputs.diagnostic_summary }}
     steps:
