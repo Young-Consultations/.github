@@ -38,13 +38,15 @@ Read these sources in order:
 1. [Young Consultations AI-SDLC vision](docs/VISION.md) — establishes intent
    and ownership boundaries; it is not an implementation specification.
 2. [Repository README](README.md) — defines the AI-SDLC platform repository, contract-validation package, verification sequence, and platform-versus-execution ownership boundary.
-3. [Organization Codex router](docs/codex-router.md) — defines router responsibilities, canonical routing, execution modes, concurrency, registry policy, failure categories, workflow ownership, and verification stages.
-4. [Canonical contracts](contracts/) — authoritative schemas and contract examples used by planning, routing, execution, and result reporting.
-5. [Repository registry](config/codex-repositories.json) — authoritative allowlist and shared routing policy for registered target repositories.
-6. [Organization router workflow](.github/workflows/codex-router.yml) — reusable organization routing boundary.
-7. [AI-SDLC contract tests](.github/workflows/ai-sdlc-contract-tests.yml) — canonical read-only contract, schema, registry, router, integration-boundary, and security verification.
-8. [Router smoke test](.github/workflows/router-smoke-test.yml) — execution-level verification of the organization router.
-9. [Control-plane releases](docs/releases.md) — canonical versioning, release, upgrade, deprecation, and rollback procedure.
+3. [Requirements baseline](docs/requirements/README.md) — proposed, testable control-plane requirements derived from the vision; non-authoritative until its required stakeholders approve it.
+4. [Software architecture](docs/architecture/README.md) — proposed implementation-independent components, interfaces, boundaries, decisions, quality strategies, and traceability; non-authoritative until the requirements baseline and architecture are approved.
+5. [Organization Codex router](docs/codex-router.md) — defines current router responsibilities, canonical routing, execution modes, concurrency, registry policy, failure categories, workflow ownership, and verification stages.
+6. [Canonical contracts](contracts/) — authoritative schemas and contract examples used by planning, routing, execution, and result reporting.
+7. [Repository registry](config/codex-repositories.json) — authoritative allowlist and shared routing policy for registered target repositories.
+8. [Organization router workflow](.github/workflows/codex-router.yml) — reusable organization routing boundary.
+9. [AI-SDLC contract tests](.github/workflows/ai-sdlc-contract-tests.yml) — canonical read-only contract, schema, registry, router, integration-boundary, and security verification.
+10. [Router smoke test](.github/workflows/router-smoke-test.yml) — execution-level verification of the organization router.
+11. [Control-plane releases](docs/releases.md) — canonical versioning, release, upgrade, deprecation, and rollback procedure.
 
 ### Ownership boundary
 
@@ -70,9 +72,10 @@ This section is an explicitly documented gap. Do not create or infer new organiz
 
 ## 5. ADRs
 
-No canonical ADR index or ADR directory has been identified in this repository.
-Existing architectural behavior must be derived from the authoritative repository documentation, contracts, registry, workflows, tests, and approved portfolio issues listed in this file.
-This section is an explicitly documented gap. Do not invent architectural decisions or create retrospective ADRs unless an approved issue specifically requests them.
+The [architecture decision record](docs/architecture/ADR.md) documents normative
+decisions, alternatives, tradeoffs, consequences, and open questions. Update it
+only with vision and requirement traceability; do not turn incidental
+implementation choices into architecture.
 
 ## 6. Development workflow
 
