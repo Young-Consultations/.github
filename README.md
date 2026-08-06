@@ -2,6 +2,10 @@
 
 See the [Young Consultations AI-SDLC vision](docs/VISION.md) for the
 authoritative organization and control-plane intent and boundaries.
+Read the [requirements baseline](docs/requirements/README.md) and then the
+[authoritative software architecture](docs/architecture/README.md) before
+changing control-plane behavior. The authority order is Vision → Requirements
+→ Architecture → Implementation.
 
 The router, reusable interface, schemas, registry, and Python package are
 released as one immutable compatibility unit. See [release, upgrade,

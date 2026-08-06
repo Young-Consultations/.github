@@ -1,0 +1,29 @@
+# Interface Architecture
+
+## Universal contract rules
+
+Every interface has a named producer, consumer, owner, exact version, minimum data set, authentication/authorization policy, validation at both sides, and stable failure semantics. External data is untrusted. Breaking semantic changes require a new major; additive emission waits until consumers accept it. Retries preserve immutable delivery identity/payload and use bounded exponential backoff with jitter only for classified transient failures. Unknown completion requires reconciliation, not blind retry.
+
+## Interface catalog
+
+| ID / interface | Contract, inputs → outputs | Ownership / assumptions | Validation, failure, retry/idempotency |
+| --- | --- | --- | --- |
+| IF-01 Canonical Task | Exact task contract: identity, source, target, type, scope, acceptance/trace and approval-related data → validated task | Schema: control plane; truth/provenance: planning owner. Task source is authoritative GitHub record. | Exact major, closed fields, formats/invariants. Invalid/stale/unauthorized rejects without dispatch. Producer may correct and resubmit; same logical task retains identity. |
+| IF-02 Router workflow | Canonical task JSON + explicit mode + scoped dispatch credential → result/status, delivery/correlation IDs, failure/diagnostic, concurrency key | Control plane owns reusable interface; caller owns authorization to invoke. Credential alone is insufficient approval. | Authenticate caller; validate task/mode/provenance/policy. Retriable only after failure classification; stable delivery identity. |
+| IF-03 Registry | Versioned snapshot of repository identity, owner, enablement, workflow, versions, modes/types, concurrency, publication, security environment, idempotency → route policy | Control plane owner; target owner confirms capabilities. | Schema, unique identities, immutable workflow reference for production, least privilege, compatible release. Invalid snapshot blocks routing. Configuration retries have no delivery side effect. |
+| IF-04 Execution Input | `execution-input` with task/delivery/correlation identity, target, explicit mode, bounded instructions/criteria → target acceptance | Schema/semantics: control plane; consumption: target. | Producer and target validate exact version and target identity. Transport may redeliver unchanged. Target keys publication by delivery ID and rejects changed immutable fields. |
+| IF-05 Execution Result | `execution-result` identity, canonical status, evidence/branch/draft PR or sanitized failure → accepted progress/terminal decision | Target owns assertion/evidence; control plane owns interpretation. | Exact version and matching identities; status invariants; evidence authenticity. Invalid quarantined. Result submission may retry idempotently; terminal conflicts require reconciliation. |
+| IF-06 Target workflow | Registered dispatch endpoint accepting canonical JSON (optional concurrency hint only) → workflow acceptance and later canonical result/evidence | Target owns workflow internals; control plane owns endpoint policy. | Compatibility gate verifies inputs, permissions, modes, invalid cases, idempotency. Dispatch timeout is ambiguous; reconcile before retry. |
+| IF-07 Validation library/CLI | Artifact kind + payload + optional explicit contract source; normalization only when explicitly mapped → validated canonical value or stable validation error | Control plane owns package/API. Consumers own boundary use. | No network required; package resources integrity checked; no implicit version coercion/defaulting. Calls are side-effect free and safely repeatable. |
+| IF-08 Compatibility workflow | Registry/release/target selector + read-only credential → versioned report/evidence | Control plane owns criteria/report; target owner remediates. | Must prove interface, version, permissions, verify semantics, failure and idempotency. Safe to retry; verify creates no branch/PR/AI run. Failure blocks enablement/adoption. |
+| IF-09 Release artifacts | Immutable tag/manifest binding package, payload/schema version, router, registry format, checks, targets, rollback → consumable compatibility release | Control plane release owner; consumers pin/adopt. | Digests/identity/coherence/signing where available. Never retry by moving a published identity; publish a new release or roll back to known-good. |
+| IF-10 Telemetry/evidence | Correlated sanitized decision/attempt/latency/health facts → operator/auditor views | Component owners emit; operations/security govern access/retention. | Validate classification, correlation and integrity. Telemetry loss alerts but cannot turn denial into approval. Duplicate facts deduplicated by event/attempt identity. |
+| IF-11 Human review | Draft PR, trace, tests, risks, security, compatibility, adoption/rollback → approve/reject/merge decision | Target/human reviewers own; automation proposes only. | Protected review/branch policy. Never automated retry or merge. Human decision identity is retained. |
+
+## Public versus internal interfaces
+
+IF-01 through IF-11 are repository or human boundaries. Internal ports in [Low-Level Design](LowLevelDesign.md) are replaceable and must not leak workflow expressions or transport response shapes into domain policy.
+
+## Unknowns requiring validation
+
+The exact approval-provenance payload and freshness rules, result-return transport, target evidence authenticity mechanism, organization identity provider/app model, retention durations, signing enforcement, and platform rate budgets are not fully established by this repository. Implementations must treat these as blocked policy decisions rather than invent values.
