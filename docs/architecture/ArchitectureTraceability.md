@@ -2,7 +2,7 @@
 
 ## Method
 
-Architecture identifiers are stable design obligations. Future implementation work shall add repository path/service, test ID, release and operational evidence columns; a code location alone is not proof. Vision/requirements remain authoritative. `V-FLOW`, `V-GUARD`, `V-RESP`, `V-EVOL`, `V-PRIN`, and `V-NRESP` are the requirement baseline's vision themes.
+Architecture identifiers are proposed design obligations that become normative only after baseline and architecture approval. Future implementation work shall add repository path/service, test ID, release and operational evidence columns; a code location alone is not proof. The approved vision remains authoritative; the proposed requirements baseline does not become authoritative until it receives the approvals listed in its governance section. `V-FLOW`, `V-GUARD`, `V-RESP`, `V-EVOL`, `V-PRIN`, and `V-NRESP` are the requirement baseline's vision themes.
 
 ## End-to-end trace
 

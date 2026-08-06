@@ -2,7 +2,7 @@
 
 ## Executive summary
 
-`Young-Consultations/.github` is the organization AI-SDLC **control plane**. It owns the shared language, admission and routing policy, compatibility lifecycle, and verification evidence that allow an approved GitHub task to be delivered safely to exactly one registered repository. It never performs target implementation, merge, deployment, portfolio prioritization, or approval. This architecture is normative for future implementations; the vision and requirements remain higher authorities.
+`Young-Consultations/.github` is the organization AI-SDLC **control plane**. It owns the shared language, admission and routing policy, compatibility lifecycle, and verification evidence that allow an approved GitHub task to be delivered safely to exactly one registered repository. It never performs target implementation, merge, deployment, portfolio prioritization, or approval. This architecture is a non-authoritative proposal pending approval of the proposed requirements baseline and subsequent architecture approval; the vision and currently approved specifications remain authoritative in the meantime.
 
 ## Architectural vision and goals
 

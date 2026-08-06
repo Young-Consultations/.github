@@ -1,6 +1,8 @@
 # AI-SDLC Control-Plane Architecture
 
-This directory is the authoritative implementation-independent design for `Young-Consultations/.github`. Read [the vision](../VISION.md) and [requirements baseline](../requirements/README.md) first. Authority order is **Vision → Requirements → Architecture → Implementation**.
+**Status:** Proposed; non-authoritative pending approval of the [requirements baseline](../requirements/README.md).
+
+This directory is the proposed implementation-independent design for `Young-Consultations/.github`. Read [the vision](../VISION.md) and [requirements baseline](../requirements/README.md) first. Once the baseline receives its required stakeholder approvals and this suite is approved against it, the authority order will be **Vision → Requirements → Architecture → Implementation**. Until then, current approved specifications and implementation remain authoritative for implemented behavior.
 
 ## Document map
 
@@ -28,7 +30,7 @@ This directory is the authoritative implementation-independent design for `Young
 
 ## Interpretation rules
 
-- Responsibilities and contracts are normative; examples and diagrams explain them.
+- Responsibilities and contracts are intended to become normative after baseline and architecture approval; examples and diagrams explain them.
 - External repository internals are deliberately unspecified. `Known`, `Assumed`, and `Unknown` integration facts have distinct meanings.
 - Open questions block invention, not all progress: implementations may proceed behind a port while preserving fail-closed behavior.
 - Architecture changes require vision/requirement trace, affected interfaces, compatibility/security assessment, tests, adoption, and rollback consideration.

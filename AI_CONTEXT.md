@@ -38,8 +38,8 @@ Read these sources in order:
 1. [Young Consultations AI-SDLC vision](docs/VISION.md) — establishes intent
    and ownership boundaries; it is not an implementation specification.
 2. [Repository README](README.md) — defines the AI-SDLC platform repository, contract-validation package, verification sequence, and platform-versus-execution ownership boundary.
-3. [Requirements baseline](docs/requirements/README.md) — normative, testable control-plane requirements derived from the vision.
-4. [Software architecture](docs/architecture/README.md) — authoritative implementation-independent components, interfaces, boundaries, decisions, quality strategies, and traceability.
+3. [Requirements baseline](docs/requirements/README.md) — proposed, testable control-plane requirements derived from the vision; non-authoritative until its required stakeholders approve it.
+4. [Software architecture](docs/architecture/README.md) — proposed implementation-independent components, interfaces, boundaries, decisions, quality strategies, and traceability; non-authoritative until the requirements baseline and architecture are approved.
 5. [Organization Codex router](docs/codex-router.md) — defines current router responsibilities, canonical routing, execution modes, concurrency, registry policy, failure categories, workflow ownership, and verification stages.
 6. [Canonical contracts](contracts/) — authoritative schemas and contract examples used by planning, routing, execution, and result reporting.
 7. [Repository registry](config/codex-repositories.json) — authoritative allowlist and shared routing policy for registered target repositories.
