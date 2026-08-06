@@ -74,6 +74,9 @@ This matrix covers every normative requirement in the baseline. The source codes
 | GH-UX-006 | V-FLOW/V-PRIN/V-RESP/V-GUARD/V-EVOL | BG-01/BG-02/BG-03/BG-04/BG-05/BG-07 | Human-facing governance experience | [UX requirements](user-experience.md): UX table measurable AC | Accessibility, content, journey or usability test | `TC-UX-006` |
 | GH-UX-007 | V-FLOW/V-PRIN/V-RESP/V-GUARD/V-EVOL | BG-01/BG-02/BG-03/BG-04/BG-05/BG-07 | Human-facing governance experience | [UX requirements](user-experience.md): UX table measurable AC | Accessibility, content, journey or usability test | `TC-UX-007` |
 | GH-UX-008 | V-FLOW/V-PRIN/V-RESP/V-GUARD/V-EVOL | BG-01/BG-02/BG-03/BG-04/BG-05/BG-07 | Human-facing governance experience | [UX requirements](user-experience.md): UX table measurable AC | Accessibility, content, journey or usability test | `TC-UX-008` |
+| GH-FR-017 | V-FLOW/V-GUARD | BG-01/BG-02/BG-04 | Organization owns lifecycle semantics; source owner conforms via CC-MVP-SOURCE | [SRS](software-requirements.md): GH-FR-017; [ADR-009](../architecture/ADR.md) | Lifecycle decision table and stale/revoked/edited/label-projection simulation | `TC-FR-017`; `TC-MVP-CI-001` |
+| GH-FR-018 | V-RESP/V-GUARD | BG-03/BG-04/BG-05 | Target creates result; `.github` receiver validates/forwards; source owner projects | [SRS](software-requirements.md): GH-FR-018; [ADR-010](../architecture/ADR.md); RI-MVP-01 | Result fault/replay simulation and controlled real-path proof | `TC-FR-018`; `TC-MVP-CI-001`; `TC-MVP-E2E-001` |
+| GH-QR-008 | V-RESP/V-EVOL | BG-01/BG-03/BG-04/BG-06 | `.github` owns fixtures/oracle; each consumer owns an isolated conformance adapter/report | [SRS](software-requirements.md): GH-QR-008; [next-MVP baseline](../releases/next-mvp.md) | Four-target deterministic matrix and incompatible-consumer canary; no Codex/real publication | `TC-MVP-CI-001`; separately gated `TC-MVP-E2E-001` |
 
 ## Goal and coverage checks
 
@@ -86,6 +89,7 @@ This matrix covers every normative requirement in the baseline. The source codes
 | Every requirement reserves a downstream test identity | Covered; matrix column 7 |
 | Vision non-responsibilities are protected | GH-FR-005, GH-FR-007, GH-FR-010, GH-NFR-009, GH-ER-003 |
 | Human authority is protected | GH-FR-005, GH-FR-010, GH-OR-002, GH-SR-005, GH-QR-003/005, GH-UX-002 |
+| Next MVP ends at correlated validated draft PR | GH-FR-007–012, GH-FR-017–018, GH-QR-008; ADR-009/010; TC-MVP-CI-001/TC-MVP-E2E-001 |
 
 ## Downstream trace schema
 

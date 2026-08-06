@@ -64,3 +64,38 @@ Published identity and contents are immutable. Rollback selects a recorded known
 ## Approval/admission lifecycle
 
 An authored task becomes `Approved` only through authoritative human action. It may become `Stale` after material task/policy change or `Withdrawn` by authority. Admission requires `Approved` and fresh provenance at the decision point. A prior admission does not silently authorize changed work.
+
+## Work lifecycle
+
+```mermaid
+stateDiagram-v2
+  [*] --> proposed
+  proposed --> approved: human approves revision digest
+  approved --> queued: admitted for controlled routing
+  approved --> withdrawn: approval revoked
+  proposed --> superseded: material replacement
+  approved --> superseded: approved revision changes
+  queued --> executing: target accepts
+  queued --> withdrawn: revoked before target starts
+  queued --> cancelled: human cancels before start
+  executing --> completed: validated terminal result
+  executing --> failed: rejection/execution/validation failure
+  executing --> cancelled: best-effort stop; no new effects
+  completed --> [*]
+  failed --> [*]
+  withdrawn --> [*]
+  cancelled --> [*]
+  superseded --> proposed: replacement revision
+```
+
+`proposed` has no execution authority. `approved` binds an authorized human to
+one executable revision and target. `queued` is approved work admitted for
+routing; it remains authorized if a presentation label is removed, but only
+while the durable approval record still matches the current revision.
+`executing` means the target accepted the delivery, not that it succeeded.
+`completed` requires a valid success/verified/duplicate-reused result and, for
+implement mode, validation evidence plus one managed draft PR. `failed` is a
+terminal unsuccessful outcome. `withdrawn` revokes approval before execution;
+`cancelled` is a human stop request/terminal disposition whose in-flight
+interruption may be best-effort; `superseded` means a different revision needs
+new approval. Terminal evidence is retained and never rewritten as success.

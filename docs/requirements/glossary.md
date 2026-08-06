@@ -5,6 +5,7 @@
 | Acceptance criteria | Observable conditions that demonstrate a requirement is satisfied. |
 | AI-assisted SDLC | Governed use of AI to support lifecycle work while humans retain consequential authority. |
 | Approval provenance | Durable evidence identifying what was approved, by whom, under which authority, and when. |
+| Approval ID | Immutable identity of one human authorization record bound to a source issue, executable revision digest, and target. |
 | Artifact integrity | Evidence that an artifact is authentic and unchanged from its approved form. |
 | Bounded AI executor | AI agent restricted by explicit authorization, scope, data, permissions, and review requirements. |
 | Canonical contract | Authoritative, versioned representation shared across repository boundaries. |
@@ -14,6 +15,8 @@
 | Control plane | This repository's shared policy, contract, registration, routing, and verification subsystem. |
 | Correlation ID | Trace identifier associating related records; it is not the delivery idempotency key. |
 | Delivery ID | Immutable identity of one logical approved delivery, preserved across retries. |
+| Result ID | Stable identity used to recognize repeat delivery of the same canonical execution result; a conflicting result under the same delivery is ambiguous. |
+| Revision digest | Deterministic digest of the executable issue content and selected target to which human approval is bound. |
 | Draft pull request | Reviewable, explicitly non-final publication of proposed changes. |
 | Exactly-once externally visible effect | At most one managed branch and open draft PR for a delivery despite possible repeated execution attempts. |
 | Fail closed | Refuse execution or side effects when authorization, validity, compatibility, or state is uncertain. |
@@ -40,5 +43,6 @@
 | Task contract | Canonical representation of governed work and its authoritative identity/metadata. |
 | Verification method | Inspection, analysis, demonstration, or test used to establish requirement conformance. |
 | Verification mode | Explicit read-only integration mode that invokes no AI implementation and publishes no change. |
+| Work state | Canonical source lifecycle value: proposed, approved, queued, executing, completed, failed, withdrawn, cancelled, or superseded. Repository labels are only projections of this meaning. |
 | Workflow dispatch | GitHub Actions event used to request a target workflow; acceptance may be ambiguous during faults. |
 | Young Consultations | GitHub organization operating the modular governed AI-assisted delivery platform. |
