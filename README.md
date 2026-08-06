@@ -1,5 +1,8 @@
 # .github
 
+See the [Young Consultations AI-SDLC vision](docs/VISION.md) for the
+authoritative organization and control-plane intent and boundaries.
+
 The router, reusable interface, schemas, registry, and Python package are
 released as one immutable compatibility unit. See [release, upgrade,
 deprecation, and rollback procedures](docs/releases.md).
