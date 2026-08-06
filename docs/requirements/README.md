@@ -1,8 +1,8 @@
 # AI-SDLC Control-Plane Requirements Baseline
 
-**Baseline:** 1.0 (proposed)  
-**Status:** Ready for stakeholder review  
-**Authoritative input:** [`../VISION.md`](../VISION.md)  
+**Baseline:** 1.0 (proposed)
+**Status:** Ready for stakeholder review
+**Authoritative input:** [`../VISION.md`](../VISION.md)
 **Scope:** `Young-Consultations/.github`
 
 This package is the requirements baseline for the organization AI-assisted SDLC control plane. Architecture, design, implementation, tests, and backlog items shall cite requirement IDs in this package. Current code is evidence of the present state, not a constraint on the required future state.
