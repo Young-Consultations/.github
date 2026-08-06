@@ -5,10 +5,20 @@ Read the sections below in order before proposing or implementing changes. Follo
 
 ## 1. Vision
 
-The organization AI-SDLC is intended to turn one approved portfolio task into one authorized repository execution, one deterministic implementation branch, one draft pull request, and one canonical execution result.
-The current stabilization vision is maintained in the organization backlog:
+Read these sources in order:
 
-- [Epic 1 — Stabilize the AI-SDLC control plane](https://github.com/Young-Consultations/portfolio-tasks/issues/72) — defines the control-plane stabilization objective, repository ownership boundaries, safety constraints, and completion criteria.
+1. [Young Consultations AI-SDLC vision](docs/VISION.md) — authoritative for
+   organization and `Young-Consultations/.github` intent, boundaries, guiding
+   principles, and the handoff to requirements development.
+2. [Epic 1 — Stabilize the AI-SDLC control plane](https://github.com/Young-Consultations/portfolio-tasks/issues/72)
+   — defines the approved control-plane stabilization work and completion
+   criteria in the organization backlog.
+
+The vision document is authoritative for intent; it does not assert that
+planned capabilities are implemented. Versioned contracts, schemas, the
+repository registry, released workflows, tests, and release documentation
+remain authoritative for implemented behavior. Where vision and current
+behavior differ, describe the gap rather than treating intent as implementation.
 
 `Young-Consultations/portfolio-tasks` remains the authoritative backlog, planning, and approval source. GitHub Projects may report task state but is not an executable task source.
 
@@ -25,14 +35,16 @@ Review the parent epic and its linked child issues before making changes that af
 
 Read these sources in order:
 
-1. [Repository README](README.md) — defines the AI-SDLC platform repository, contract-validation package, verification sequence, and platform-versus-execution ownership boundary.
-2. [Organization Codex router](docs/codex-router.md) — defines router responsibilities, canonical routing, execution modes, concurrency, registry policy, failure categories, workflow ownership, and verification stages.
-3. [Canonical contracts](contracts/) — authoritative schemas and contract examples used by planning, routing, execution, and result reporting.
-4. [Repository registry](config/codex-repositories.json) — authoritative allowlist and shared routing policy for registered target repositories.
-5. [Organization router workflow](.github/workflows/codex-router.yml) — reusable organization routing boundary.
-6. [AI-SDLC contract tests](.github/workflows/ai-sdlc-contract-tests.yml) — canonical read-only contract, schema, registry, router, integration-boundary, and security verification.
-7. [Router smoke test](.github/workflows/router-smoke-test.yml) — execution-level verification of the organization router.
-8. [Control-plane releases](docs/releases.md) — canonical versioning, release, upgrade, deprecation, and rollback procedure.
+1. [Young Consultations AI-SDLC vision](docs/VISION.md) — establishes intent
+   and ownership boundaries; it is not an implementation specification.
+2. [Repository README](README.md) — defines the AI-SDLC platform repository, contract-validation package, verification sequence, and platform-versus-execution ownership boundary.
+3. [Organization Codex router](docs/codex-router.md) — defines router responsibilities, canonical routing, execution modes, concurrency, registry policy, failure categories, workflow ownership, and verification stages.
+4. [Canonical contracts](contracts/) — authoritative schemas and contract examples used by planning, routing, execution, and result reporting.
+5. [Repository registry](config/codex-repositories.json) — authoritative allowlist and shared routing policy for registered target repositories.
+6. [Organization router workflow](.github/workflows/codex-router.yml) — reusable organization routing boundary.
+7. [AI-SDLC contract tests](.github/workflows/ai-sdlc-contract-tests.yml) — canonical read-only contract, schema, registry, router, integration-boundary, and security verification.
+8. [Router smoke test](.github/workflows/router-smoke-test.yml) — execution-level verification of the organization router.
+9. [Control-plane releases](docs/releases.md) — canonical versioning, release, upgrade, deprecation, and rollback procedure.
 
 ### Ownership boundary
 
