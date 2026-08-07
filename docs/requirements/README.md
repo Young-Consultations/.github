@@ -1,7 +1,7 @@
 # AI-SDLC Control-Plane Requirements Baseline
 
-**Baseline:** 1.0 (proposed)
-**Status:** Ready for stakeholder review
+**Baseline:** 1.0 (approved for the next MVP)
+**Status:** Approved implementation baseline
 **Authoritative input:** [`../VISION.md`](../VISION.md)
 **Scope:** `Young-Consultations/.github`
 

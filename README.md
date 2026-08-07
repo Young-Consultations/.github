@@ -2,10 +2,9 @@
 
 See the [Young Consultations AI-SDLC vision](docs/VISION.md) for the
 authoritative organization and control-plane intent and boundaries.
-Read the [requirements baseline](docs/requirements/README.md) and then the
-[proposed software architecture](docs/architecture/README.md) before changing
-control-plane behavior. The architecture remains non-authoritative until the
-requirements baseline and architecture receive their required approvals.
+Read the [approved requirements baseline](docs/requirements/README.md) and then
+the [next-MVP software architecture](docs/architecture/README.md) before
+changing control-plane behavior.
 
 The router, reusable interface, schemas, registry, and Python package are
 released as one immutable compatibility unit. See [release, upgrade,
@@ -55,9 +54,10 @@ Production-path verification proceeds in this order:
 
 The contract workflow performs no dispatch, Codex execution, issue mutation,
 branch creation, or pull-request publication. The router smoke test remains a
-separate execution-level test. The organization repository has no
-`codex-execute.yml`: the organization router is its only dispatch boundary,
-and execution workflows are owned by registered target repositories.
+separate execution-level test. The organization control plane does not execute
+target changes. Its separately authorized `codex-execute.yml` target adapter is
+planned implementation work and must remain isolated from router and receiver
+credentials.
 
 The reusable router defaults to canonical `execution_mode: implement` for
 production calls. The smoke workflow explicitly sends `execution_mode: verify`,

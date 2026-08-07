@@ -51,6 +51,13 @@ validated keys; changing their meaning is breaking.
    reviewed 40-character merge SHA. Package consumers pin exactly the manifest
    package version and schema consumers retrieve the same tag or SHA.
 
+For the 2.2.0 MVP baseline, the approved reference is
+`f2491872976a4dcc1633997954c03c07cbc4fced`. The declared
+`ai-sdlc-v2.2.0` tag has not been published. A published
+`ai-sdlc-contracts==2.2.0` distribution has also not been verified, so MVP
+consumers must retrieve the canonical schemas directly at the approved SHA
+rather than require that package.
+
 Production mode remains draft-only. Release validation does not dispatch work,
 change settings or secrets, widen permissions, or create an approval bypass.
 

@@ -29,7 +29,7 @@ Concurrency keys incorporate the normalized target repository, source issue, par
 ```yaml
 jobs:
   route:
-    uses: Young-Consultations/.github/.github/workflows/codex-router.yml@ai-sdlc-v2.2.0
+    uses: Young-Consultations/.github/.github/workflows/codex-router.yml@f2491872976a4dcc1633997954c03c07cbc4fced
     permissions:
       contents: read
       actions: read
@@ -41,9 +41,11 @@ jobs:
 
 The token should be a repository-scoped token or GitHub App installation token able to dispatch only registered target workflows.
 
-The tag is an immutable release pin. See [control-plane releases](releases.md)
-for the compatibility model, upgrades, deprecation, and rollback. Never replace
-this pin with a branch name.
+The complete commit SHA is the approved immutable MVP pin. The declared
+`ai-sdlc-v2.2.0` tag does not currently exist and must not be used until it is
+published through the governed release process. See [control-plane
+releases](releases.md) for upgrades, deprecation, and rollback. Never replace
+the SHA with a branch name.
 
 ## Registry changes
 
@@ -80,8 +82,10 @@ The organization repository owns these active workflows:
 - `router-smoke-test.yml` exercises the router with read-only verification.
 
 `Young-Consultations/.github` also owns the canonical schemas, shared Python
-validator, and repository registry. It does not contain a target
-`codex-execute.yml` and does not execute repository changes.
+validator, and repository registry. Its control-plane workflows do not execute
+repository changes. The separately authorized `.github` target adapter required
+by RI-MVP-02 is planned implementation work and must not use control-plane
+credentials or bypass router admission.
 
 Registered target repositories (`.github`, `portfolio-tasks`, `consulting-playbook`, and
 `slugger`) own their executor workflows. Each target consumes the canonical
