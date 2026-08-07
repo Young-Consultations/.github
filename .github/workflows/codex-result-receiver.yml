@@ -1,0 +1,56 @@
+name: Codex result receiver interface (not implemented)
+
+on:
+  workflow_call:
+    inputs:
+      execution_result:
+        description: Complete canonical execution-result/v2 JSON object.
+        required: true
+        type: string
+      source_issue:
+        description: Source issue bound to the admitted delivery.
+        required: true
+        type: string
+    secrets:
+      CODEX_RESULT_TOKEN:
+        description: Result-only repository-scoped identity; no target write, merge, release, or deploy authority.
+        required: true
+    outputs:
+      accepted:
+        description: String true or false; never an execution-success reinterpretation.
+        value: ${{ jobs.interface-only.outputs.accepted }}
+      delivery_id:
+        value: ${{ jobs.interface-only.outputs.delivery_id }}
+      correlation_id:
+        value: ${{ jobs.interface-only.outputs.correlation_id }}
+      execution_status:
+        value: ${{ jobs.interface-only.outputs.execution_status }}
+      failure_category:
+        value: ${{ jobs.interface-only.outputs.failure_category }}
+      diagnostic_summary:
+        value: ${{ jobs.interface-only.outputs.diagnostic_summary }}
+
+permissions: {}
+
+jobs:
+  interface-only:
+    runs-on: ubuntu-latest
+    outputs:
+      accepted: ${{ steps.refuse.outputs.accepted }}
+      delivery_id: ${{ steps.refuse.outputs.delivery_id }}
+      correlation_id: ${{ steps.refuse.outputs.correlation_id }}
+      execution_status: ${{ steps.refuse.outputs.execution_status }}
+      failure_category: ${{ steps.refuse.outputs.failure_category }}
+      diagnostic_summary: ${{ steps.refuse.outputs.diagnostic_summary }}
+    steps:
+      - id: refuse
+        shell: bash
+        run: |
+          echo 'accepted=false' >> "$GITHUB_OUTPUT"
+          echo 'delivery_id=' >> "$GITHUB_OUTPUT"
+          echo 'correlation_id=' >> "$GITHUB_OUTPUT"
+          echo 'execution_status=rejected' >> "$GITHUB_OUTPUT"
+          echo 'failure_category=unknown' >> "$GITHUB_OUTPUT"
+          echo 'diagnostic_summary=Receiver implementation is not deployed.' >> "$GITHUB_OUTPUT"
+          echo 'Interface declaration only; refusing result processing.' >&2
+          exit 1

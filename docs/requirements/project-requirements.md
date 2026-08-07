@@ -50,7 +50,7 @@ The next delivery baseline is [the approved-issue-to-validated-draft-PR
 MVP](../releases/next-mvp.md). Its functional success is one human-approved
 revision routed to exactly one supported target, ending in one validated draft
 PR and a canonical result correlated to the source issue. Continuous simulated
-conformance across all three registered targets is required; one successful
+conformance across all four registered targets is required; one successful
 dispatch is not sufficient.
 
 1. 100% of admitted production dispatches reference approved canonical tasks and enabled registered targets.

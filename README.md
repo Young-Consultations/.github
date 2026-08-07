@@ -73,7 +73,7 @@ It owns the canonical schemas, shared Python validator, repository registry,
 organization router, and contract tests. It validates and routes work but does
 not execute repository changes.
 
-Registered target repositories—including `portfolio-tasks`,
+The four registered target repositories—`.github`, `portfolio-tasks`,
 `consulting-playbook`, and `slugger`—own their `codex-execute.yml` workflows.
 Those workflows consume `execution-input/v2`, perform verification or Codex
 implementation in the target repository, and emit `execution-result/v2`.

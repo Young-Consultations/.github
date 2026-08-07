@@ -11,6 +11,13 @@ def test_current_release_is_coherent_and_immutable():
     assert validate_release.validate() == []
 
 
+def test_mvp_fixture_uses_current_release_identity_and_targets():
+    manifest = json.loads((ROOT / "release/release-manifest.json").read_text(encoding="utf-8"))
+    fixture = json.loads((ROOT / "tests/fixtures/mvp-v2/manifest.json").read_text(encoding="utf-8"))
+    assert fixture["immutable_reference"] == f"release/release-manifest.json#{manifest['tag']}"
+    assert sorted(fixture["targets"]) == manifest["supported_targets"]
+
+
 def test_mutable_router_reference_is_rejected(tmp_path):
     for path in (
         "release/release-manifest.json", "contracts/contract-version.txt",

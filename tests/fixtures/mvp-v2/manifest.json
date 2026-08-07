@@ -1,0 +1,33 @@
+{
+  "fixture_set": "TC-MVP-CI-001",
+  "contract_version": "ai-sdlc-contract/v2",
+  "immutable_reference": "release/release-manifest.json#ai-sdlc-v2.2.0",
+  "schemas": {
+    "task": "contracts/task-contract.schema.json",
+    "execution_input": "contracts/execution-input.schema.json",
+    "execution_result": "contracts/execution-result.schema.json"
+  },
+  "examples": {
+    "task": "contracts/examples/valid-task.json",
+    "execution_input": "contracts/examples/valid-execution-input.json",
+    "execution_result": "contracts/examples/valid-execution-result.json",
+    "verification_result": "contracts/examples/valid-verification-result.json"
+  },
+  "targets": [
+    "Young-Consultations/.github",
+    "Young-Consultations/portfolio-tasks",
+    "Young-Consultations/slugger",
+    "Young-Consultations/consulting-playbook"
+  ],
+  "scenarios": [
+    "valid-verify", "valid-implement-fake-executor", "valid-result",
+    "unsupported-version", "malformed-payload", "non-approved-task",
+    "queued-task-at-admission", "material-change-old-task-id",
+    "unknown-target", "disabled-target", "duplicate-delivery",
+    "existing-managed-draft-pr", "identical-duplicate-result",
+    "conflicting-duplicate-result", "target-rejection", "execution-failure",
+    "validation-failure", "test-failure", "publication-failure",
+    "missing-result", "delayed-result", "ambiguous-result", "no-real-effects"
+  ],
+  "required_zero_effect_counters": ["codex_calls", "real_branches_created", "real_pull_requests_created"]
+}

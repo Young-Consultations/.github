@@ -23,21 +23,37 @@ def test_registry_json_syntax_and_required_fields():
     assert "Young-Consultations/slugger" in repos
     assert "Young-Consultations/consulting-playbook" in repos
     assert "Young-Consultations/portfolio-tasks" in repos
+    assert "Young-Consultations/.github" in repos
+    assert len(repos) == 4
+    assert repos["Young-Consultations/.github"]["enabled"] is False
     for name, entry in repos.items():
         assert isinstance(entry["enabled"], bool), name
         assert entry["allowed_task_types"], name
         assert entry["codex_environment"], name
         assert entry["max_parallel_tasks"] >= 1, name
         assert entry["draft_pr_only"] is True, name
-        assert entry["workflow_ref"].startswith(f"{name}/.github/workflows/"), name
-        assert name != ORGANIZATION_REPOSITORY
-        assert entry["workflow_ref"] == (
-            f"{name}/.github/workflows/codex-execute.yml@main"
-        ), name
+        assert entry["workflow_ref"] == f"{name}/.github/workflows/codex-execute.yml@main", name
         assert entry["contract_version"] == "ai-sdlc-contract/v2", name
 
 
-def test_organization_repository_has_no_target_executor():
+def test_github_target_is_bounded_and_idempotent():
+    data = json.loads(Path("config/codex-repositories.json").read_text())
+    entry = data["repositories"]["Young-Consultations/.github"]
+    assert entry["workflow_ref"] == "Young-Consultations/.github/.github/workflows/codex-execute.yml@main"
+    assert entry["allowed_task_types"] == ["ci-cd", "documentation", "repository-maintenance", "testing"]
+    assert entry["contract_version"] == "ai-sdlc-contract/v2"
+    assert entry["draft_pr_only"] is True
+    assert entry["idempotency"] == {
+        "branch_identity": "delivery_id",
+        "ownership_marker": "ai-sdlc-delivery-id",
+        "requires_preflight": True,
+        "requires_fail_closed_reuse": True,
+        "requires_create_race_requery": True,
+        "terminal_reuse_status": "duplicate-reused",
+    }
+
+
+def test_organization_target_executor_is_not_implemented_yet():
     assert not (WORKFLOWS / "codex-execute.yml").exists()
     assert {
         "ai-sdlc-contract-tests.yml",

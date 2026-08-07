@@ -1,6 +1,28 @@
 {
   "registry_format_version": 1,
   "repositories": {
+    "Young-Consultations/.github": {
+      "enabled": false,
+      "workflow_ref": "Young-Consultations/.github/.github/workflows/codex-execute.yml@main",
+      "allowed_task_types": [
+        "ci-cd",
+        "documentation",
+        "repository-maintenance",
+        "testing"
+      ],
+      "codex_environment": "github-target-codex",
+      "max_parallel_tasks": 1,
+      "draft_pr_only": true,
+      "contract_version": "ai-sdlc-contract/v2",
+      "idempotency": {
+        "branch_identity": "delivery_id",
+        "ownership_marker": "ai-sdlc-delivery-id",
+        "requires_preflight": true,
+        "requires_fail_closed_reuse": true,
+        "requires_create_race_requery": true,
+        "terminal_reuse_status": "duplicate-reused"
+      }
+    },
     "Young-Consultations/slugger": {
       "enabled": false,
       "workflow_ref": "Young-Consultations/slugger/.github/workflows/codex-execute.yml@main",
