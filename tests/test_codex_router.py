@@ -171,6 +171,7 @@ def test_correlation_id_is_propagated():
 
 def test_authorization_requires_approved_codex_task():
     assert output(run_router(status="proposed"), "failure_category") == "authorization"
+    assert output(run_router(status="queued"), "failure_category") == "authorization"
     assert output(run_router(executor="human"), "failure_category") == "authorization"
 
 

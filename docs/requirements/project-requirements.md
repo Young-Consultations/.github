@@ -46,6 +46,13 @@ The organization owns identity and access governance, GitHub plan and platform a
 
 ## Success criteria
 
+The next delivery baseline is [the approved-issue-to-validated-draft-PR
+MVP](../releases/next-mvp.md). Its functional success is one human-approved
+revision routed to exactly one supported target, ending in one validated draft
+PR and a canonical result correlated to the source issue. Continuous simulated
+conformance across all three registered targets is required; one successful
+dispatch is not sufficient.
+
 1. 100% of admitted production dispatches reference approved canonical tasks and enabled registered targets.
 2. 100% of boundary payloads validate against an explicitly supported version; invalid or uncertain inputs produce no dispatch.
 3. Every canonical delivery can be reconstructed from source identity through terminal result and any draft PR.
@@ -54,6 +61,7 @@ The organization owns identity and access governance, GitHub plan and platform a
 6. Automated paths have no permission to merge or authorize production deployment.
 7. A documented rollback or target-isolation procedure is exercised for each release class.
 8. A new integrator can locate the authoritative contract, adoption, verification, and recovery guidance from one index.
+9. Normal cross-repository conformance CI exercises the complete interface with no Codex invocation or real branch/PR creation and rejects an incompatible consumer.
 
 ## Product principles
 

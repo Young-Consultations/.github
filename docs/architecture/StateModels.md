@@ -64,3 +64,38 @@ Published identity and contents are immutable. Rollback selects a recorded known
 ## Approval/admission lifecycle
 
 An authored task becomes `Approved` only through authoritative human action. It may become `Stale` after material task/policy change or `Withdrawn` by authority. Admission requires `Approved` and fresh provenance at the decision point. A prior admission does not silently authorize changed work.
+
+## Work lifecycle
+
+```mermaid
+stateDiagram-v2
+  [*] --> proposed
+  proposed --> approved: human approves current task ID
+  approved --> queued: admitted for controlled routing
+  approved --> withdrawn: approval revoked
+  proposed --> superseded: material replacement
+  approved --> superseded: approved revision changes
+  queued --> executing: target accepts
+  queued --> withdrawn: revoked before target starts
+  queued --> cancelled: human cancels before start
+  executing --> completed: validated terminal result
+  executing --> failed: rejection/execution/validation failure
+  executing --> cancelled: best-effort stop; no new effects
+  completed --> [*]
+  failed --> [*]
+  withdrawn --> [*]
+  cancelled --> [*]
+  superseded --> proposed: replacement revision
+```
+
+`proposed` has no execution authority. `approved` is the only v2 task state accepted for admission and binds the task
+identity to one target. `queued` is a post-admission source projection, not a
+router authorization; it cannot be replayed through the v2 boundary. A material
+edit receives a new task ID and fresh approval.
+`executing` means the target accepted the delivery, not that it succeeded.
+`completed` requires a valid success/verified/duplicate-reused result and, for
+implement mode, validation evidence plus one managed draft PR. `failed` is a
+terminal unsuccessful outcome. `withdrawn` revokes approval before execution;
+`cancelled` is a human stop request/terminal disposition whose in-flight
+interruption may be best-effort; `superseded` means a different revision needs
+new approval. Terminal evidence is retained and never rewritten as success.

@@ -222,6 +222,11 @@ capability is already delivered.
 
 ## Transition to Requirements Development
 
+The current organization-level realization increment is defined in the
+[next-MVP baseline](releases/next-mvp.md). That baseline traces this vision into
+measurable requirements and tests; it does not change the vision or turn this
+document into a workflow specification.
+
 The next phase is to derive and approve requirements, not to add implementation
 detail to this vision. The proposed traceability hierarchy is:
 

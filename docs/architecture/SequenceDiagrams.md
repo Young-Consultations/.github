@@ -6,7 +6,7 @@
 sequenceDiagram
   actor H as Human approver
   participant P as Planning authority
-  participant C as Control plane
+  participant C as Control plane/router
   participant G as GitHub transport
   participant T as Target workflow
   participant R as Human reviewer
@@ -19,10 +19,18 @@ sequenceDiagram
   T->>T: Revalidate, authorize, idempotency preflight
   T->>T: Implement and validate bounded change
   T->>G: Publish one managed draft PR
-  T-->>C: Canonical result + evidence references
-  C->>C: Validate/correlate result
+  participant X as Result receiver
+  T->>X: Canonical result + evidence references
+  X->>X: Authenticate, validate, deduplicate, retain
+  X->>P: Idempotent correlated result projection
+  P-->>H: Status + validation + draft-PR link
   R->>G: Review; optionally merge under human policy
 ```
+
+Normal `TC-MVP-CI-001` replaces planning, transport, target execution, Codex,
+publication, receiver, and source projection with deterministic adapters. It
+creates no real branch or pull request and consumes no Codex resources. The
+real sequence is exercised only by separately gated `TC-MVP-E2E-001`.
 
 ## Verification alternate flow
 

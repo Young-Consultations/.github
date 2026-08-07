@@ -12,11 +12,11 @@ These prospective records govern architecture rather than merely describing curr
 
 ## ADR-003 — Human approval and target-owned execution
 
-**Context:** AI must not acquire approval or production authority. **Decision:** Planning owns approval truth; control plane proves admission/routes; targets implement and publish draft proposals; humans review/merge. **Alternatives:** central executor; automation approval/merge. **Tradeoffs:** more cross-boundary evidence but strong accountability and repository autonomy. **Consequences:** control plane never modifies target code. **Open questions:** exact approval provenance/freshness contract.
+**Context:** AI must not acquire approval or production authority. **Decision:** Planning owns approval truth; control plane proves admission/routes; targets implement and publish draft proposals; humans review/merge. **Alternatives:** central executor; automation approval/merge. **Tradeoffs:** more cross-boundary evidence but strong accountability and repository autonomy. **Consequences:** control plane never modifies target code. Approval provenance/freshness is resolved by ADR-009.
 
 ## ADR-004 — At-least-once delivery with idempotent visible effects
 
-**Context:** Cross-repository workflow delivery is not transactional. **Decision:** Preserve deterministic delivery identity and immutable payload across retries; targets preflight and create at most one managed branch and open draft PR, requerying after races. **Alternatives:** claim exactly-once transport; control-plane dedupe alone; random attempt identity. **Tradeoffs:** target complexity in exchange for recoverability. **Consequences:** duplicate reuse is canonical; ambiguity fails closed. **Open questions:** durable result reconciliation transport.
+**Context:** Cross-repository workflow delivery is not transactional. **Decision:** Preserve deterministic delivery identity and immutable payload across retries; targets preflight and create at most one managed branch and open draft PR, requerying after races. **Alternatives:** claim exactly-once transport; control-plane dedupe alone; random attempt identity. **Tradeoffs:** target complexity in exchange for recoverability. **Consequences:** duplicate reuse is canonical; ambiguity fails closed. Result reconciliation transport is resolved by ADR-010.
 
 ## ADR-005 — Explicit verify and implement modes
 
@@ -32,4 +32,42 @@ These prospective records govern architecture rather than merely describing curr
 
 ## ADR-008 — Evidence-based asynchronous outcomes
 
-**Context:** Dispatch acknowledgement is not execution success. **Decision:** Separate attempt acknowledgement from target result; accept success only with validated target evidence. **Alternatives:** synchronous router completion; assume success on dispatch. **Tradeoffs:** reconciliation complexity versus honest status. **Consequences:** pending/uncertain are first-class states. **Open questions:** callback, polling, or artifact-based result channel.
+**Context:** Dispatch acknowledgement is not execution success. **Decision:** Separate attempt acknowledgement from target result; accept success only with validated target evidence. **Alternatives:** synchronous router completion; assume success on dispatch. **Tradeoffs:** reconciliation complexity versus honest status. **Consequences:** pending/uncertain are first-class states. ADR-010 selects the MVP result channel.
+
+## ADR-009 — v2 approval admission precedes queue projection
+
+**Status:** Accepted for the next MVP. **Context:** Repository-specific labels have
+been externally observed to disagree, and the closed v2 task contract carries a
+status but no approval ID, authority, timestamp, or revision digest. A queued
+payload therefore cannot independently prove authorization. **Decision:** The
+source emits `status: approved` for admission and assigns a new `task_id` after
+any material edit. The v2 router accepts only `approved`; the source may project
+`queued` only after admission succeeds and must not replay that projection as a
+new authorization. Revocation before admission prevents routing; cancellation
+after execution starts is best-effort and forbids new effects. **Alternatives:**
+add undeclared fields to v2; accept a queue label as approval; introduce v3 in
+this MVP. **Tradeoffs:** v2 cannot transport rich approval provenance, but this
+rule is representable and fail-closed without an unimplemented interface.
+**Consequences:** richer revision-bound evidence requires a future versioned
+contract/router migration. Consumers reject non-approved router input.
+**Trace:** GH-FR-005, GH-FR-017; TC-MVP-CI-001.
+
+## ADR-010 — Canonical reusable result receiver and source projection
+
+**Status:** Accepted for the next MVP. **Context:** Dispatch acknowledgement is
+not a result, direct target-to-issue writes broaden credentials, and polling or
+artifacts alone do not define one accountable return boundary. **Decision:** A
+target creates `execution-result/v2` and invokes an organization-owned reusable
+result-receiver workflow. The receiver authenticates the caller, validates the
+contract and identity bindings, deduplicates by the v2 `delivery_id`,
+persists evidence, and idempotently forwards the result to the source owner;
+`portfolio-tasks` owns issue projection. On timeout, sender and receiver
+reconcile receiver evidence and managed-PR markers before unchanged retry.
+Conflicting valid-looking results fail closed as ambiguous. **Alternatives:**
+direct target issue mutation; source polling every target; workflow artifacts
+as the sole channel; dispatch status as success. **Tradeoffs:** one additional
+hop and receiver availability in exchange for least privilege, uniform
+validation, and replayable evidence. **Consequences:** at-least-once transport,
+not exactly-once delivery, is assumed; visible issue and draft-PR effects are
+idempotent. **Trace:** GH-FR-008/011/012/018; TC-MVP-CI-001,
+TC-MVP-E2E-001.

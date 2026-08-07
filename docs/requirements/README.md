@@ -21,6 +21,7 @@ This package is the requirements baseline for the organization AI-assisted SDLC 
 | [User experience](user-experience.md) | Human-facing experience requirements |
 | [Gap analysis](gap-analysis.md) | Current-to-required-state assessment |
 | [Glossary](glossary.md) | Controlled vocabulary |
+| [Next-MVP release baseline](../releases/next-mvp.md) | Shared objective, allocation, acceptance, CI conformance, and deferrals |
 
 ## Normative conventions and governance
 
