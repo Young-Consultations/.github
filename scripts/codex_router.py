@@ -152,7 +152,9 @@ def validate() -> dict[str, Any]:
     execution_mode = os.environ.get("EXECUTION_MODE", "implement")
     if execution_mode not in {"verify", "implement"}:
         reject("contract-validation", "Execution mode must be verify or implement.", correlation_id)
-    if task["status"] not in {"approved", "queued"}:
+    # v2 carries no separate approval record. Consequently the trust boundary
+    # accepts only its explicit approved state; queued is a later projection.
+    if task["status"] != "approved":
         reject("authorization", "Task status is not approved for execution.", correlation_id)
     if task["executor"] != "codex":
         reject("authorization", "Task executor must be codex.", correlation_id)

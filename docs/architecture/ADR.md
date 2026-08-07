@@ -34,24 +34,23 @@ These prospective records govern architecture rather than merely describing curr
 
 **Context:** Dispatch acknowledgement is not execution success. **Decision:** Separate attempt acknowledgement from target result; accept success only with validated target evidence. **Alternatives:** synchronous router completion; assume success on dispatch. **Tradeoffs:** reconciliation complexity versus honest status. **Consequences:** pending/uncertain are first-class states. ADR-010 selects the MVP result channel.
 
-## ADR-009 — Revision-bound approval survives queue projection
+## ADR-009 — v2 approval admission precedes queue projection
 
 **Status:** Accepted for the next MVP. **Context:** Repository-specific labels have
-been externally observed to disagree, and a visible approval label may be
-replaced by a queue label. Labels alone cannot prove what a human authorized.
-**Decision:** The source owner records immutable approval provenance containing
-approval ID, authorized actor/authority, timestamp, source issue, executable
-revision digest, and target. Transition to `queued` may remove the visible
-approval label without revoking authority; admission revalidates the retained
-record and current digest. A material edit creates `superseded` approval and
-requires new human approval. Revocation before execution yields `withdrawn`;
-cancellation after execution starts is best-effort and forbids new effects.
-**Alternatives:** require one label to remain; treat queueing as new approval;
-trust issue state without a digest. **Tradeoffs:** durable evidence is more work
-than label checks but removes cross-repository label coupling. **Consequences:**
-consumers map local presentation to canonical states and must fail closed on
-missing, stale, withdrawn, or contradictory evidence. **Trace:** GH-FR-005,
-GH-FR-017; TC-MVP-CI-001.
+been externally observed to disagree, and the closed v2 task contract carries a
+status but no approval ID, authority, timestamp, or revision digest. A queued
+payload therefore cannot independently prove authorization. **Decision:** The
+source emits `status: approved` for admission and assigns a new `task_id` after
+any material edit. The v2 router accepts only `approved`; the source may project
+`queued` only after admission succeeds and must not replay that projection as a
+new authorization. Revocation before admission prevents routing; cancellation
+after execution starts is best-effort and forbids new effects. **Alternatives:**
+add undeclared fields to v2; accept a queue label as approval; introduce v3 in
+this MVP. **Tradeoffs:** v2 cannot transport rich approval provenance, but this
+rule is representable and fail-closed without an unimplemented interface.
+**Consequences:** richer revision-bound evidence requires a future versioned
+contract/router migration. Consumers reject non-approved router input.
+**Trace:** GH-FR-005, GH-FR-017; TC-MVP-CI-001.
 
 ## ADR-010 — Canonical reusable result receiver and source projection
 
@@ -60,7 +59,7 @@ not a result, direct target-to-issue writes broaden credentials, and polling or
 artifacts alone do not define one accountable return boundary. **Decision:** A
 target creates `execution-result/v2` and invokes an organization-owned reusable
 result-receiver workflow. The receiver authenticates the caller, validates the
-contract and identity bindings, deduplicates by result/delivery identity,
+contract and identity bindings, deduplicates by the v2 `delivery_id`,
 persists evidence, and idempotently forwards the result to the source owner;
 `portfolio-tasks` owns issue projection. On timeout, sender and receiver
 reconcile receiver evidence and managed-PR markers before unchanged retry.

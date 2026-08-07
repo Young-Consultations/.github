@@ -70,7 +70,7 @@ An authored task becomes `Approved` only through authoritative human action. It 
 ```mermaid
 stateDiagram-v2
   [*] --> proposed
-  proposed --> approved: human approves revision digest
+  proposed --> approved: human approves current task ID
   approved --> queued: admitted for controlled routing
   approved --> withdrawn: approval revoked
   proposed --> superseded: material replacement
@@ -88,10 +88,10 @@ stateDiagram-v2
   superseded --> proposed: replacement revision
 ```
 
-`proposed` has no execution authority. `approved` binds an authorized human to
-one executable revision and target. `queued` is approved work admitted for
-routing; it remains authorized if a presentation label is removed, but only
-while the durable approval record still matches the current revision.
+`proposed` has no execution authority. `approved` is the only v2 task state accepted for admission and binds the task
+identity to one target. `queued` is a post-admission source projection, not a
+router authorization; it cannot be replayed through the v2 boundary. A material
+edit receives a new task ID and fresh approval.
 `executing` means the target accepted the delivery, not that it succeeded.
 `completed` requires a valid success/verified/duplicate-reused result and, for
 implement mode, validation evidence plus one managed draft PR. `failed` is a

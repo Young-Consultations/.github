@@ -28,7 +28,7 @@ preserving the vision's human-authority and repository-ownership boundaries.
 
 | Repository | MVP responsibility | Requirement ownership |
 | --- | --- | --- |
-| `Young-Consultations/.github` | Own canonical contracts/fixtures, registry, admission, routing, result-consumption rules, conformance suite, and this baseline; it is also a supported target when selected. | Organization requirements (`GH-*`), ADRs, and shared test identities |
+| `Young-Consultations/.github` | Own canonical contracts/fixtures, registry, admission, routing, result-consumption rules, conformance suite, and this baseline. It is the control plane, not an execution target. | Organization requirements (`GH-*`), ADRs, and shared test identities |
 | `Young-Consultations/portfolio-tasks` | Own eligible source issue, revision-bound human approval, exactly-one-target selection, lifecycle projection, and consumption/presentation of the correlated result; implement target duties when selected. | Consumer conformance obligations; repository-specific IDs pending owner confirmation |
 | `Young-Consultations/slugger` | Accept only authorized compatible input and perform target execution, validation, idempotent draft publication, and result return when selected. | Consumer conformance obligations; repository-specific IDs pending owner confirmation |
 | `Young-Consultations/consulting-playbook` | Perform the same target obligations without assuming undocumented package paths or APIs. | Consumer conformance obligations; repository-specific IDs pending owner confirmation |
@@ -40,16 +40,17 @@ implementation or documentation.
 ## End-to-end acceptance scenario
 
 1. An eligible issue is created in `portfolio-tasks` and identifies exactly one
-   of the four supported targets and an explicit `implement` mode.
-2. An authorized human approves a content digest of the current executable
-   revision. The approval record captures approver, authority, timestamp,
-   revision digest, source issue, and approval identity.
-3. The producer atomically records `queued` and retains the immutable approval
-   provenance even if the visible `approved` label is removed.
-4. The control plane revalidates provenance, revision, target, registry
-   enablement, contract version, and scope, then constructs and routes one
-   canonical execution input using stable task, delivery, and correlation IDs.
-5. The target independently validates authorization and compatibility, invokes
+   of the three registered targets and an explicit `implement` mode.
+2. An authorized human approves the current executable task. The producer emits
+   a canonical v2 task with `status: approved`; a material edit is represented
+   by a new `task_id` and requires approval again.
+3. The control plane validates the approved task, target, registry enablement,
+   contract version, and scope, then constructs and routes one canonical
+   execution input using stable task, delivery, and correlation IDs.
+4. Only after successful admission may the source project the work as `queued`.
+   A queued v2 task is not accepted as fresh router input because v2 carries no
+   separate approval record with which to re-establish authorization.
+5. The target independently validates compatibility, invokes
    Codex, validates resulting changes, and creates or reuses one managed draft
    pull request for the delivery ID.
 6. The target returns one canonical `execution-result/v2` through the result
@@ -66,8 +67,8 @@ not success.
 ## Continuous interface-validation objective
 
 Normal CI shall deterministically simulate the entire approved-issue-to-draft-PR
-process for all four targets without Codex, a real implementation branch, or a
-real pull request. Organization-owned versioned fixtures are authoritative for
+process for all three registered targets without Codex, a real implementation
+branch, or a real pull request. Organization-owned versioned fixtures are authoritative for
 valid and invalid task/input/result messages, approval evidence, registry
 snapshots, delivery histories, and expected canonical outcomes. Mocks, stubs,
 or test adapters shall exercise approval, construction, selection, target
@@ -90,7 +91,7 @@ explicit human gate, never merges, and cleans up only under human control.
 
 ## Included capabilities and exclusions
 
-Included: approval/revision evidence; canonical construction; four-target
+Included: approved v2 task admission; canonical construction; three-target
 registration and gated enablement; deterministic routing; `verify` and
 `implement` modes; target execution and validation; at-least-once-safe result
 return; draft-PR discovery/reuse; source correlation; deterministic conformance
@@ -106,10 +107,9 @@ and draft-only publication after approval.
 
 Canonical work states are `proposed`, `approved`, `queued`, `executing`,
 `completed`, `failed`, `withdrawn`, `cancelled`, and `superseded`, as defined in
-[State Models](../architecture/StateModels.md#work-lifecycle). `queued` remains
-authorized after removal of a presentation label only while its immutable
-approval record still binds the current revision. A material edit supersedes
-that approval. Revocation before execution produces `withdrawn`; cancellation
+[State Models](../architecture/StateModels.md#work-lifecycle). For this v2 MVP, `approved` is the only state admitted at the router
+boundary. `queued` is a post-admission source projection and cannot be replayed as
+authorization. A material edit receives a new task ID and fresh approval. Revocation before execution produces `withdrawn`; cancellation
 during execution requests best-effort stop and forbids new side effects, but
 does not erase evidence or guarantee interruption of an already-running actor.
 
@@ -123,18 +123,21 @@ resolution. A valid terminal state never regresses.
 
 The baseline is the canonical task, `execution-input/v2`, and
 `execution-result/v2` contract family in [`contracts/`](../../contracts/README.md),
-the four-entry registry policy, and repository interfaces
-[RI-01–RI-03 and RI-MVP-01](../requirements/repository-interfaces.md). Task ID
-identifies source work; approval ID plus revision digest identifies authorized
-intent; delivery ID identifies the logical at-least-once delivery and remains
+the three-entry registry policy, and repository interfaces
+[RI-01–RI-03 and RI-MVP-01](../requirements/repository-interfaces.md). Task
+ID identifies the approved source-work revision; delivery ID identifies the
+logical at-least-once delivery and remains
 stable across attempts; attempt ID (transport metadata, not the idempotency key)
-identifies an invocation; correlation ID joins evidence across the flow; result
-ID identifies the canonical result and supports duplicate consumption.
+identifies an invocation; correlation ID joins evidence across the flow. The v2
+result has no
+separate result ID, so receivers deduplicate by delivery ID and reject a second
+non-identical result for that delivery as ambiguous.
 
 The MVP result transport is an organization-owned, reusable result-receiver
 workflow invoked by targets with a canonical result and authenticated caller
 identity. It validates schema, target identity, delivery/correlation binding,
-and result uniqueness, stores durable evidence, and idempotently dispatches the
+and delivery-ID uniqueness, stores durable evidence, and idempotently
+dispatches the
 validated result to the source owner for issue projection. Targets own result
 creation and retry; `.github` owns receiver validation/forwarding and
 reconciliation; `portfolio-tasks` owns issue presentation. Transport
@@ -148,15 +151,15 @@ assertions, pins an immutable fixture release, tests both modes and all cases
 applicable to its role, and reports fixture release, adapter revision, and
 pass/fail evidence. Normal CI uses fake Codex and publication adapters and is
 denied write permissions. Interface changes cannot merge until producer,
-router, receiver, source consumer, and all four target profiles pass.
+router, receiver, source consumer, and all three target profiles pass.
 
 ## Success criteria
 
 - One intentionally approved real-path run ends in one validated draft PR and
   a schema-valid result visibly correlated to the source issue.
-- All four targets pass the shared simulated matrix before enablement; a target
+- All three registered targets pass the shared simulated matrix before enablement; a target
   that has not passed remains disabled.
-- Every material revision has distinct approval provenance; stale, withdrawn,
+- Every material revision has a distinct task ID and fresh `approved` state; stale, withdrawn,
   unknown, incompatible, or ambiguous work creates no new implementation side
   effect.
 - Redelivery and duplicate results cause idempotent visible effects: at most one
@@ -167,8 +170,8 @@ router, receiver, source consumer, and all four target profiles pass.
 
 ## Assumptions, constraints, risks, and unresolved decisions
 
-Assumptions requiring consumer confirmation: `portfolio-tasks` can retain
-approval provenance while changing labels; every target can validate and emit
+Assumptions requiring consumer confirmation: `portfolio-tasks` can emit the
+approved v2 task before projecting `queued`; every target can validate and emit
 `execution-result/v2`; all targets can discover a managed draft by delivery
 marker; and consumers can call the reusable result receiver. External
 observations report that `portfolio-tasks` may replace `status:approved` with
