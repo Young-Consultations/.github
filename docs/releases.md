@@ -75,7 +75,7 @@ must record those three consumer PRs or confirm that no router call exists.
 
 ## Current compatibility update
 
-Strengthening read-only target compatibility verification changes shared control-plane compatibility behavior. Prepare the next immutable PATCH release through this documented process before consumers pin the updated behavior; do not move or rewrite `ai-sdlc-v2.1.0`. Registry-only enablement would not require a new release, but this change is broader than registry enablement.
+Registering `.github` as a fourth disabled-first target changes the supported-target compatibility unit. Prepare the new immutable MINOR release `ai-sdlc-v2.2.0` through this documented process before consumers pin it; do not move or rewrite `ai-sdlc-v2.1.0`. A later enablement-only change would not require another release, but adding the registration does.
 
 ## Rollback
 

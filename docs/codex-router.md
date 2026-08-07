@@ -29,7 +29,7 @@ Concurrency keys incorporate the normalized target repository, source issue, par
 ```yaml
 jobs:
   route:
-    uses: Young-Consultations/.github/.github/workflows/codex-router.yml@ai-sdlc-v2.1.0
+    uses: Young-Consultations/.github/.github/workflows/codex-router.yml@ai-sdlc-v2.2.0
     permissions:
       contents: read
       actions: read
