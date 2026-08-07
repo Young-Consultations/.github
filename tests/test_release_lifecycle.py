@@ -14,7 +14,8 @@ def test_current_release_is_coherent_and_immutable():
 def test_mvp_fixture_uses_current_release_identity_and_targets():
     manifest = json.loads((ROOT / "release/release-manifest.json").read_text(encoding="utf-8"))
     fixture = json.loads((ROOT / "tests/fixtures/mvp-v2/manifest.json").read_text(encoding="utf-8"))
-    assert fixture["immutable_reference"] == f"release/release-manifest.json#{manifest['tag']}"
+    assert manifest["tag_published"] is False
+    assert fixture["immutable_reference"] == manifest["immutable_reference"]
     assert sorted(fixture["targets"]) == manifest["supported_targets"]
 
 

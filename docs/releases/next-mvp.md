@@ -91,11 +91,18 @@ explicit human gate, never merges, and cleans up only under human control.
 
 ## Included capabilities and exclusions
 
-Included: approved v2 task admission; canonical construction; three-target
+Included: approved v2 task admission; canonical construction; four-target
 registration and gated enablement; deterministic routing; `verify` and
 `implement` modes; target execution and validation; at-least-once-safe result
 return; draft-PR discovery/reuse; source correlation; deterministic conformance
 simulation; and controlled real-path evidence.
+
+The shared fixture set currently provides the authoritative scenario catalog
+and canonical examples, but not executable inputs and expected outputs for
+every scenario. Completing those repository-owned fixture artifacts and the
+no-real-effects harness is planned implementation work under `GH-QR-008`; their
+absence is not evidence of shared executable or live cross-repository
+conformance.
 
 Excluded: exactly-once transport; autonomous approval; automatic merge;
 release, deployment, production operation, or production-scale SLOs; unrelated

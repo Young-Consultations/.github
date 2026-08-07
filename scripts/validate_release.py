@@ -27,6 +27,10 @@ def validate(root: Path = ROOT) -> list[str]:
         errors.append("release_version must be semantic versioning")
     if manifest.get("tag") != f"ai-sdlc-v{version}":
         errors.append("tag must map exactly to release_version")
+    if not isinstance(manifest.get("tag_published"), bool):
+        errors.append("tag_published must explicitly record publication state")
+    if not re.fullmatch(r"[0-9a-f]{40}", manifest.get("immutable_reference", "")):
+        errors.append("immutable_reference must be a full commit SHA")
 
     pyproject = (root / "pyproject.toml").read_text(encoding="utf-8")
     package_match = re.search(r'^version = "([^"]+)"$', pyproject, re.MULTILINE)
