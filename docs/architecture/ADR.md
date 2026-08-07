@@ -71,3 +71,17 @@ validation, and replayable evidence. **Consequences:** at-least-once transport,
 not exactly-once delivery, is assumed; visible issue and draft-PR effects are
 idempotent. **Trace:** GH-FR-008/011/012/018; TC-MVP-CI-001,
 TC-MVP-E2E-001.
+
+## ADR-011 — `.github` control-plane and execution-target isolation
+
+**Status:** Accepted for the next MVP. **Context:** `.github` owns organization
+admission infrastructure but is also one of exactly four useful MVP targets.
+Combining its authorities would allow self-approval or bypass. **Decision:** Treat
+the control plane and `.github` target adapter as separate trust boundaries. The
+adapter runs only after explicit router selection, uses target-only credentials,
+is limited to documentation, CI, repository maintenance, and testing, and ends
+at a draft PR plus canonical result. It cannot approve, route, mutate another
+repository, use control-plane credentials, merge, release, or deploy.
+**Consequences:** both roles may share a repository but not an authority; the
+registry remains disabled-first and conformance is required before enablement.
+**Trace:** GH-FR-002/008–012/017–018; RI-MVP-02; TC-MVP-CI-001.

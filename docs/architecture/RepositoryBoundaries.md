@@ -22,6 +22,8 @@
 | Collaborator | Owns | Required exchange |
 | --- | --- | --- |
 | Planning authority (`portfolio-tasks`) | Task record, governance, approval provenance, initiation | IF-01 canonical task and IF-02 invocation; consumes status/evidence |
+| `.github` control plane | Contracts, registry, admission, routing, result receiver, fixtures, conformance policy | Control-plane identity; never target code-write authority |
+| `.github` target adapter | Bounded changes to `.github` after explicit router selection | Separate target-only identity; cannot approve, route, cross repository boundaries, merge, release, or deploy |
 | Target repository owner | Local permission, execution, idempotency, branch/draft PR, tests/evidence/result | IF-04/IF-06 input; IF-05 result; IF-08 conformance |
 | Human approver/reviewer | Approval and consequential acceptance | Durable approval/review records |
 | GitHub | Hosted identities and automation primitives | Authenticated platform interfaces |

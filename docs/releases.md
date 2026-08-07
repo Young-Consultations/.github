@@ -67,7 +67,7 @@ registered consumers migrate. Critical security remediation may shorten the
 window only with an explicit risk record and maintainer approval. Pre-releases
 do not start the window.
 
-The registered consumers—`portfolio-tasks`, `consulting-playbook`, and
+The four registered consumers—`.github`, `portfolio-tasks`, `consulting-playbook`, and
 `slugger`—must each replace any mutable organization-router reference in a
 separate repository pull request with the new tag (or reviewed merge SHA).
 Cross-repository edits are intentionally not combined here. Release approval

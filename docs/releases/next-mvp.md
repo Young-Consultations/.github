@@ -28,7 +28,7 @@ preserving the vision's human-authority and repository-ownership boundaries.
 
 | Repository | MVP responsibility | Requirement ownership |
 | --- | --- | --- |
-| `Young-Consultations/.github` | Own canonical contracts/fixtures, registry, admission, routing, result-consumption rules, conformance suite, and this baseline. It is the control plane, not an execution target. | Organization requirements (`GH-*`), ADRs, and shared test identities |
+| `Young-Consultations/.github` | Own canonical contracts/fixtures, registry, admission, routing, result-consumption rules, conformance suite, and this baseline. It is both the control plane and, behind a separate trust boundary and target-only credentials, a bounded execution target for explicitly selected organization documentation, CI, repository-maintenance, and testing work. | Organization requirements (`GH-*`), ADRs, and shared test identities |
 | `Young-Consultations/portfolio-tasks` | Own eligible source issue, revision-bound human approval, exactly-one-target selection, lifecycle projection, and consumption/presentation of the correlated result; implement target duties when selected. | Consumer conformance obligations; repository-specific IDs pending owner confirmation |
 | `Young-Consultations/slugger` | Accept only authorized compatible input and perform target execution, validation, idempotent draft publication, and result return when selected. | Consumer conformance obligations; repository-specific IDs pending owner confirmation |
 | `Young-Consultations/consulting-playbook` | Perform the same target obligations without assuming undocumented package paths or APIs. | Consumer conformance obligations; repository-specific IDs pending owner confirmation |
@@ -40,7 +40,7 @@ implementation or documentation.
 ## End-to-end acceptance scenario
 
 1. An eligible issue is created in `portfolio-tasks` and identifies exactly one
-   of the three registered targets and an explicit `implement` mode.
+   of the four registered targets and an explicit `implement` mode.
 2. An authorized human approves the current executable task. The producer emits
    a canonical v2 task with `status: approved`; a material edit is represented
    by a new `task_id` and requires approval again.
@@ -67,7 +67,7 @@ not success.
 ## Continuous interface-validation objective
 
 Normal CI shall deterministically simulate the entire approved-issue-to-draft-PR
-process for all three registered targets without Codex, a real implementation
+process for all four registered targets without Codex, a real implementation
 branch, or a real pull request. Organization-owned versioned fixtures are authoritative for
 valid and invalid task/input/result messages, approval evidence, registry
 snapshots, delivery histories, and expected canonical outcomes. Mocks, stubs,
@@ -123,7 +123,7 @@ resolution. A valid terminal state never regresses.
 
 The baseline is the canonical task, `execution-input/v2`, and
 `execution-result/v2` contract family in [`contracts/`](../../contracts/README.md),
-the three-entry registry policy, and repository interfaces
+the four-entry registry policy, and repository interfaces
 [RI-01–RI-03 and RI-MVP-01](../requirements/repository-interfaces.md). Task
 ID identifies the approved source-work revision; delivery ID identifies the
 logical at-least-once delivery and remains
@@ -151,13 +151,13 @@ assertions, pins an immutable fixture release, tests both modes and all cases
 applicable to its role, and reports fixture release, adapter revision, and
 pass/fail evidence. Normal CI uses fake Codex and publication adapters and is
 denied write permissions. Interface changes cannot merge until producer,
-router, receiver, source consumer, and all three target profiles pass.
+router, receiver, source consumer, and all four target profiles pass.
 
 ## Success criteria
 
 - One intentionally approved real-path run ends in one validated draft PR and
   a schema-valid result visibly correlated to the source issue.
-- All three registered targets pass the shared simulated matrix before enablement; a target
+- All four registered targets pass the shared simulated matrix before enablement; a target
   that has not passed remains disabled.
 - Every material revision has a distinct task ID and fresh `approved` state; stale, withdrawn,
   unknown, incompatible, or ambiguous work creates no new implementation side

@@ -83,7 +83,7 @@ The organization repository owns these active workflows:
 validator, and repository registry. It does not contain a target
 `codex-execute.yml` and does not execute repository changes.
 
-Registered target repositories (`portfolio-tasks`, `consulting-playbook`, and
+Registered target repositories (`.github`, `portfolio-tasks`, `consulting-playbook`, and
 `slugger`) own their executor workflows. Each target consumes the canonical
 `execution-input/v2` payload through `execution_input_json` (plus the transport
 `concurrency_group`), performs verification or Codex implementation, and emits

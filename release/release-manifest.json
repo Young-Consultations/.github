@@ -9,6 +9,7 @@
   "router_workflow": ".github/workflows/codex-router.yml",
   "registry": "config/codex-repositories.json",
   "supported_targets": [
+    "Young-Consultations/.github",
     "Young-Consultations/consulting-playbook",
     "Young-Consultations/portfolio-tasks",
     "Young-Consultations/slugger"
