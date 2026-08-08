@@ -27,8 +27,9 @@ Interpret repository evidence in this order:
 4. Current organization and repository interface documentation defines
    cross-repository interactions and ownership boundaries.
 5. Code, workflows, schemas, tests, fixtures, packages, examples, release
-   artifacts, and other implementation artifacts are blueprints and evidence
-   only.
+   artifacts, and other implementation artifacts are authoritative evidence
+   of current behavior and must be treated as such; they do not override
+   higher-authority intent, requirements, or design decisions.
 
 An existing or operating implementation artifact does not override a higher
 authority. After an artifact is deliberately aligned, it may enforce the
@@ -115,9 +116,9 @@ silently override approved higher-authority product documentation.
 
 ## Implementation authority and compatibility policy
 
-- The project is pre-production, currently has one user, and currently has no
-  backward-compatibility requirement. These facts do not weaken governance or
-  security controls.
+- Per the approved requirements baseline and current release documentation,
+  the project is pre-production and no backward-compatibility requirement has
+  been approved. These facts do not weaken governance or security controls.
 - Existing implementation is a blueprint, not the product authority. Reuse an
   artifact only when it conforms to approved requirements and design.
 - A later authorized implementation task may modify, replace, or remove
@@ -193,8 +194,8 @@ are deferred by the next-MVP allocation.
 
 Keep every change focused on its approved scope, cite applicable requirement
 and architecture IDs, and run the tests that cover the affected behavior. The
-checked-in CI configuration supports these local commands after installing
-[`requirements-dev.txt`](requirements-dev.txt):
+checked-in CI configuration supports these local commands after installing the
+packages declared in [`requirements-dev.txt`](requirements-dev.txt):
 
 ```console
 python -m pytest
@@ -204,8 +205,9 @@ git diff --check
 ```
 
 `python scripts/verify_target_workflows.py` is applicable only when its
-documented target-workflow credentials and external access are available; the
-target compatibility workflow separately runs its local pytest coverage.
+documented target-workflow credentials and external access are available; pass
+`--fixtures-only` to run the script in offline mode without live credentials.
+The target compatibility workflow separately runs its local pytest coverage.
 Documentation-only work must at minimum validate Markdown links, review the
 diff and changed-file list, apply any available Markdown checks, scan for
 sensitive or unsupported claims, and run `git diff --check`. No standalone
