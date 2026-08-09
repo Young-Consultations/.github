@@ -21,6 +21,7 @@ fi
 
 log "Cloning consulting-playbook..."
 TMP=$(mktemp -d)
+trap 'rm -rf "$TMP"' EXIT
 git clone https://github.com/Young-Consultations/consulting-playbook "$TMP/consulting-playbook"
 cd "$TMP/consulting-playbook"
 git checkout -b copilot/migrate-consulting-assets

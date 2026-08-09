@@ -1,4 +1,4 @@
-From 245c98b483e757b7f289efbafe4185f28c47a0c2 Mon Sep 17 00:00:00 2001
+From 25f2516c340568ccf9e6928708b31be659359ca8 Mon Sep 17 00:00:00 2001
 From: "copilot-swe-agent[bot]" <198982749+Copilot@users.noreply.github.com>
 Date: Sun, 9 Aug 2026 00:20:05 +0000
 Subject: [PATCH] Migrate consulting operating assets from Slugger
@@ -169,11 +169,11 @@ index 0000000..efc9cc3
 +These assets are owned and maintained by `Young-Consultations/consulting-playbook`. Slugger (`Young-Consultations/slugger`) is an AI-assisted software-development orchestration product that may be used as a tool during consulting engagements, but consulting operating assets are not part of the Slugger product.
 diff --git a/playbooks/assessment/checklists/ai-sdlc-readiness-checklist.md b/playbooks/assessment/checklists/ai-sdlc-readiness-checklist.md
 new file mode 100644
-index 0000000..71cd6bc
+index 0000000..ee3f24a
 --- /dev/null
 +++ b/playbooks/assessment/checklists/ai-sdlc-readiness-checklist.md
 @@ -0,0 +1,30 @@
-+# Ai Sdlc Readiness Checklist
++# AI-SDLC Readiness Checklist
 +
 +## Maturity Scale
 +
@@ -239,11 +239,11 @@ index 0000000..d2d54de
 +Base each rating on observed evidence, not preference. If evidence is unavailable, record the gap and risk rather than assuming maturity.
 diff --git a/playbooks/assessment/checklists/sdlc-maturity-checklist.md b/playbooks/assessment/checklists/sdlc-maturity-checklist.md
 new file mode 100644
-index 0000000..c049e8b
+index 0000000..b58c3fc
 --- /dev/null
 +++ b/playbooks/assessment/checklists/sdlc-maturity-checklist.md
 @@ -0,0 +1,28 @@
-+# Sdlc Maturity Checklist
++# SDLC Maturity Checklist
 +
 +## Maturity Scale
 +
