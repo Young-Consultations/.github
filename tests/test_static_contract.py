@@ -1,5 +1,6 @@
 import json
 import re
+import subprocess
 from pathlib import Path
 
 import yaml
@@ -138,6 +139,21 @@ def test_third_party_actions_are_pinned_to_full_shas():
             if owner.startswith("Young-Consultations/"):
                 continue
             assert re.fullmatch(r"[0-9a-f]{40}", version), (workflow, reference)
+
+
+def test_repository_does_not_track_gitlinks():
+    result = subprocess.run(
+        ["git", "ls-files", "-s"],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    gitlinks = [
+        line.split("\t", 1)[1]
+        for line in result.stdout.splitlines()
+        if line.startswith("160000 ")
+    ]
+    assert gitlinks == []
 
 
 def test_contract_workflow_is_read_only_and_has_no_execution_path():
