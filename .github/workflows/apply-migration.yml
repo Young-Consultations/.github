@@ -34,7 +34,7 @@ jobs:
 
       - name: Clone consulting-playbook
         run: |
-          git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/Young-Consultations/consulting-playbook /tmp/consulting-playbook
+          git clone https://x-access-token:${{ secrets.CODEX_ROUTER_TOKEN }}@github.com/Young-Consultations/consulting-playbook /tmp/consulting-playbook
 
       - name: Apply patch to consulting-playbook
         run: |
@@ -51,12 +51,13 @@ jobs:
       - name: Open PR in consulting-playbook
         if: ${{ !inputs.dry_run }}
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.CODEX_ROUTER_TOKEN }}
         run: |
           gh pr create \
             --repo Young-Consultations/consulting-playbook \
             --head copilot/migrate-consulting-assets \
             --base main \
+            --draft \
             --title "Migrate consulting operating assets from Slugger" \
             --body "Adds 37 consulting files under \`playbooks/\` with a lifecycle-aligned structure. Applied via the apply-migration workflow in Young-Consultations/.github."
 
@@ -66,7 +67,7 @@ jobs:
 
       - name: Clone slugger
         run: |
-          git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/Young-Consultations/slugger /tmp/slugger
+          git clone https://x-access-token:${{ secrets.CODEX_ROUTER_TOKEN }}@github.com/Young-Consultations/slugger /tmp/slugger
 
       - name: Apply patch to slugger
         run: |
@@ -83,12 +84,13 @@ jobs:
       - name: Open PR in slugger
         if: ${{ !inputs.dry_run }}
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.CODEX_ROUTER_TOKEN }}
         run: |
           gh pr create \
             --repo Young-Consultations/slugger \
             --head copilot/remove-consulting-assets \
             --base main \
+            --draft \
             --title "Remove consulting assets after consulting-playbook extraction" \
             --body "Removes \`consulting/\` from Slugger and updates README to link to consulting-playbook. Applied via the apply-migration workflow in Young-Consultations/.github."
 
