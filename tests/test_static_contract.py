@@ -119,6 +119,14 @@ def test_workflow_yaml_syntax():
         assert yaml.safe_load(workflow.read_text(encoding="utf-8")) is not None
 
 
+def test_apply_migration_uses_cross_repo_token_and_creates_draft_prs():
+    text = Path(".github/workflows/apply-migration.yml").read_text(encoding="utf-8")
+    assert "secrets.GITHUB_TOKEN" not in text
+    assert text.count("secrets.CODEX_ROUTER_TOKEN") == 4
+    assert text.count("gh pr create") == 2
+    assert text.count("--draft") == 2
+
+
 def test_contract_workflow_runs_for_every_pull_request():
     workflow = yaml.load(
         CONTRACT_WORKFLOW.read_text(encoding="utf-8"), Loader=yaml.BaseLoader
