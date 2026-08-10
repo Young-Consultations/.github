@@ -1,0 +1,1054 @@
+From 25f2516c340568ccf9e6928708b31be659359ca8 Mon Sep 17 00:00:00 2001
+From: "copilot-swe-agent[bot]" <198982749+Copilot@users.noreply.github.com>
+Date: Sun, 9 Aug 2026 00:20:05 +0000
+Subject: [PATCH] Migrate consulting operating assets from Slugger
+
+Migrated all reusable consulting assets from Young-Consultations/slugger consulting/
+into playbooks/ directory. consulting-playbook is now the authoritative home for
+the Young Consultations reusable consulting operating system.
+
+Migrated areas:
+- Service offer templates -> playbooks/service/
+- Client intake and qualification -> playbooks/engagement/intake/
+- Discovery interviews -> playbooks/engagement/discovery/
+- Assessment checklists (backlog, sprint, SDLC, AI-SDLC, delivery) -> playbooks/assessment/checklists/
+- Evidence collection (request, inventory, traceability) -> playbooks/assessment/evidence/
+- Findings and analysis templates -> playbooks/assessment/findings/
+- Report templates -> playbooks/reporting/
+- Roadmap templates -> playbooks/roadmap/
+- Proposals and SOW -> playbooks/proposals/
+- Case studies -> playbooks/case-studies/
+- Knowledge base (principles, glossary, prompts, lessons) -> playbooks/knowledge/
+
+Updated README.md to add consulting operating assets section.
+Added playbooks/README.md navigation index.
+---
+ README.md                                     | 10 +++++
+ playbooks/README.md                           | 38 +++++++++++++++++++
+ .../checklists/ai-sdlc-readiness-checklist.md | 30 +++++++++++++++
+ .../checklists/backlog-health-checklist.md    | 28 ++++++++++++++
+ .../checklists/sdlc-maturity-checklist.md     | 28 ++++++++++++++
+ .../software-delivery-assessment-checklist.md | 27 +++++++++++++
+ .../checklists/sprint-health-checklist.md     | 27 +++++++++++++
+ .../evidence/evidence-inventory-template.md   |  5 +++
+ .../evidence/evidence-request-list.md         | 19 ++++++++++
+ .../evidence/evidence-traceability-matrix.md  |  7 ++++
+ .../findings/assessment-scorecard.md          | 15 ++++++++
+ .../assessment/findings/finding-template.md   | 21 ++++++++++
+ .../findings/prioritization-matrix.md         |  9 +++++
+ .../findings/recommendation-template.md       | 14 +++++++
+ .../findings/risk-register-template.md        |  5 +++
+ playbooks/case-studies/case-study-template.md | 16 ++++++++
+ .../slugger-internal-case-study-outline.md    | 29 ++++++++++++++
+ .../discovery/discovery-call-agenda.md        | 11 ++++++
+ .../discovery/interview-notes-template.md     | 15 ++++++++
+ .../discovery/stakeholder-interview-guide.md  | 33 ++++++++++++++++
+ .../intake/client-intake-questionnaire.md     | 25 ++++++++++++
+ .../intake/client-qualification-checklist.md  | 25 ++++++++++++
+ .../intake/engagement-readiness-checklist.md  | 12 ++++++
+ playbooks/knowledge/consulting-principles.md  | 11 ++++++
+ .../knowledge/definitions-and-glossary.md     | 24 ++++++++++++
+ .../knowledge/lessons-learned-template.md     | 14 +++++++
+ playbooks/knowledge/reusable-prompts.md       | 27 +++++++++++++
+ .../proposals/change-request-template.md      | 14 +++++++
+ .../proposals/consulting-proposal-template.md | 24 ++++++++++++
+ .../engagement-closeout-checklist.md          | 11 ++++++
+ .../proposals/statement-of-work-template.md   | 21 ++++++++++
+ .../reporting/executive-assessment-report.md  | 18 +++++++++
+ .../reporting/executive-summary-template.md   | 17 +++++++++
+ .../reporting/leadership-readout-outline.md   | 10 +++++
+ playbooks/roadmap/30-60-90-day-roadmap.md     | 16 ++++++++
+ .../roadmap/definition-of-done-template.md    | 10 +++++
+ .../implementation-backlog-template.md        |  5 +++
+ .../service/service-overview-template.md      | 17 +++++++++
+ playbooks/service/service-scope-template.md   | 20 ++++++++++
+ 39 files changed, 708 insertions(+)
+ create mode 100644 playbooks/README.md
+ create mode 100644 playbooks/assessment/checklists/ai-sdlc-readiness-checklist.md
+ create mode 100644 playbooks/assessment/checklists/backlog-health-checklist.md
+ create mode 100644 playbooks/assessment/checklists/sdlc-maturity-checklist.md
+ create mode 100644 playbooks/assessment/checklists/software-delivery-assessment-checklist.md
+ create mode 100644 playbooks/assessment/checklists/sprint-health-checklist.md
+ create mode 100644 playbooks/assessment/evidence/evidence-inventory-template.md
+ create mode 100644 playbooks/assessment/evidence/evidence-request-list.md
+ create mode 100644 playbooks/assessment/evidence/evidence-traceability-matrix.md
+ create mode 100644 playbooks/assessment/findings/assessment-scorecard.md
+ create mode 100644 playbooks/assessment/findings/finding-template.md
+ create mode 100644 playbooks/assessment/findings/prioritization-matrix.md
+ create mode 100644 playbooks/assessment/findings/recommendation-template.md
+ create mode 100644 playbooks/assessment/findings/risk-register-template.md
+ create mode 100644 playbooks/case-studies/case-study-template.md
+ create mode 100644 playbooks/case-studies/slugger-internal-case-study-outline.md
+ create mode 100644 playbooks/engagement/discovery/discovery-call-agenda.md
+ create mode 100644 playbooks/engagement/discovery/interview-notes-template.md
+ create mode 100644 playbooks/engagement/discovery/stakeholder-interview-guide.md
+ create mode 100644 playbooks/engagement/intake/client-intake-questionnaire.md
+ create mode 100644 playbooks/engagement/intake/client-qualification-checklist.md
+ create mode 100644 playbooks/engagement/intake/engagement-readiness-checklist.md
+ create mode 100644 playbooks/knowledge/consulting-principles.md
+ create mode 100644 playbooks/knowledge/definitions-and-glossary.md
+ create mode 100644 playbooks/knowledge/lessons-learned-template.md
+ create mode 100644 playbooks/knowledge/reusable-prompts.md
+ create mode 100644 playbooks/proposals/change-request-template.md
+ create mode 100644 playbooks/proposals/consulting-proposal-template.md
+ create mode 100644 playbooks/proposals/engagement-closeout-checklist.md
+ create mode 100644 playbooks/proposals/statement-of-work-template.md
+ create mode 100644 playbooks/reporting/executive-assessment-report.md
+ create mode 100644 playbooks/reporting/executive-summary-template.md
+ create mode 100644 playbooks/reporting/leadership-readout-outline.md
+ create mode 100644 playbooks/roadmap/30-60-90-day-roadmap.md
+ create mode 100644 playbooks/roadmap/definition-of-done-template.md
+ create mode 100644 playbooks/roadmap/implementation-backlog-template.md
+ create mode 100644 playbooks/service/service-overview-template.md
+ create mode 100644 playbooks/service/service-scope-template.md
+
+diff --git a/README.md b/README.md
+index 4db0d45..e2ed4e1 100644
+--- a/README.md
++++ b/README.md
+@@ -6,6 +6,16 @@
+ 
+ The [Consulting Playbook Vision](docs/VISION.md) defines the intended direction for this repository as Young Consultations' reusable consulting operating system. The target-executor workflow described below is an enabling delivery mechanism for approved implementation work; it is not the full consulting-playbook product vision, and the envisioned consulting methods and assets still require requirements development and implementation.
+ 
++## Consulting operating assets
++
++The `playbooks/` directory contains the reusable consulting operating system — methods, templates, checklists, and knowledge assets for the full consulting engagement lifecycle:
++
++**Lead → Qualification → Discovery → Engagement Scope → Evidence Collection → Interviews → Assessment → Findings → Recommendations → Roadmap → Leadership Readout → Implementation Proposal → Closeout**
++
++See [playbooks/README.md](playbooks/README.md) for the full directory index, including service offer templates, client intake, discovery, assessment checklists (backlog health, sprint health, SDLC maturity, AI-SDLC readiness), evidence collection, findings analysis, report templates, roadmap templates, proposals, statements of work, case studies, and the consulting knowledge base.
++
++These assets were migrated from `Young-Consultations/slugger` in August 2026. `consulting-playbook` is the authoritative home for all reusable consulting operating content.
++
+ ## AI-SDLC control plane
+ 
+ The shared AI-SDLC execution control plane is owned by `Young-Consultations/.github`. That organization repository owns canonical schemas, task and execution validation, contract versioning, repository registry, routing policy, shared failure categories, and correlation behavior.
+diff --git a/playbooks/README.md b/playbooks/README.md
+new file mode 100644
+index 0000000..efc9cc3
+--- /dev/null
++++ b/playbooks/README.md
+@@ -0,0 +1,38 @@
++# Consulting Playbooks
++
++This directory contains the reusable consulting operating assets for the Young Consultations consulting practice. These assets were migrated from Young-Consultations/slugger in August 2026, establishing `consulting-playbook` as the authoritative home for all reusable consulting operating content.
++
++## Standard Engagement Lifecycle
++
++Lead → Qualification → Discovery → Engagement Scope → Evidence Collection → Interviews → Assessment → Findings → Recommendations → 30/60/90 Roadmap → Leadership Readout → Implementation Proposal → Closeout
++
++## Directory Structure
++
++| Directory | Contents |
++| --- | --- |
++| [service/](service/) | Service offer definitions and scope templates |
++| [engagement/intake/](engagement/intake/) | Client qualification checklist, intake questionnaire, engagement readiness checklist |
++| [engagement/discovery/](engagement/discovery/) | Discovery call agenda, stakeholder interview guide, interview notes template |
++| [assessment/checklists/](assessment/checklists/) | Backlog health, sprint health, SDLC maturity, AI-SDLC readiness, and software delivery assessment checklists |
++| [assessment/evidence/](assessment/evidence/) | Evidence request list, evidence inventory template, evidence traceability matrix |
++| [assessment/findings/](assessment/findings/) | Finding template, recommendation template, prioritization matrix, risk register, assessment scorecard |
++| [reporting/](reporting/) | Executive assessment report, executive summary template, leadership readout outline |
++| [roadmap/](roadmap/) | 30/60/90-day roadmap, implementation backlog template, definition-of-done template |
++| [proposals/](proposals/) | Consulting proposal template, statement-of-work template, change-request template, engagement closeout checklist |
++| [case-studies/](case-studies/) | Reusable case study template and Slugger internal case study outline |
++| [knowledge/](knowledge/) | Consulting principles, definitions and glossary, reusable prompts, lessons-learned template |
++
++## Operating Principles
++
++- Customer value drives prioritization.
++- Evidence must support findings.
++- Observations, conclusions, and recommendations must remain distinct.
++- Every finding must include customer or business impact.
++- Every recommendation must include an owner and measurable definition of done.
++- AI-generated content must be human-reviewed.
++- Client confidentiality and intellectual property must be protected.
++- Slugger may assist the workflow as a tool but does not replace accountable human judgment.
++
++## Ownership
++
++These assets are owned and maintained by `Young-Consultations/consulting-playbook`. Slugger (`Young-Consultations/slugger`) is an AI-assisted software-development orchestration product that may be used as a tool during consulting engagements, but consulting operating assets are not part of the Slugger product.
+diff --git a/playbooks/assessment/checklists/ai-sdlc-readiness-checklist.md b/playbooks/assessment/checklists/ai-sdlc-readiness-checklist.md
+new file mode 100644
+index 0000000..ee3f24a
+--- /dev/null
++++ b/playbooks/assessment/checklists/ai-sdlc-readiness-checklist.md
+@@ -0,0 +1,30 @@
++# AI-SDLC Readiness Checklist
++
++## Maturity Scale
++
++* 4 — Strong
++* 3 — Effective
++* 2 — Inconsistent
++* 1 — Weak
++* 0 — Not present
++* N/A — Not applicable
++
++| Assessment Item | Rating | Evidence | Impact | Risk Level | Recommended Action |
++| --- | --- | --- | --- | --- | --- |
++| Approved AI use cases |  |  |  |  |  |
++| Data handling |  |  |  |  |  |
++| Credential management |  |  |  |  |  |
++| Human approval |  |  |  |  |  |
++| Prompt governance |  |  |  |  |  |
++| Model and provider governance |  |  |  |  |  |
++| Artifact traceability |  |  |  |  |  |
++| Test and validation gates |  |  |  |  |  |
++| Repository integration |  |  |  |  |  |
++| Auditability |  |  |  |  |  |
++| Security |  |  |  |  |  |
++| Intellectual property |  |  |  |  |  |
++| Failure recovery |  |  |  |  |  |
++
++## Scoring Guidance
++
++Base each rating on observed evidence, not preference. If evidence is unavailable, record the gap and risk rather than assuming maturity.
+diff --git a/playbooks/assessment/checklists/backlog-health-checklist.md b/playbooks/assessment/checklists/backlog-health-checklist.md
+new file mode 100644
+index 0000000..d2d54de
+--- /dev/null
++++ b/playbooks/assessment/checklists/backlog-health-checklist.md
+@@ -0,0 +1,28 @@
++# Backlog Health Checklist
++
++## Maturity Scale
++
++* 4 — Strong
++* 3 — Effective
++* 2 — Inconsistent
++* 1 — Weak
++* 0 — Not present
++* N/A — Not applicable
++
++| Assessment Item | Rating | Evidence | Impact | Risk Level | Recommended Action |
++| --- | --- | --- | --- | --- | --- |
++| Backlog hierarchy |  |  |  |  |  |
++| Ownership |  |  |  |  |  |
++| Story clarity |  |  |  |  |  |
++| Acceptance criteria |  |  |  |  |  |
++| Dependencies |  |  |  |  |  |
++| Sizing |  |  |  |  |  |
++| Definition of ready |  |  |  |  |  |
++| Obsolete items |  |  |  |  |  |
++| Technical debt |  |  |  |  |  |
++| Defects |  |  |  |  |  |
++| Customer-value traceability |  |  |  |  |  |
++
++## Scoring Guidance
++
++Base each rating on observed evidence, not preference. If evidence is unavailable, record the gap and risk rather than assuming maturity.
+diff --git a/playbooks/assessment/checklists/sdlc-maturity-checklist.md b/playbooks/assessment/checklists/sdlc-maturity-checklist.md
+new file mode 100644
+index 0000000..b58c3fc
+--- /dev/null
++++ b/playbooks/assessment/checklists/sdlc-maturity-checklist.md
+@@ -0,0 +1,28 @@
++# SDLC Maturity Checklist
++
++## Maturity Scale
++
++* 4 — Strong
++* 3 — Effective
++* 2 — Inconsistent
++* 1 — Weak
++* 0 — Not present
++* N/A — Not applicable
++
++| Assessment Item | Rating | Evidence | Impact | Risk Level | Recommended Action |
++| --- | --- | --- | --- | --- | --- |
++| Requirements |  |  |  |  |  |
++| Architecture |  |  |  |  |  |
++| Design |  |  |  |  |  |
++| Development |  |  |  |  |  |
++| Code review |  |  |  |  |  |
++| Testing |  |  |  |  |  |
++| Integration |  |  |  |  |  |
++| Release |  |  |  |  |  |
++| Operations |  |  |  |  |  |
++| Incident response |  |  |  |  |  |
++| Feedback loops |  |  |  |  |  |
++
++## Scoring Guidance
++
++Base each rating on observed evidence, not preference. If evidence is unavailable, record the gap and risk rather than assuming maturity.
+diff --git a/playbooks/assessment/checklists/software-delivery-assessment-checklist.md b/playbooks/assessment/checklists/software-delivery-assessment-checklist.md
+new file mode 100644
+index 0000000..be23b4a
+--- /dev/null
++++ b/playbooks/assessment/checklists/software-delivery-assessment-checklist.md
+@@ -0,0 +1,27 @@
++# Software Delivery Assessment Checklist
++
++## Maturity Scale
++
++* 4 — Strong
++* 3 — Effective
++* 2 — Inconsistent
++* 1 — Weak
++* 0 — Not present
++* N/A — Not applicable
++
++| Assessment Item | Rating | Evidence | Impact | Risk Level | Recommended Action |
++| --- | --- | --- | --- | --- | --- |
++| Customer alignment |  |  |  |  |  |
++| Backlog |  |  |  |  |  |
++| Prioritization |  |  |  |  |  |
++| Sprint execution |  |  |  |  |  |
++| Flow |  |  |  |  |  |
++| SDLC |  |  |  |  |  |
++| Communication |  |  |  |  |  |
++| Metrics |  |  |  |  |  |
++| Governance |  |  |  |  |  |
++| Risk management |  |  |  |  |  |
++
++## Scoring Guidance
++
++Base each rating on observed evidence, not preference. If evidence is unavailable, record the gap and risk rather than assuming maturity.
+diff --git a/playbooks/assessment/checklists/sprint-health-checklist.md b/playbooks/assessment/checklists/sprint-health-checklist.md
+new file mode 100644
+index 0000000..74bf97b
+--- /dev/null
++++ b/playbooks/assessment/checklists/sprint-health-checklist.md
+@@ -0,0 +1,27 @@
++# Sprint Health Checklist
++
++## Maturity Scale
++
++* 4 — Strong
++* 3 — Effective
++* 2 — Inconsistent
++* 1 — Weak
++* 0 — Not present
++* N/A — Not applicable
++
++| Assessment Item | Rating | Evidence | Impact | Risk Level | Recommended Action |
++| --- | --- | --- | --- | --- | --- |
++| Sprint goals |  |  |  |  |  |
++| Capacity |  |  |  |  |  |
++| Commitment |  |  |  |  |  |
++| Carryover |  |  |  |  |  |
++| Unplanned work |  |  |  |  |  |
++| Blockers |  |  |  |  |  |
++| Scope changes |  |  |  |  |  |
++| Reviews |  |  |  |  |  |
++| Retrospectives |  |  |  |  |  |
++| Definitions of done |  |  |  |  |  |
++
++## Scoring Guidance
++
++Base each rating on observed evidence, not preference. If evidence is unavailable, record the gap and risk rather than assuming maturity.
+diff --git a/playbooks/assessment/evidence/evidence-inventory-template.md b/playbooks/assessment/evidence/evidence-inventory-template.md
+new file mode 100644
+index 0000000..40d667c
+--- /dev/null
++++ b/playbooks/assessment/evidence/evidence-inventory-template.md
+@@ -0,0 +1,5 @@
++# Evidence Inventory Template
++
++| Evidence ID | Name | Source | Owner | Date Received | Date Range Covered | Confidentiality | Reliability | Relevant Assessment Area | Notes |
++| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
++| E-001 |  |  |  |  |  |  | High / Medium / Low |  |  |
+diff --git a/playbooks/assessment/evidence/evidence-request-list.md b/playbooks/assessment/evidence/evidence-request-list.md
+new file mode 100644
+index 0000000..74ff451
+--- /dev/null
++++ b/playbooks/assessment/evidence/evidence-request-list.md
+@@ -0,0 +1,19 @@
++# Evidence Request List
++
++Request only approved, necessary evidence. Accept screen-shared review when exports are not appropriate.
++
++- [ ] Product roadmap
++- [ ] Backlog
++- [ ] Sprint history
++- [ ] Metrics
++- [ ] Release records
++- [ ] Defect reports
++- [ ] Architecture documentation
++- [ ] ADRs
++- [ ] CI/CD workflows
++- [ ] Test reports
++- [ ] Pull requests
++- [ ] Incident reports
++- [ ] Customer commitments
++- [ ] Status reports
++- [ ] AI prompts and workflow definitions where permitted
+diff --git a/playbooks/assessment/evidence/evidence-traceability-matrix.md b/playbooks/assessment/evidence/evidence-traceability-matrix.md
+new file mode 100644
+index 0000000..cdb581f
+--- /dev/null
++++ b/playbooks/assessment/evidence/evidence-traceability-matrix.md
+@@ -0,0 +1,7 @@
++# Evidence Traceability Matrix
++
++| Evidence | Observation | Finding | Customer Impact | Recommendation | Roadmap Action | Definition of Done |
++| --- | --- | --- | --- | --- | --- | --- |
++| E-001 |  |  |  |  |  |  |
++
++Use this matrix to verify that every recommendation can be traced backward to evidence and forward to measurable implementation.
+diff --git a/playbooks/assessment/findings/assessment-scorecard.md b/playbooks/assessment/findings/assessment-scorecard.md
+new file mode 100644
+index 0000000..47bd808
+--- /dev/null
++++ b/playbooks/assessment/findings/assessment-scorecard.md
+@@ -0,0 +1,15 @@
++# Assessment Scorecard
++
++| Assessment Area | Score | Strengths | Gaps | Customer/Business Impact | Priority |
++| --- | --- | --- | --- | --- | --- |
++| Customer alignment |  |  |  |  |  |
++| Backlog quality and readiness |  |  |  |  |  |
++| Prioritization effectiveness |  |  |  |  |  |
++| Sprint planning and execution |  |  |  |  |  |
++| Team velocity and delivery flow |  |  |  |  |  |
++| SDLC maturity |  |  |  |  |  |
++| Technical debt and defect management |  |  |  |  |  |
++| Communication |  |  |  |  |  |
++| Metrics and governance |  |  |  |  |  |
++| AI-SDLC readiness and traceability |  |  |  |  |  |
++| Overall maturity |  |  |  |  |  |
+diff --git a/playbooks/assessment/findings/finding-template.md b/playbooks/assessment/findings/finding-template.md
+new file mode 100644
+index 0000000..7954d3b
+--- /dev/null
++++ b/playbooks/assessment/findings/finding-template.md
+@@ -0,0 +1,21 @@
++# Finding Template
++
++| Field | Content |
++| --- | --- |
++| Finding ID | F-001 |
++| Title |  |
++| Assessment area |  |
++| Observation | Evidence-based statement of what was seen. |
++| Evidence | Evidence IDs and interview references. |
++| Root cause | Process, governance, technical, capacity, or alignment cause. |
++| Customer impact |  |
++| Business impact |  |
++| Technical impact |  |
++| Likelihood | Low / Medium / High |
++| Severity | Low / Medium / High |
++| Risk rating | Low / Medium / High / Critical |
++| Recommendation |  |
++| Owner |  |
++| Target date |  |
++| Success measure |  |
++| Definition of done |  |
+diff --git a/playbooks/assessment/findings/prioritization-matrix.md b/playbooks/assessment/findings/prioritization-matrix.md
+new file mode 100644
+index 0000000..5a0ff0c
+--- /dev/null
++++ b/playbooks/assessment/findings/prioritization-matrix.md
+@@ -0,0 +1,9 @@
++# Prioritization Matrix
++
++Score each criterion 1-5. Clients may adjust weights to reflect strategy, risk tolerance, and compliance obligations.
++
++| Recommendation | Customer Impact | Business Value | Urgency | Strategic Alignment | Risk Reduction | Compliance Obligation | Dependency Enablement | Effort | Technical Complexity | Confidence | Weighted Score |
++| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
++| REC-001 |  |  |  |  |  |  |  |  |  |  |  |
++
++Sample formula: `(customer impact*3 + business value*3 + urgency*2 + strategic alignment*2 + risk reduction*2 + compliance obligation*2 + dependency enablement + confidence) - (effort*2 + technical complexity)`.
+diff --git a/playbooks/assessment/findings/recommendation-template.md b/playbooks/assessment/findings/recommendation-template.md
+new file mode 100644
+index 0000000..b3fb77b
+--- /dev/null
++++ b/playbooks/assessment/findings/recommendation-template.md
+@@ -0,0 +1,14 @@
++# Recommendation Template
++
++| Field | Content |
++| --- | --- |
++| Problem addressed |  |
++| Proposed action |  |
++| Expected benefit | Customer, business, delivery, or risk-reduction benefit. |
++| Effort | Small / Medium / Large |
++| Impact | Low / Medium / High |
++| Dependencies |  |
++| Owner |  |
++| Target date |  |
++| Metric |  |
++| Definition of done | Observable completion condition. |
+diff --git a/playbooks/assessment/findings/risk-register-template.md b/playbooks/assessment/findings/risk-register-template.md
+new file mode 100644
+index 0000000..6407a4d
+--- /dev/null
++++ b/playbooks/assessment/findings/risk-register-template.md
+@@ -0,0 +1,5 @@
++# Risk Register Template
++
++| Risk ID | Risk Statement | Cause | Impact | Likelihood | Severity | Rating | Mitigation | Owner | Target Date | Status |
++| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
++| R-001 | If ..., then ..., resulting in ... |  |  |  |  |  |  |  |  | Open |
+diff --git a/playbooks/case-studies/case-study-template.md b/playbooks/case-studies/case-study-template.md
+new file mode 100644
+index 0000000..c7bb8a0
+--- /dev/null
++++ b/playbooks/case-studies/case-study-template.md
+@@ -0,0 +1,16 @@
++# Case Study Template
++
++| Field | Content |
++| --- | --- |
++| Client or anonymized description |  |
++| Situation |  |
++| Problem |  |
++| Business impact |  |
++| Assessment approach |  |
++| Findings |  |
++| Recommendations |  |
++| Actions taken |  |
++| Results | Distinguish measured outcomes from expected outcomes. |
++| Metrics |  |
++| Client quote | Use only with approval. |
++| Confidentiality approval | Approver, date, and permitted usage. |
+diff --git a/playbooks/case-studies/slugger-internal-case-study-outline.md b/playbooks/case-studies/slugger-internal-case-study-outline.md
+new file mode 100644
+index 0000000..ca8430e
+--- /dev/null
++++ b/playbooks/case-studies/slugger-internal-case-study-outline.md
+@@ -0,0 +1,29 @@
++> **Note:** This case study outline lives in `Young-Consultations/consulting-playbook` as a consulting artifact documenting the use of Slugger in a consulting context. It is not part of the Slugger product. References to Slugger in this document refer to it as the software system being documented, not as the owner of this consulting artifact.
++
++# Slugger Internal Case Study Outline
++
++Slugger is an internal methodology demonstration. It is not presented as a paying-client engagement. Results must distinguish completed outcomes from expected outcomes.
++
++## Assessment Areas
++
++| Area | Completed Outcomes | Expected Outcomes | Evidence |
++| --- | --- | --- | --- |
++| Product vision |  |  |  |
++| MVP completeness |  |  |  |
++| Backlog |  |  |  |
++| Architecture |  |  |  |
++| CI/CD |  |  |  |
++| Testing |  |  |  |
++| Security |  |  |  |
++| Codex integration |  |  |  |
++| Workflow persistence |  |  |  |
++| Artifact traceability |  |  |  |
++| GitHub publication |  |  |  |
++| Demonstration readiness |  |  |  |
++
++## Narrative Outline
++
++1. Internal context and purpose.
++2. Assessment method and evidence reviewed.
++3. Findings and business relevance for future consulting workflows.
++4. Recommendations for using Slugger as an internal accelerator.
+diff --git a/playbooks/engagement/discovery/discovery-call-agenda.md b/playbooks/engagement/discovery/discovery-call-agenda.md
+new file mode 100644
+index 0000000..b5dc485
+--- /dev/null
++++ b/playbooks/engagement/discovery/discovery-call-agenda.md
+@@ -0,0 +1,11 @@
++# Discovery Call Agenda
++
++| Time | Topic | Outcome |
++| --- | --- | --- |
++| 0-3 min | Introductions and roles | Confirm sponsor, decision maker, and facilitator. |
++| 3-8 min | Business problem | State the problem, urgency, and customer impact. |
++| 8-13 min | Delivery context | Identify teams, backlogs, releases, and constraints. |
++| 13-18 min | Evidence availability | Confirm systems, reports, and documents available for review. |
++| 18-23 min | Success criteria | Define measurable engagement outcomes and readout audience. |
++| 23-28 min | Scope and next steps | Confirm scope assumptions, risks, and readiness actions. |
++| 28-30 min | Decision | Decide whether to proceed, refine, or pause. |
+diff --git a/playbooks/engagement/discovery/interview-notes-template.md b/playbooks/engagement/discovery/interview-notes-template.md
+new file mode 100644
+index 0000000..7c684d8
+--- /dev/null
++++ b/playbooks/engagement/discovery/interview-notes-template.md
+@@ -0,0 +1,15 @@
++# Interview Notes Template
++
++| Field | Notes |
++| --- | --- |
++| Stakeholder |  |
++| Role |  |
++| Date |  |
++| Confidentiality designation | Public / Internal / Confidential / Restricted |
++| Key concerns |  |
++| Observations |  |
++| Direct evidence | Document, metric, backlog item, pull request, or report reference |
++| Perceived impact | Customer, business, delivery, technical, security, or morale impact |
++| Conflicting statements | Note source and what requires reconciliation |
++| Follow-up questions |  |
++| Potential findings | Mark as potential until evidence is confirmed |
+diff --git a/playbooks/engagement/discovery/stakeholder-interview-guide.md b/playbooks/engagement/discovery/stakeholder-interview-guide.md
+new file mode 100644
+index 0000000..1e20ed7
+--- /dev/null
++++ b/playbooks/engagement/discovery/stakeholder-interview-guide.md
+@@ -0,0 +1,33 @@
++# Stakeholder Interview Guide
++
++Use open-ended questions, ask for examples, and request evidence references when possible.
++
++## Executive Leadership
++* What customer or business outcome is most at risk?
++* Which delivery decisions need better visibility?
++
++## Product or Program Leadership
++* How are priorities selected and changed?
++* Which commitments are hardest to forecast?
++
++## Engineering Leadership
++* Where does delivery flow slow down?
++* Which technical risks threaten customer outcomes?
++
++## Developers
++* What makes work ready or not ready?
++* Which review, build, or dependency issues create rework?
++
++## Test and Quality Staff
++* Where are defects found and escaped?
++* Which quality gates are reliable or bypassed?
++
++## Scrum Masters or Delivery Leads
++* How are sprint goals, capacity, carryover, blockers, and retrospectives managed?
++
++## Customers or Business Representatives
++* Do delivered increments match expected value and timing?
++* Where is communication unclear?
++
++## Security and Operations
++* What release, incident, data, credential, and AI governance concerns affect delivery?
+diff --git a/playbooks/engagement/intake/client-intake-questionnaire.md b/playbooks/engagement/intake/client-intake-questionnaire.md
+new file mode 100644
+index 0000000..e5f1c5a
+--- /dev/null
++++ b/playbooks/engagement/intake/client-intake-questionnaire.md
+@@ -0,0 +1,25 @@
++# Client Intake Questionnaire
++
++## Organization and Product
++* What product, platform, or service is in scope?
++* Who are the primary customers or users?
++* What business outcomes are most important this quarter?
++
++## Team Composition
++* What roles are on the delivery team?
++* Which teams, vendors, or shared services affect delivery?
++
++## Delivery Context
++* What customer commitments, deadlines, or contractual obligations are at risk?
++* What delivery problems are most visible to leadership or customers?
++* How would you describe backlog condition, sprint performance, technical debt, testing, release practices, and defect trends?
++
++## Metrics and AI Usage
++* Which delivery metrics are reviewed today?
++* How are AI tools used for requirements, design, coding, testing, review, or documentation?
++* What security, compliance, data handling, or IP rules apply?
++
++## Commercial Fit
++* What desired business outcome would make this engagement successful?
++* Who owns budget and decision authority?
++* What timeline, kickoff date, and readout date are preferred?
+diff --git a/playbooks/engagement/intake/client-qualification-checklist.md b/playbooks/engagement/intake/client-qualification-checklist.md
+new file mode 100644
+index 0000000..13e382f
+--- /dev/null
++++ b/playbooks/engagement/intake/client-qualification-checklist.md
+@@ -0,0 +1,25 @@
++# Client Qualification Checklist
++
++| Check | Yes/No | Evidence or Notes |
++| --- | --- | --- |
++| Clear business problem |  |  |
++| Measurable impact |  |  |
++| Access to stakeholders |  |  |
++| Access to evidence |  |  |
++| Executive sponsor |  |  |
++| Decision authority identified |  |  |
++| Realistic scope |  |  |
++| Budget availability |  |  |
++| Conflicts of interest reviewed |  |  |
++| Consulting fit confirmed |  |  |
++
++## Recommendation Outcome
++
++- [ ] Proceed
++- [ ] Proceed with conditions
++- [ ] Refer elsewhere
++- [ ] Decline
++
++## Conditions or Rationale
++
++Record required conditions, referral reasons, or decline rationale in business terms.
+diff --git a/playbooks/engagement/intake/engagement-readiness-checklist.md b/playbooks/engagement/intake/engagement-readiness-checklist.md
+new file mode 100644
+index 0000000..04a6277
+--- /dev/null
++++ b/playbooks/engagement/intake/engagement-readiness-checklist.md
+@@ -0,0 +1,12 @@
++# Engagement Readiness Checklist
++
++- [ ] Executive sponsor confirmed.
++- [ ] Engagement scope and exclusions approved.
++- [ ] Evidence owner assigned.
++- [ ] Stakeholder interview list approved.
++- [ ] Confidentiality expectations documented.
++- [ ] Tool access, screen-share process, or evidence export process approved.
++- [ ] Kickoff, interview window, assessment window, and readout scheduled.
++- [ ] Decision makers understand advisory nature of assessment.
++- [ ] Client confirms no restricted data should be provided unless explicitly approved.
++- [ ] Closeout and data handling expectations agreed.
+diff --git a/playbooks/knowledge/consulting-principles.md b/playbooks/knowledge/consulting-principles.md
+new file mode 100644
+index 0000000..d53a4db
+--- /dev/null
++++ b/playbooks/knowledge/consulting-principles.md
+@@ -0,0 +1,11 @@
++# Consulting Principles
++
++* Sell outcomes, not activity.
++* Customer value drives prioritization.
++* Evidence precedes conclusions.
++* Technical findings must be translated into business impact.
++* Avoid measuring individual productivity through story points.
++* AI assists but does not own accountable decisions.
++* Protect client confidentiality.
++* Prefer the smallest credible improvement.
++* Capture reusable lessons after each engagement.
+diff --git a/playbooks/knowledge/definitions-and-glossary.md b/playbooks/knowledge/definitions-and-glossary.md
+new file mode 100644
+index 0000000..7215476
+--- /dev/null
++++ b/playbooks/knowledge/definitions-and-glossary.md
+@@ -0,0 +1,24 @@
++# Definitions and Glossary
++
++| Term | Definition |
++| --- | --- |
++| Backlog refinement | Ongoing work to clarify, split, prioritize, and prepare backlog items for delivery. |
++| Definition of ready | Shared criteria indicating work is sufficiently understood to enter planning. |
++| Definition of done | Shared criteria indicating work is complete, verified, and acceptable. |
++| Sprint goal | Short statement of the outcome a sprint is intended to achieve. |
++| Velocity | Historical amount of work completed by a team, useful for team-level forecasting only. |
++| Throughput | Count of work items completed in a period. |
++| Cycle time | Time from work start to completion. |
++| Lead time | Time from request or commitment to delivery. |
++| Carryover | Work planned for a sprint that is not completed in that sprint. |
++| Unplanned work | Work introduced outside the planned sprint or delivery commitment. |
++| Technical debt | Design, code, test, or operational shortcuts that increase future cost or risk. |
++| Finding | Evidence-supported conclusion about a meaningful condition, gap, or risk. |
++| Observation | Neutral statement of what was seen, heard, or measured. |
++| Risk | Uncertain event or condition that may affect objectives. |
++| Recommendation | Proposed action to address a finding or reduce risk. |
++| SDLC | Software development life cycle from idea through operation and feedback. |
++| AI-SDLC | SDLC activities augmented by AI with governance, traceability, validation, and human accountability. |
++| Traceability | Ability to connect evidence, decisions, artifacts, changes, and outcomes. |
++| Quality gate | Required check before work advances to the next stage. |
++| Human approval gate | Explicit accountable human review before AI-assisted output is accepted or used. |
+diff --git a/playbooks/knowledge/lessons-learned-template.md b/playbooks/knowledge/lessons-learned-template.md
+new file mode 100644
+index 0000000..1d88345
+--- /dev/null
++++ b/playbooks/knowledge/lessons-learned-template.md
+@@ -0,0 +1,14 @@
++# Lessons Learned Template
++
++| Field | Content |
++| --- | --- |
++| Engagement |  |
++| What worked |  |
++| What did not work |  |
++| Repeated client problems |  |
++| Template improvements |  |
++| Slugger automation opportunities |  |
++| Risks discovered |  |
++| Process changes |  |
++| Owner |  |
++| Completion date |  |
+diff --git a/playbooks/knowledge/reusable-prompts.md b/playbooks/knowledge/reusable-prompts.md
+new file mode 100644
+index 0000000..6815d07
+--- /dev/null
++++ b/playbooks/knowledge/reusable-prompts.md
+@@ -0,0 +1,27 @@
++# Reusable Prompts
++
++Each prompt requires evidence-based output, clear assumptions, no invented facts, human review, and protection of confidential information. Remove client identifiers unless approved.
++
++## Organize Interview Notes
++Organize the provided interview notes into themes. Use only supplied evidence, list assumptions separately, do not invent facts, protect confidential information, and mark the output for human review.
++
++## Categorize Findings
++Categorize these evidence-supported observations by assessment area and risk level. Use only provided evidence, state assumptions, avoid invented facts, protect confidential information, and require human review before sharing.
++
++## Draft Risk Statements
++Draft risk statements in the format "If..., then..., resulting in..." using only the supplied evidence. Include assumptions, avoid invented facts, protect confidential information, and require human review.
++
++## Translate Technical Issues into Customer Language
++Translate these technical issues into customer and business impact language. Preserve evidence references, state assumptions, avoid invented facts, protect confidential information, and require human review.
++
++## Draft Recommendations
++Draft recommendations with owner, metric, target date, expected benefit, and definition of done. Use only evidence provided, state assumptions, avoid invented facts, protect confidential information, and require human review.
++
++## Create Definitions of Done
++Create measurable definitions of done for these roadmap actions. Tie each item to evidence and success metrics, state assumptions, avoid invented facts, protect confidential information, and require human review.
++
++## Produce a Roadmap
++Sequence recommendations into 0-30, 31-60, and 61-90 day actions. Use evidence-based priorities, state assumptions, avoid invented facts, protect confidential information, and require human review.
++
++## Review Report Consistency
++Review the report for consistency among evidence, observations, findings, recommendations, roadmap actions, and definitions of done. State assumptions, do not invent facts, protect confidential information, and require human review.
+diff --git a/playbooks/proposals/change-request-template.md b/playbooks/proposals/change-request-template.md
+new file mode 100644
+index 0000000..dae8e40
+--- /dev/null
++++ b/playbooks/proposals/change-request-template.md
+@@ -0,0 +1,14 @@
++# Change Request Template
++
++| Field | Content |
++| --- | --- |
++| Change request ID | CR-001 |
++| Requested by |  |
++| Description |  |
++| Scope impact | Added, removed, or changed work. |
++| Schedule impact | Milestones and readout dates affected. |
++| Cost impact | Fee or expense changes. |
++| Evidence/access impact | New materials, systems, or stakeholders needed. |
++| Risks |  |
++| Approval decision | Approved / Deferred / Rejected |
++| Approvers and date |  |
+diff --git a/playbooks/proposals/consulting-proposal-template.md b/playbooks/proposals/consulting-proposal-template.md
+new file mode 100644
+index 0000000..5a21b33
+--- /dev/null
++++ b/playbooks/proposals/consulting-proposal-template.md
+@@ -0,0 +1,24 @@
++# Consulting Proposal Template
++
++## Client Problem
++Describe the delivery or AI-SDLC problem and measurable business impact.
++
++## Proposed Engagement
++Software Delivery and AI-SDLC Alignment Assessment.
++
++| Section | Content |
++| --- | --- |
++| Objectives |  |
++| Scope |  |
++| Approach | Intake, discovery, evidence, interviews, assessment, report, readout. |
++| Deliverables | Report, scorecard, findings, recommendations, roadmap. |
++| Timeline |  |
++| Responsibilities | Client and consultant responsibilities. |
++| Assumptions |  |
++| Exclusions |  |
++| Fees |  |
++| Payment terms |  |
++| Acceptance | Deliverable review and acceptance process. |
++| Follow-on options |  |
++
++This template is not a substitute for legal, tax, or procurement review.
+diff --git a/playbooks/proposals/engagement-closeout-checklist.md b/playbooks/proposals/engagement-closeout-checklist.md
+new file mode 100644
+index 0000000..2a41fe2
+--- /dev/null
++++ b/playbooks/proposals/engagement-closeout-checklist.md
+@@ -0,0 +1,11 @@
++# Engagement Closeout Checklist
++
++- [ ] Deliverables accepted.
++- [ ] Open actions transferred to client owner.
++- [ ] Consultant access removed.
++- [ ] Client data returned or deleted according to agreement.
++- [ ] Final invoice submitted.
++- [ ] Feedback requested.
++- [ ] Review or recommendation requested when appropriate.
++- [ ] Case-study permission requested only if appropriate.
++- [ ] Lessons captured.
+diff --git a/playbooks/proposals/statement-of-work-template.md b/playbooks/proposals/statement-of-work-template.md
+new file mode 100644
+index 0000000..085b393
+--- /dev/null
++++ b/playbooks/proposals/statement-of-work-template.md
+@@ -0,0 +1,21 @@
++# Statement of Work Template
++
++Legal counsel should review agreements before use.
++
++| Section | Content |
++| --- | --- |
++| Parties |  |
++| Background |  |
++| Objectives |  |
++| Scope |  |
++| Activities |  |
++| Deliverables |  |
++| Schedule |  |
++| Acceptance criteria |  |
++| Client responsibilities |  |
++| Consultant responsibilities |  |
++| Change control | Written change request and approval required. |
++| Confidentiality reference | Reference governing confidentiality agreement or policy. |
++| Fees and payment |  |
++| Termination reference | Reference governing agreement terms. |
++| Signatures | Authorized representatives and dates. |
+diff --git a/playbooks/reporting/executive-assessment-report.md b/playbooks/reporting/executive-assessment-report.md
+new file mode 100644
+index 0000000..4f98af8
+--- /dev/null
++++ b/playbooks/reporting/executive-assessment-report.md
+@@ -0,0 +1,18 @@
++# Executive Assessment Report
++
++1. Cover information: client, assessment name, dates, consultant, confidentiality.
++2. Executive summary: top outcomes, risks, and decisions needed.
++3. Assessment purpose: why the work was performed.
++4. Scope: teams, backlogs, repositories, releases, interviews, and exclusions.
++5. Methodology: evidence review, interviews, maturity scoring, and human review.
++6. Current-state summary: delivery operating model and constraints.
++7. Strengths: capabilities to preserve.
++8. Critical findings: risk-rated findings tied to evidence.
++9. Customer and business impact: value, commitment, cost, risk, and trust implications.
++10. Maturity scorecard: area scores and overall maturity.
++11. Recommendations: prioritized actions with owners and definitions of done.
++12. 30-, 60-, and 90-day roadmap: sequenced implementation plan.
++13. Risks and assumptions: unresolved dependencies and assumptions.
++14. Metrics: current and proposed decision metrics.
++15. Follow-on options: advisory, facilitation, implementation support, fractional leadership.
++16. Appendix and evidence references: evidence inventory and traceability matrix.
+diff --git a/playbooks/reporting/executive-summary-template.md b/playbooks/reporting/executive-summary-template.md
+new file mode 100644
+index 0000000..0cd17f6
+--- /dev/null
++++ b/playbooks/reporting/executive-summary-template.md
+@@ -0,0 +1,17 @@
++# Executive Summary Template
++
++## Situation
++Summarize the business context, customer commitments, and delivery concern in one short paragraph.
++
++## Most Important Findings
++| Finding | Impact | Decision Needed |
++| --- | --- | --- |
++|  |  |  |
++
++## Recommended 30-Day Focus
++| Action | Owner | Success Measure |
++| --- | --- | --- |
++|  |  |  |
++
++## Overall Maturity
++State the overall maturity score and the primary reason for that score. Keep this page decision-oriented.
+diff --git a/playbooks/reporting/leadership-readout-outline.md b/playbooks/reporting/leadership-readout-outline.md
+new file mode 100644
+index 0000000..1ab02ec
+--- /dev/null
++++ b/playbooks/reporting/leadership-readout-outline.md
+@@ -0,0 +1,10 @@
++# Leadership Readout Outline
++
++| Time | Segment | Decision Focus |
++| --- | --- | --- |
++| 0-5 min | Purpose and scope | Confirm what was and was not assessed. |
++| 5-10 min | Executive summary | Align on the main delivery risk and opportunity. |
++| 10-20 min | Findings and impact | Decide which risks require leadership action. |
++| 20-30 min | Recommendations | Select priority actions and owners. |
++| 30-40 min | 30/60/90 roadmap | Approve sequencing, dependencies, and metrics. |
++| 40-45 min | Next steps | Confirm implementation proposal or closeout path. |
+diff --git a/playbooks/roadmap/30-60-90-day-roadmap.md b/playbooks/roadmap/30-60-90-day-roadmap.md
+new file mode 100644
+index 0000000..fac5c95
+--- /dev/null
++++ b/playbooks/roadmap/30-60-90-day-roadmap.md
+@@ -0,0 +1,16 @@
++# 30/60/90-Day Roadmap
++
++## Immediate: 0-30 Days
++| Action | Problem Addressed | Customer Benefit | Owner | Dependencies | Effort | Target Date | Success Metric | Definition of Done |
++| --- | --- | --- | --- | --- | --- | --- | --- | --- |
++|  |  |  |  |  |  |  |  |  |
++
++## Near-Term: 31-60 Days
++| Action | Problem Addressed | Customer Benefit | Owner | Dependencies | Effort | Target Date | Success Metric | Definition of Done |
++| --- | --- | --- | --- | --- | --- | --- | --- | --- |
++|  |  |  |  |  |  |  |  |  |
++
++## Medium-Term: 61-90 Days
++| Action | Problem Addressed | Customer Benefit | Owner | Dependencies | Effort | Target Date | Success Metric | Definition of Done |
++| --- | --- | --- | --- | --- | --- | --- | --- | --- |
++|  |  |  |  |  |  |  |  |  |
+diff --git a/playbooks/roadmap/definition-of-done-template.md b/playbooks/roadmap/definition-of-done-template.md
+new file mode 100644
+index 0000000..0951450
+--- /dev/null
++++ b/playbooks/roadmap/definition-of-done-template.md
+@@ -0,0 +1,10 @@
++# Definition of Done Template
++
++- [ ] Process changes documented and communicated.
++- [ ] Documentation updated in the approved repository or knowledge base.
++- [ ] Software changes implemented where applicable.
++- [ ] Testing completed with evidence attached.
++- [ ] Metrics baseline and post-change measurement defined.
++- [ ] Training or enablement completed for affected roles.
++- [ ] Leadership approval recorded for operating model changes.
++- [ ] Customer validation completed or explicitly scheduled.
+diff --git a/playbooks/roadmap/implementation-backlog-template.md b/playbooks/roadmap/implementation-backlog-template.md
+new file mode 100644
+index 0000000..ae2ff09
+--- /dev/null
++++ b/playbooks/roadmap/implementation-backlog-template.md
+@@ -0,0 +1,5 @@
++# Implementation Backlog Template
++
++| Epic | Feature | Story or Task | Priority | Customer Outcome | Acceptance Criteria | Owner | Estimate | Dependencies | Status |
++| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
++|  |  |  |  |  | Given/When/Then or checklist criteria |  |  |  | Proposed |
+diff --git a/playbooks/service/service-overview-template.md b/playbooks/service/service-overview-template.md
+new file mode 100644
+index 0000000..a47a07d
+--- /dev/null
++++ b/playbooks/service/service-overview-template.md
+@@ -0,0 +1,17 @@
++# Service Overview Template
++
++| Field | Working Content |
++| --- | --- |
++| Service name | Software Delivery and AI-SDLC Alignment Assessment |
++| Client problem | Delivery outcomes are unpredictable, prioritization is unclear, or AI-assisted development needs governance and traceability. |
++| Ideal client | Software organization with active delivery teams, customer commitments, and leadership support for improvement. |
++| Business outcomes | Clear delivery risks, prioritized improvement roadmap, better customer alignment, and measurable delivery governance. |
++| Assessment areas | Customer alignment, backlog, prioritization, sprint execution, flow, SDLC maturity, technical debt, communication, metrics, AI-SDLC readiness. |
++| Engagement duration | Common range: 2-4 weeks depending on team count, evidence access, and stakeholder availability. |
++| Activities | Intake, discovery, evidence review, interviews, scoring, findings analysis, recommendations, readout. |
++| Deliverables | Assessment report, scorecard, findings register, recommendations, 30/60/90 roadmap, implementation backlog starter. |
++| Client responsibilities | Provide sponsor, stakeholders, approved evidence, tool access where appropriate, and timely review. |
++| Assumptions | Assessment is advisory, evidence is complete enough for directional findings, and client owns implementation decisions. |
++| Exclusions | Legal advice, security certification, production code changes, personnel performance evaluation, and unmanaged tool access. |
++| Optional follow-on services | Fractional delivery leadership, backlog refinement facilitation, sprint operating model improvement, AI-SDLC workflow design. |
++| Call to action | Schedule qualification call, confirm scope, and identify evidence owner and executive sponsor. |
+diff --git a/playbooks/service/service-scope-template.md b/playbooks/service/service-scope-template.md
+new file mode 100644
+index 0000000..e48d388
+--- /dev/null
++++ b/playbooks/service/service-scope-template.md
+@@ -0,0 +1,20 @@
++# Service Scope Template
++
++| Scope Area | Included Items | Owner | Notes |
++| --- | --- | --- | --- |
++| In-scope teams | Teams assessed, locations, time zones |  |  |
++| In-scope backlogs | Product, sprint, defect, technical debt backlogs |  |  |
++| In-scope repositories | Repositories reviewed for process evidence, not code audit unless agreed |  |  |
++| Sprint history reviewed | Number of sprints and date range |  |  |
++| Stakeholder interviews | Roles and approximate count |  |  |
++| Delivery metrics | Velocity, throughput, cycle time, lead time, escaped defects, carryover |  |  |
++| Releases examined | Recent releases, hotfixes, incidents, rollback history |  |  |
++| AI-development workflows | Approved prompts, tooling, review gates, traceability artifacts where permitted |  |  |
++| Explicit exclusions | Teams, repos, data, tools, legal/security certifications outside scope |  |  |
++
++## Scope-Change Process
++
++1. Document requested change, reason, and decision deadline.
++2. Assess impact to scope, schedule, cost, evidence needs, and stakeholders.
++3. Obtain written approval before beginning changed work.
++4. Update the proposal, SOW, roadmap, and evidence plan if approved.
+-- 
+2.54.0
+
