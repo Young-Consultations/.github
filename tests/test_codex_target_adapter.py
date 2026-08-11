@@ -93,8 +93,15 @@ def test_rejected_policy_paths_have_no_effects(payload, registry, mutation, cate
     assert effects.calls["codex"] == effects.calls["publish"] == 0
 
 
-def test_disabled_target(payload, registry):
+def test_historical_disabled_snapshot_does_not_block_router_admission(payload, registry):
     registry["repositories"][TARGET]["enabled"] = False
+    result, effects = execute(payload, registry)
+    assert result["execution_status"] == "draft-pr-created"
+    assert effects.calls == {"discover": 1, "codex": 1, "validate": 1, "publish": 1}
+
+
+def test_missing_target_identity_is_rejected(payload, registry):
+    del registry["repositories"][TARGET]
     result, effects = execute(payload, registry)
     assert result["failure_category"] == "repository-routing"
     assert effects.calls["codex"] == 0

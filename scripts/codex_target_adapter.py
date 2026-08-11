@@ -96,8 +96,8 @@ def admit(raw: str, transport_group: str, caller: str, trusted_callers: set[str]
     if payload["concurrency_group"] != transport_group or not re.fullmatch(r"[a-z0-9][a-z0-9._-]{0,254}", transport_group):
         raise AdapterError("contract-validation", "Transport concurrency group is invalid or does not match payload")
     entry = registry.get("repositories", {}).get(TARGET)
-    if not entry or not entry.get("enabled"):
-        raise AdapterError("repository-routing", "Target is not enabled in the registry")
+    if not entry:
+        raise AdapterError("repository-routing", "Target identity is not present in the registry")
     if payload["target_repository"] != TARGET:
         raise AdapterError("repository-routing", "Execution input targets a different repository")
     if entry.get("contract_version") != payload["contract_version"]:
