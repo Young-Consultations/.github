@@ -15,7 +15,9 @@ from jsonschema import Draft202012Validator
 
 ROOT = Path(__file__).resolve().parents[1]
 REGISTRY = ROOT / "config/codex-repositories.json"
-ACTIVATION = ROOT / "config/codex-activation.json"
+ACTIVATION = Path(
+    os.environ.get("CODEX_ACTIVATION_PATH", ROOT / "config/codex-activation.json")
+)
 TASK_SCHEMA = ROOT / "contracts/task-contract.schema.json"
 INPUT_SCHEMA = ROOT / "contracts/execution-input.schema.json"
 REPO_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")

@@ -211,6 +211,21 @@ def test_router_checkout_uses_policy_repository():
     assert "persist-credentials: false" in text
 
 
+def test_router_loads_current_activation_outside_immutable_checkout():
+    text = Path(".github/workflows/codex-router.yml").read_text(encoding="utf-8")
+    assert text.count("ref: ${{ github.workflow_sha }}") == 2
+    assert text.count("ref: main") == 2
+    assert text.count("sparse-checkout: config/codex-activation.json") == 2
+    assert "CODEX_ACTIVATION_PATH: ${{ github.workspace }}/control-plane/config/codex-activation.json" in text
+    assert "python3 immutable-policy/scripts/codex_router.py validate" in text
+    assert "python3 immutable-policy/scripts/codex_router.py dispatch" in text
+
+
+def test_activation_changes_trigger_target_compatibility():
+    text = Path(".github/workflows/target-workflow-compatibility.yml").read_text(encoding="utf-8")
+    assert "- 'config/codex-activation.json'" in text
+
+
 def test_router_installs_validator_dependencies_and_enforces_concurrency():
     text = Path(".github/workflows/codex-router.yml").read_text(encoding="utf-8")
     assert "--no-deps" not in text

@@ -57,25 +57,39 @@ jobs:
       workflow_ref: ${{ steps.validate.outputs.workflow_ref }}
       concurrency_group: ${{ steps.validate.outputs.concurrency_group }}
     steps:
-      - name: Checkout organization policy
+      - name: Checkout immutable organization policy
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: Young-Consultations/.github
           ref: ${{ github.workflow_sha }}
+          path: immutable-policy
+          persist-credentials: false
+
+      - name: Checkout current activation state
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: Young-Consultations/.github
+          ref: main
+          path: control-plane
+          sparse-checkout: config/codex-activation.json
+          sparse-checkout-cone-mode: false
           persist-credentials: false
 
       - name: Install schema validator
         run: python -m pip install --disable-pip-version-check 'jsonschema>=4.18,<5'
 
       - name: Validate repository registry
-        run: python3 scripts/codex_router.py validate-registry
+        env:
+          CODEX_ACTIVATION_PATH: ${{ github.workspace }}/control-plane/config/codex-activation.json
+        run: python3 immutable-policy/scripts/codex_router.py validate-registry
 
       - name: Validate task and build execution input
         id: validate
         env:
           TASK_PAYLOAD: ${{ inputs.task_payload }}
           EXECUTION_MODE: ${{ inputs.execution_mode }}
-        run: python3 scripts/codex_router.py validate
+          CODEX_ACTIVATION_PATH: ${{ github.workspace }}/control-plane/config/codex-activation.json
+        run: python3 immutable-policy/scripts/codex_router.py validate
 
   dispatch:
     name: Dispatch canonical Codex task
@@ -94,11 +108,22 @@ jobs:
       failure_category: ${{ steps.dispatch.outputs.failure_category }}
       diagnostic_summary: ${{ steps.dispatch.outputs.diagnostic_summary }}
     steps:
-      - name: Checkout organization policy
+      - name: Checkout immutable organization policy
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: Young-Consultations/.github
           ref: ${{ github.workflow_sha }}
+          path: immutable-policy
+          persist-credentials: false
+
+      - name: Checkout current activation state
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: Young-Consultations/.github
+          ref: main
+          path: control-plane
+          sparse-checkout: config/codex-activation.json
+          sparse-checkout-cone-mode: false
           persist-credentials: false
 
       - name: Install schema validator
@@ -110,4 +135,5 @@ jobs:
           GH_TOKEN: ${{ secrets.CODEX_ROUTER_TOKEN }}
           EXECUTION_INPUT: ${{ needs.route.outputs.execution_input }}
           WORKFLOW_REF: ${{ needs.route.outputs.workflow_ref }}
-        run: python3 scripts/codex_router.py dispatch
+          CODEX_ACTIVATION_PATH: ${{ github.workspace }}/control-plane/config/codex-activation.json
+        run: python3 immutable-policy/scripts/codex_router.py dispatch
