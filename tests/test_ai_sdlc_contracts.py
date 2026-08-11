@@ -1,4 +1,3 @@
-import copy
 import json
 import os
 import subprocess
@@ -16,7 +15,6 @@ from ai_sdlc_contracts import (
     validate_execution_result,
     validate_task,
 )
-from ai_sdlc_contracts.normalization import normalize_payload
 
 
 EXAMPLES = Path("contracts/examples")
@@ -91,7 +89,6 @@ def test_packaged_contracts_match_canonical_contracts():
     filenames = {"contract-version.txt", *loader.SCHEMAS.values()}
     for filename in filenames:
         assert (packaged / filename).read_bytes() == (canonical / filename).read_bytes()
-        assert (packaged / "v1" / filename).read_bytes() == (canonical / "v1" / filename).read_bytes()
 
 
 @pytest.mark.parametrize(
@@ -140,24 +137,6 @@ def test_issue_reference_validation(issue):
         validate_execution_input(payload)
 
 
-def test_safe_legacy_values_are_normalized_without_mutation():
-    payload = example("task")
-    payload.update(priority="P1", executor="Codex", status="Draft PR")
-    original = copy.deepcopy(payload)
-    validate_task(payload)
-    assert payload == original
-
-
-def test_explicit_task_type_migration_can_be_configured():
-    payload = example("task")
-    payload["task_type"] = "repository governance"
-    normalized = normalize_payload(
-        payload,
-        migration_mappings={"task_type": {"repository governance": "repository-maintenance"}},
-    )
-    validate_task(normalized)
-
-
 def test_diagnostics_do_not_include_sensitive_values():
     payload = example("task")
     secret = "SUPER-SECRET-INSTRUCTION"
@@ -173,7 +152,7 @@ def test_diagnostics_do_not_include_sensitive_values():
 )
 def test_cli_accepts_valid_examples(command):
     suffix = {"validate-task": "task", "validate-input": "execution-input", "validate-result": "execution-result"}[command]
-    env = dict(os.environ, PYTHONPATH="src")
+    env = dict(os.environ, PYTHONPATH=os.pathsep.join(filter(None, ("src", os.environ.get("PYTHONPATH")))))
     result = subprocess.run(
         [sys.executable, "-m", "ai_sdlc_contracts", command, str(EXAMPLES / f"valid-{suffix}.json")],
         capture_output=True,
@@ -192,7 +171,7 @@ def test_cli_invalid_json_preserves_exit_code_two(tmp_path):
         [sys.executable, "-m", "ai_sdlc_contracts", "validate-task", str(payload)],
         capture_output=True,
         text=True,
-        env=dict(os.environ, PYTHONPATH="src"),
+        env=dict(os.environ, PYTHONPATH=os.pathsep.join(filter(None, ("src", os.environ.get("PYTHONPATH"))))),
         check=False,
     )
     assert result.returncode == 2

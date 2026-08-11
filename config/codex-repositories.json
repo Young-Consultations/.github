@@ -69,7 +69,7 @@
       }
     },
     "Young-Consultations/portfolio-tasks": {
-      "enabled": true,
+      "enabled": false,
       "workflow_ref": "Young-Consultations/portfolio-tasks/.github/workflows/codex-execute.yml@main",
       "allowed_task_types": [
         "automation",

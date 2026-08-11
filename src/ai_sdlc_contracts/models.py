@@ -3,4 +3,3 @@
 from typing import Any, Mapping
 
 Payload = Mapping[str, Any]
-MigrationMappings = Mapping[str, Mapping[str, str]]

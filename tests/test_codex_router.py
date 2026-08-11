@@ -1,11 +1,15 @@
 import json
 import os
 import subprocess
+from pathlib import Path
 
 import pytest
 from jsonschema import Draft202012Validator
 
 from scripts import codex_router
+
+
+TEST_ADAPTER_TAG = "codex-adapter-v2.0.0"
 
 
 BASE_TASK = {
@@ -27,20 +31,34 @@ BASE_TASK = {
 }
 
 
-def run_router(*, github_output=None, execution_mode=None, **changes):
+def run_router(
+    *, github_output=None, execution_mode=None, enable_target=True,
+    workflow_revision=TEST_ADAPTER_TAG, **changes,
+):
     task = {**BASE_TASK, **changes}
     env = {key: value for key, value in os.environ.items() if key != "GITHUB_OUTPUT"}
     env["TASK_PAYLOAD"] = json.dumps(task)
+    registry = json.loads(Path("config/codex-repositories.json").read_text(encoding="utf-8"))
+    if enable_target and task["target_repository"] in registry["repositories"]:
+        entry = registry["repositories"][task["target_repository"]]
+        entry["enabled"] = True
+        entry["workflow_ref"] = entry["workflow_ref"].rsplit("@", 1)[0] + "@" + workflow_revision
     if execution_mode is not None:
         env["EXECUTION_MODE"] = execution_mode
     else:
         env.pop("EXECUTION_MODE", None)
     if github_output is not None:
         env["GITHUB_OUTPUT"] = os.fspath(github_output)
-    result = subprocess.run(
-        ["python3", "scripts/codex_router.py", "validate"], env=env,
-        text=True, capture_output=True,
-    )
+    registry_path = Path("config/codex-repositories.json")
+    original_registry = registry_path.read_text(encoding="utf-8")
+    try:
+        registry_path.write_text(json.dumps(registry), encoding="utf-8")
+        result = subprocess.run(
+            ["python3", "scripts/codex_router.py", "validate"], env=env,
+            text=True, capture_output=True,
+        )
+    finally:
+        registry_path.write_text(original_registry, encoding="utf-8")
     result.github_output_path = github_output
     return result
 
@@ -106,17 +124,11 @@ def test_unknown_repository_is_canonical_routing_rejection():
     assert output(result, "failure_category") == "repository-routing"
 
 
-def test_disabled_repository_is_rejected(tmp_path):
-    path = "config/codex-repositories.json"
-    original = open(path, encoding="utf-8").read()
-    changed = original.replace('"enabled": true', '"enabled": false', 1)
-    try:
-        open(path, "w", encoding="utf-8").write(changed)
-        result = run_router()
-    finally:
-        open(path, "w", encoding="utf-8").write(original)
+def test_disabled_repository_is_rejected():
+    result = run_router(enable_target=False)
     assert result.returncode == 1
-    assert "disabled" in result.stdout
+    assert output(result, "failure_category") == "repository-routing"
+    assert json.loads(output(result, "execution_result"))["execution_status"] == "rejected"
 
 
 def test_unsupported_task_type_is_rejected():
@@ -245,6 +257,23 @@ def test_registry_validation_command_passes():
         text=True, capture_output=True,
     )
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+@pytest.mark.parametrize("workflow_revision", [
+    "main",
+    "0123456789abcdef0123456789abcdef01234567",
+    "codex-adapter-v2",
+])
+def test_enabled_registry_rejects_non_release_tag_refs(workflow_revision):
+    result = run_router(workflow_revision=workflow_revision)
+    assert result.returncode == 1
+    assert output(result, "failure_category") == "repository-routing"
+
+
+def test_enabled_registry_accepts_dispatchable_immutable_adapter_tag():
+    result = run_router(workflow_revision="codex-adapter-v2.1.3-rc.1")
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert output(result, "workflow_ref").endswith("@codex-adapter-v2.1.3-rc.1")
 
 
 def test_repository_specific_configuration_is_registry_only():

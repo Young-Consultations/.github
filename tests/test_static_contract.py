@@ -35,12 +35,13 @@ def test_registry_json_syntax_and_required_fields():
         assert entry["draft_pr_only"] is True, name
         assert entry["workflow_ref"] == f"{name}/.github/workflows/codex-execute.yml@main", name
         assert entry["contract_version"] == "ai-sdlc-contract/v2", name
+        if entry["enabled"]:
+            assert re.search(r"@codex-adapter-v[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?$", entry["workflow_ref"]), name
 
 
 def test_github_target_is_bounded_and_idempotent():
     data = json.loads(Path("config/codex-repositories.json").read_text())
     entry = data["repositories"]["Young-Consultations/.github"]
-    assert entry["workflow_ref"] == "Young-Consultations/.github/.github/workflows/codex-execute.yml@main"
     assert entry["allowed_task_types"] == ["ci-cd", "documentation", "repository-maintenance", "testing"]
     assert entry["contract_version"] == "ai-sdlc-contract/v2"
     assert entry["draft_pr_only"] is True
@@ -93,7 +94,7 @@ def test_active_workflows_do_not_expose_obsolete_executor_inputs():
 def test_portfolio_tasks_registration_contract():
     data = json.loads(Path("config/codex-repositories.json").read_text(encoding="utf-8"))
     entry = data["repositories"]["Young-Consultations/portfolio-tasks"]
-    assert entry["enabled"] is True
+    assert entry["enabled"] is False
     assert entry["allowed_task_types"] == [
         "automation",
         "backlog-governance",
@@ -102,7 +103,6 @@ def test_portfolio_tasks_registration_contract():
         "repository-maintenance",
     ]
     assert entry["codex_environment"] == "portfolio-tasks-codex-production"
-    assert entry["workflow_ref"] == "Young-Consultations/portfolio-tasks/.github/workflows/codex-execute.yml@main"
     assert entry["draft_pr_only"] is True
 
 
@@ -117,15 +117,6 @@ def test_workflows_do_not_use_pull_request_target_or_merge():
 def test_workflow_yaml_syntax():
     for workflow in WORKFLOWS.glob("*.yml"):
         assert yaml.safe_load(workflow.read_text(encoding="utf-8")) is not None
-
-
-def test_apply_migration_uses_cross_repo_token_and_creates_draft_prs():
-    text = Path(".github/workflows/apply-migration.yml").read_text(encoding="utf-8")
-    assert "secrets.GITHUB_TOKEN" not in text
-    assert text.count("git clone https://x-access-token:${{ secrets.CODEX_ROUTER_TOKEN }}@github.com/Young-Consultations/") == 2
-    assert text.count("GH_TOKEN: ${{ secrets.CODEX_ROUTER_TOKEN }}") == 2
-    assert text.count("gh pr create") == 2
-    assert text.count("--draft") == 2
 
 
 def test_contract_workflow_runs_for_every_pull_request():

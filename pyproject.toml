@@ -25,6 +25,4 @@ pythonpath = ["src"]
 ai_sdlc_contracts = [
   "contracts/*.json",
   "contracts/*.txt",
-  "contracts/v1/*.json",
-  "contracts/v1/*.txt",
 ]

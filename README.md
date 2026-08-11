@@ -31,9 +31,9 @@ python -m ai_sdlc_contracts validate-result payload.json
 ```
 
 Set `AI_SDLC_CONTRACT_DIR` only when an installation needs to use a separately
-deployed canonical contract directory. Legacy normalization is intentionally
-limited to safe spellings such as `P1`, `Codex`, and `Draft PR`; task-type
-migrations require an explicit mapping through `normalize_payload`.
+deployed canonical contract directory. Validation is exact: callers must supply
+the closed v2 vocabulary, and the package does not normalize aliases or build
+source tasks.
 
 ## Verification sequence
 
@@ -70,8 +70,10 @@ request.
 
 `Young-Consultations/.github` is the organization AI-SDLC platform repository.
 It owns the canonical schemas, shared Python validator, repository registry,
-organization router, and contract tests. It validates and routes work but does
-not execute repository changes.
+organization router, result-receiver boundary, and contract tests. It validates
+and routes work but does not execute repository changes. All targets remain
+disabled until their owners approve immutable adapter revisions and publish the
+required conformance evidence.
 
 The four registered target repositories—`.github`, `portfolio-tasks`,
 `consulting-playbook`, and `slugger`—own their `codex-execute.yml` workflows.
@@ -85,3 +87,13 @@ guarantee is exactly-once externally visible publication effects for one
 canonical `delivery_id`: at most one managed deterministic branch and one open
 managed draft PR. It intentionally does not claim transactional exactly-once
 Codex execution.
+
+## Current MVP path
+
+The sole supported organization path is approved `task-contract/v2` admission
+through [`codex-router.yml`](.github/workflows/codex-router.yml), target-owned
+`execution-input/v2` handling, and canonical `execution-result/v2` return through
+[`codex-result-receiver.yml`](.github/workflows/codex-result-receiver.yml). The
+receiver currently fails closed because durable binding, deduplication, and source
+projection are not deployed; therefore no target is enabled for execution. See
+the [next-MVP path audit](docs/next-mvp-path-audit.md).

@@ -51,6 +51,14 @@ the SHA with a branch name.
 
 Every registration contains only shared policy keys: `enabled`, `workflow_ref`, `allowed_task_types`, `codex_environment`, `max_parallel_tasks`, `draft_pr_only`, `contract_version`, and `idempotency`. Run `python3 scripts/codex_router.py validate-registry` in CI whenever registry or router policy changes. Repository differences belong only in this registry; aliases and target-specific parsing are prohibited.
 
+An enabled target's `workflow_ref` must end in a target-owned release tag named
+`codex-adapter-vMAJOR.MINOR.PATCH` (or a SemVer-style prerelease such as
+`codex-adapter-v2.1.0-rc.1`). GitHub CLI accepts that tag through
+`gh workflow run --ref`; raw commit SHAs are deliberately rejected because the
+workflow-dispatch interface accepts a branch or tag name. Target owners must
+create the tag from the reviewed adapter commit and must never move, delete, or
+recreate it. Branch refs remain valid only while a registration is disabled.
+
 ## Contract verification gate
 
 `AI-SDLC Contract Tests` is the single canonical read-only gate for shared
@@ -78,7 +86,8 @@ The organization repository owns these active workflows:
 
 - `ai-sdlc-contract-tests.yml` validates schemas, the shared Python validator,
   registry policy, router behavior, and static contract boundaries;
-- `codex-router.yml` is the only organization dispatch boundary; and
+- `codex-router.yml` is the only organization dispatch boundary;
+- `codex-result-receiver.yml` is the sole canonical result-return boundary and currently fails closed pending its durable implementation; and
 - `router-smoke-test.yml` exercises the router with read-only verification.
 
 `Young-Consultations/.github` also owns the canonical schemas, shared Python
