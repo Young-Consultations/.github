@@ -95,6 +95,10 @@ def test_scenario_e_router_rejects_conflicting_payload_for_delivery_id(tmp_path,
     monkeypatch.setenv("WORKFLOW_REF", "Young-Consultations/portfolio-tasks/.github/workflows/codex-execute.yml@main")
     monkeypatch.setattr(subprocess, "run", lambda *a, **k: subprocess.CompletedProcess(a, 0))
     from scripts import codex_router
+    repositories = codex_router.validate_registry()
+    monkeypatch.setattr(codex_router, "routing_configuration", lambda: (
+        repositories, {repository: True for repository in repositories}
+    ))
     codex_router.dispatch()
     changed = copy.deepcopy(execution); changed["instructions"] = "Altered immutable instructions."
     monkeypatch.setenv("EXECUTION_INPUT", json.dumps(changed))

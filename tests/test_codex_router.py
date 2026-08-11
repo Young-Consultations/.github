@@ -31,6 +31,18 @@ BASE_TASK = {
 }
 
 
+@pytest.fixture(autouse=True)
+def enabled_in_process_routing(monkeypatch):
+    """Direct dispatch unit tests operate on an explicitly active snapshot."""
+    original = codex_router.routing_configuration
+
+    def active_configuration():
+        repositories, _ = original()
+        return repositories, {repository: True for repository in repositories}
+
+    monkeypatch.setattr(codex_router, "routing_configuration", active_configuration)
+
+
 def run_router(
     *, github_output=None, execution_mode=None, enable_target=True,
     workflow_revision=TEST_ADAPTER_TAG, **changes,
@@ -39,9 +51,10 @@ def run_router(
     env = {key: value for key, value in os.environ.items() if key != "GITHUB_OUTPUT"}
     env["TASK_PAYLOAD"] = json.dumps(task)
     registry = json.loads(Path("config/codex-repositories.json").read_text(encoding="utf-8"))
+    activation = json.loads(Path("config/codex-activation.json").read_text(encoding="utf-8"))
     if enable_target and task["target_repository"] in registry["repositories"]:
         entry = registry["repositories"][task["target_repository"]]
-        entry["enabled"] = True
+        activation["targets"][task["target_repository"]] = True
         entry["workflow_ref"] = entry["workflow_ref"].rsplit("@", 1)[0] + "@" + workflow_revision
     if execution_mode is not None:
         env["EXECUTION_MODE"] = execution_mode
@@ -50,15 +63,19 @@ def run_router(
     if github_output is not None:
         env["GITHUB_OUTPUT"] = os.fspath(github_output)
     registry_path = Path("config/codex-repositories.json")
+    activation_path = Path("config/codex-activation.json")
     original_registry = registry_path.read_text(encoding="utf-8")
+    original_activation = activation_path.read_text(encoding="utf-8")
     try:
         registry_path.write_text(json.dumps(registry), encoding="utf-8")
+        activation_path.write_text(json.dumps(activation), encoding="utf-8")
         result = subprocess.run(
             ["python3", "scripts/codex_router.py", "validate"], env=env,
             text=True, capture_output=True,
         )
     finally:
         registry_path.write_text(original_registry, encoding="utf-8")
+        activation_path.write_text(original_activation, encoding="utf-8")
     result.github_output_path = github_output
     return result
 
@@ -264,13 +281,13 @@ def test_registry_validation_command_passes():
     "0123456789abcdef0123456789abcdef01234567",
     "codex-adapter-v2",
 ])
-def test_enabled_registry_rejects_non_release_tag_refs(workflow_revision):
+def test_enabled_activation_rejects_non_release_tag_refs(workflow_revision):
     result = run_router(workflow_revision=workflow_revision)
     assert result.returncode == 1
     assert output(result, "failure_category") == "repository-routing"
 
 
-def test_enabled_registry_accepts_dispatchable_immutable_adapter_tag():
+def test_enabled_activation_accepts_dispatchable_immutable_adapter_tag():
     result = run_router(workflow_revision="codex-adapter-v2.1.3-rc.1")
     assert result.returncode == 0, result.stdout + result.stderr
     assert output(result, "workflow_ref").endswith("@codex-adapter-v2.1.3-rc.1")

@@ -7,7 +7,7 @@ The organization router is a policy boundary between canonical planning output a
 The reusable `.github/workflows/codex-router.yml` accepts only `task_payload` plus the narrowly scoped dispatch secret. The router:
 
 1. validates `ai-sdlc-contract/v2`, approval status, the `codex` executor, and an empty dependency list;
-2. authorizes the target and task type against `config/codex-repositories.json`;
+2. authorizes capability against `config/codex-repositories.json` and current activation against `config/codex-activation.json`;
 3. constructs and schema-validates one execution input;
 4. dispatches the registered workflow with one canonical JSON input containing `execution_mode` and the other execution-contract fields, plus its concurrency transport input.
 
@@ -49,7 +49,7 @@ the SHA with a branch name.
 
 ## Registry changes
 
-Every registration contains only shared policy keys: `enabled`, `workflow_ref`, `allowed_task_types`, `codex_environment`, `max_parallel_tasks`, `draft_pr_only`, `contract_version`, and `idempotency`. Run `python3 scripts/codex_router.py validate-registry` in CI whenever registry or router policy changes. Repository differences belong only in this registry; aliases and target-specific parsing are prohibited.
+Every immutable capability entry contains only shared policy keys: `workflow_ref`, `allowed_task_types`, `codex_environment`, `max_parallel_tasks`, `draft_pr_only`, `contract_version`, and `idempotency`. Mutable booleans in `config/codex-activation.json` are the sole live enable/disable state. Run `python3 scripts/codex_router.py validate-registry` in CI whenever registry or router policy changes. Repository differences belong only in this registry; aliases and target-specific parsing are prohibited.
 
 An enabled target's `workflow_ref` must end in a target-owned release tag named
 `codex-adapter-vMAJOR.MINOR.PATCH` (or a SemVer-style prerelease such as
@@ -118,7 +118,7 @@ consumes schemas from `portfolio-tasks`. Both repositories consume the
 canonical `ai-sdlc-contract/v2` contracts from this repository.
 
 Enabled targets must pass read-only target-workflow compatibility verification
-before they are enabled in `config/codex-repositories.json`. Disabling one
+before the control-plane owner enables them in `config/codex-activation.json`. Disabling one
 target is the fail-closed rollback lever for that target and must not affect
 other registered targets. If a shared router, package, schema, registry
 contract, or compatibility behavior release must be rolled back, disable the

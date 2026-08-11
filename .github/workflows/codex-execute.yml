@@ -1,0 +1,61 @@
+name: Codex Execute
+
+on:
+  workflow_dispatch:
+    inputs:
+      execution_input_json:
+        description: Complete canonical execution-input/v2 JSON object.
+        required: true
+        type: string
+      concurrency_group:
+        description: Transport concurrency identity; must exactly match the canonical payload.
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ inputs.concurrency_group }}
+  cancel-in-progress: false
+
+jobs:
+  execute:
+    runs-on: ubuntu-latest
+    # Adapter enforcement is exact; this is a runner-level backstop so a stuck
+    # setup step cannot retain the repository concurrency group indefinitely.
+    timeout-minutes: 360
+    environment: github-target-codex
+    outputs:
+      execution_result: ${{ steps.execute.outputs.execution_result }}
+      source_issue: ${{ steps.execute.outputs.source_issue }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Install Codex CLI
+        run: npm install --global @openai/codex
+      - name: Install repository validation dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements-dev.txt
+      - id: execute
+        env:
+          EXECUTION_INPUT_JSON: ${{ inputs.execution_input_json }}
+          CONCURRENCY_GROUP: ${{ inputs.concurrency_group }}
+          CALLER_LOGIN: ${{ github.actor }}
+          TRUSTED_CALLERS: ${{ secrets.CODEX_TARGET_TRUSTED_CALLERS }}
+          OPENAI_API_KEY: ${{ secrets.CODEX_API_KEY }}
+          TARGET_PUBLICATION_TOKEN: ${{ secrets.CODEX_TARGET_PUBLICATION_TOKEN }}
+        run: python3 scripts/codex_target_adapter.py
+
+  report:
+    needs: execute
+    if: ${{ always() && needs.execute.outputs.execution_result != '' && needs.execute.outputs.source_issue != '' }}
+    permissions:
+      contents: read
+    uses: Young-Consultations/.github/.github/workflows/codex-result-receiver.yml@d646f0eea83530b269aec3d621cda7730a8c1364
+    with:
+      execution_result: ${{ needs.execute.outputs.execution_result }}
+      source_issue: ${{ needs.execute.outputs.source_issue }}
+    secrets:
+      CODEX_RESULT_TOKEN: ${{ secrets.CODEX_RESULT_TOKEN }}
+      CODEX_TRUSTED_JOURNAL_AUTHORS: ${{ secrets.CODEX_TRUSTED_JOURNAL_AUTHORS }}

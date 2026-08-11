@@ -13,7 +13,7 @@ This inventory applies the authority order in [`AI_CONTEXT.md`](../AI_CONTEXT.md
 | Built-in alias normalization and caller-supplied migration mappings | REMOVE | Deleted; validation now checks the supplied payload exactly | The closed v2 interface forbids inference, renaming, coercion, and compatibility adapters. |
 | GitHub-issue task builder, builder CLI command, fixture, and tests | REMOVE | Deleted | Portfolio task creation and approval projection belong to `portfolio-tasks`; this control plane owns validation and admission, not source-task authoring. |
 | Organization router | KEEP | Sole dispatch boundary | GH-FR-006/007 and ADR-003 require deterministic control-plane routing to target-owned execution. |
-| Target `codex-execute.yml` implementations | DEFER | Not copied here; all registry entries disabled | Targets own implementation and draft publication. Owner-approved immutable revisions and conformance evidence are pending. |
+| Target `codex-execute.yml` implementations | CONVERGE | `.github/workflows/codex-execute.yml` is the sole `.github` target adapter; sibling entries remain disabled external dependencies | Targets own implementation and draft publication. The local adapter remains disabled pending owner-approved immutable revision, credentials, and enablement. |
 | Result-receiver workflow interface | MODIFY | Retained as the sole declared receiver and explicitly fail closed | GH-FR-018 and ADR-010 require one reusable receiver. Durable bindings, deduplication, evidence storage, and source projection are not yet implemented, so accepting results would be unsafe. |
 | Router smoke and compatibility workflows | KEEP | Read-only verification paths only | GH-FR-013 and GH-QR-008 require deterministic, no-Codex compatibility evidence; these workflows do not provide an alternate executor or publisher. |
 | Consulting migration workflow, shell driver, patches, report, and their tests | REMOVE | Deleted | Cross-repository consulting asset modification belongs to the affected target owners and is outside the AI-SDLC control-plane next-MVP responsibilities. |
@@ -23,7 +23,7 @@ This inventory applies the authority order in [`AI_CONTEXT.md`](../AI_CONTEXT.md
 ## Single supported path
 
 1. A source owner supplies one approved closed v2 task.
-2. `codex-router.yml` validates it and selects exactly one enabled registry entry.
+2. `codex-router.yml` validates it, selects exactly one compatible capability entry, and requires current activation before dispatch.
 3. The selected repository's target-owned adapter revalidates one canonical v2 input and either verifies read-only or implements draft-only.
 4. The target returns one canonical v2 result through `codex-result-receiver.yml`.
 5. The receiver validates and idempotently forwards one projection to the source owner.

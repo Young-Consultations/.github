@@ -39,9 +39,14 @@ def registry(tmp_path: Path, entries: dict) -> Path:
     return path
 
 
+def activation(tmp_path: Path, targets: dict[str, bool]) -> Path:
+    path = tmp_path / "activation.json"
+    path.write_text(json.dumps({"activation_format_version": 1, "targets": targets}), encoding="utf-8")
+    return path
+
+
 def entry(repo: str = "org/repo", **changes):
     value = {
-        "enabled": True,
         "workflow_ref": f"{repo}/.github/workflows/codex-execute.yml@codex-adapter-v2.0.0",
         "contract_version": checker.CANONICAL_VERSION,
         "draft_pr_only": True,
@@ -97,11 +102,11 @@ def test_malformed_workflow_ref(reference):
         checker.parse_workflow_ref(reference)
 
 
-def test_disabled_registry_entry_is_skipped(tmp_path):
-    path = registry(tmp_path, {"org/repo": entry(enabled=False)})
+def test_disabled_activation_entry_is_skipped(tmp_path):
+    path = registry(tmp_path, {"org/repo": entry()})
     entries = checker.load_registry(path)
     with patch.object(checker, "fetch_workflow") as fetch:
-        assert checker.verify_registry(entries, None) == []
+        assert checker.verify_registry(entries, None, activation={"org/repo": False}) == []
         fetch.assert_not_called()
 
 
@@ -116,11 +121,12 @@ def test_contract_version_mismatch(tmp_path):
     "0123456789abcdef0123456789abcdef01234567",
     "codex-adapter-v2.0",
 ])
-def test_enabled_registry_requires_governed_adapter_release_tag(tmp_path, revision):
+def test_enabled_activation_requires_governed_adapter_release_tag(tmp_path, revision):
     workflow_ref = f"org/repo/.github/workflows/codex-execute.yml@{revision}"
     path = registry(tmp_path, {"org/repo": entry(workflow_ref=workflow_ref)})
+    entries = checker.load_registry(path)
     with pytest.raises(checker.CompatibilityError, match="codex-adapter-v"):
-        checker.load_registry(path)
+        checker.load_activation(activation(tmp_path, {"org/repo": True}), entries)
 
 
 def test_missing_workflow_is_reported_without_network(tmp_path):

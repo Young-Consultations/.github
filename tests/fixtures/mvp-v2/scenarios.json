@@ -94,6 +94,7 @@
       "adapter": "fake",
       "network": false,
       "codex": false,
+      "rejection_boundary": "router-activation",
       "branch_effect": "none",
       "pull_request_effect": "none"
     },
