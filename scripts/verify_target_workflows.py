@@ -21,6 +21,7 @@ except ModuleNotFoundError:  # pragma: no cover - exercised in minimal local env
 
 ROOT = Path(__file__).resolve().parents[1]
 REGISTRY = ROOT / "config/codex-repositories.json"
+ACTIVATION = ROOT / "config/codex-activation.json"
 CANONICAL_VERSION = "ai-sdlc-contract/v2"
 EXPECTED_INPUTS = {
     "execution_input_json": (False, "string"),
@@ -100,18 +101,13 @@ def load_registry(path: Path = REGISTRY) -> dict[str, dict[str, Any]]:
     if not isinstance(repositories, dict):
         raise CompatibilityError("registry must contain a repositories mapping")
     for repository, entry in repositories.items():
-        if not isinstance(entry, dict) or not isinstance(entry.get("enabled"), bool):
+        if not isinstance(entry, dict):
             raise CompatibilityError(f"invalid registry entry: {repository}")
         if entry.get("draft_pr_only") is not True:
             raise CompatibilityError(f"{repository}: draft-only publication required")
         if not isinstance(entry.get("max_parallel_tasks"), int) or entry["max_parallel_tasks"] < 1:
             raise CompatibilityError(f"{repository}: deterministic concurrency policy required")
         workflow_repository, workflow_path, workflow_revision = parse_workflow_ref(entry.get("workflow_ref"))
-        if entry["enabled"] and not IMMUTABLE_ADAPTER_TAG_RE.fullmatch(workflow_revision):
-            raise CompatibilityError(
-                f"{repository}: enabled workflow_ref must use a governed immutable "
-                "codex-adapter-v* release tag"
-            )
         if workflow_repository != repository:
             raise CompatibilityError(f"{repository}: workflow_ref repository mismatch")
         if workflow_path in {".github/workflows/codex-router.yml", ".github/workflows/router-smoke-test.yml", ".github/workflows/issue-to-codex.yml"}:
@@ -122,6 +118,25 @@ def load_registry(path: Path = REGISTRY) -> dict[str, dict[str, Any]]:
         if entry.get("contract_version") != CANONICAL_VERSION:
             raise CompatibilityError(f"{repository}: contract-version mismatch")
     return repositories
+
+
+def load_activation(path: Path, repositories: dict[str, dict[str, Any]]) -> dict[str, bool]:
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"), object_pairs_hook=_reject_duplicate_keys)
+    except (OSError, json.JSONDecodeError, CompatibilityError) as exc:
+        raise CompatibilityError(f"activation state cannot be loaded: {exc}") from exc
+    targets = data.get("targets") if isinstance(data, dict) else None
+    if data.get("activation_format_version") != 1 or not isinstance(targets, dict):
+        raise CompatibilityError("unsupported activation_format_version")
+    if set(targets) != set(repositories) or any(not isinstance(value, bool) for value in targets.values()):
+        raise CompatibilityError("activation state must contain one boolean for every registered target")
+    for repository, enabled in targets.items():
+        revision = parse_workflow_ref(repositories[repository]["workflow_ref"])[2]
+        if enabled and not IMMUTABLE_ADAPTER_TAG_RE.fullmatch(revision):
+            raise CompatibilityError(
+                f"{repository}: enabled workflow_ref must use a governed immutable codex-adapter-v* release tag"
+            )
+    return targets
 
 
 def _parse_scalar(value: str) -> Any:
@@ -276,13 +291,15 @@ def fetch_workflow(repository: str, path: str, ref: str, token: str | None = Non
 
 
 def verify_registry(
-    repositories: dict[str, dict[str, Any]], token: str | None, selected_repository: str | None = None
+    repositories: dict[str, dict[str, Any]], token: str | None,
+    selected_repository: str | None = None, activation: dict[str, bool] | None = None,
 ) -> list[dict[str, str]]:
+    activation = activation or {repository: True for repository in repositories}
     report = []
     for repository, entry in repositories.items():
         if selected_repository is not None and repository != selected_repository:
             continue
-        if not entry["enabled"] and selected_repository is None:
+        if not activation[repository] and selected_repository is None:
             debug(f"skipping disabled target {repository}")
             continue
         workflow_repository, path, ref = parse_workflow_ref(entry["workflow_ref"])
@@ -321,6 +338,7 @@ def write_outputs(report: list[dict[str, str]], report_path: Path) -> None:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--registry", type=Path, default=REGISTRY)
+    parser.add_argument("--activation", type=Path, default=ACTIVATION)
     parser.add_argument("--report", type=Path, default=ROOT / "reports/target-workflow-compatibility.json")
     parser.add_argument("--fixtures-only", action="store_true", help="validate the canonical local target fixture without network access")
     parser.add_argument("--repository", help="validate one registered repository, including when it is disabled")
@@ -334,10 +352,11 @@ def main(argv: list[str] | None = None) -> int:
             report = [{"repository": "Young-Consultations/portfolio-tasks", "workflow": ".github/workflows/codex-execute.yml",
                        "ref": "fixture", "contract_version": CANONICAL_VERSION, "draft_pr_only": "true", "transport_interface": interface, "result": "pass"}]
         else:
+            activation = load_activation(args.activation, repositories)
             token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
             if args.repository and args.repository not in repositories:
                 raise CompatibilityError(f"{args.repository}: repository is not registered")
-            report = verify_registry(repositories, token, args.repository)
+            report = verify_registry(repositories, token, args.repository, activation)
         write_outputs(report, args.report)
         failed = sum(row["result"].startswith("fail") for row in report)
         debug(f"wrote report to {args.report}; checked={len(report)}, failed={failed}")

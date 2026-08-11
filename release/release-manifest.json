@@ -2,7 +2,6 @@
   "release_version": "2.3.0",
   "tag": "ai-sdlc-v2.3.0",
   "tag_published": false,
-  "immutable_reference": "d646f0eea83530b269aec3d621cda7730a8c1364",
   "contract_package_version": "2.3.0",
   "contract_payload_version": "ai-sdlc-contract/v2",
   "schema_version": "ai-sdlc-contract/v2",

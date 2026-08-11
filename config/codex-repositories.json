@@ -2,7 +2,6 @@
   "registry_format_version": 1,
   "repositories": {
     "Young-Consultations/.github": {
-      "enabled": false,
       "workflow_ref": "Young-Consultations/.github/.github/workflows/codex-execute.yml@main",
       "allowed_task_types": [
         "ci-cd",
@@ -24,7 +23,6 @@
       }
     },
     "Young-Consultations/slugger": {
-      "enabled": false,
       "workflow_ref": "Young-Consultations/slugger/.github/workflows/codex-execute.yml@main",
       "allowed_task_types": [
         "automation",
@@ -47,7 +45,6 @@
       }
     },
     "Young-Consultations/consulting-playbook": {
-      "enabled": false,
       "workflow_ref": "Young-Consultations/consulting-playbook/.github/workflows/codex-execute.yml@main",
       "allowed_task_types": [
         "automation",
@@ -69,7 +66,6 @@
       }
     },
     "Young-Consultations/portfolio-tasks": {
-      "enabled": false,
       "workflow_ref": "Young-Consultations/portfolio-tasks/.github/workflows/codex-execute.yml@main",
       "allowed_task_types": [
         "automation",

@@ -23,7 +23,7 @@ This inventory applies the authority order in [`AI_CONTEXT.md`](../AI_CONTEXT.md
 ## Single supported path
 
 1. A source owner supplies one approved closed v2 task.
-2. `codex-router.yml` validates it and selects exactly one enabled registry entry.
+2. `codex-router.yml` validates it, selects exactly one compatible capability entry, and requires current activation before dispatch.
 3. The selected repository's target-owned adapter revalidates one canonical v2 input and either verifies read-only or implements draft-only.
 4. The target returns one canonical v2 result through `codex-result-receiver.yml`.
 5. The receiver validates and idempotently forwards one projection to the source owner.

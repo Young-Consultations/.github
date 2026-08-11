@@ -15,6 +15,9 @@ from jsonschema import Draft202012Validator
 
 ROOT = Path(__file__).resolve().parents[1]
 REGISTRY = ROOT / "config/codex-repositories.json"
+ACTIVATION = Path(
+    os.environ.get("CODEX_ACTIVATION_PATH", ROOT / "config/codex-activation.json")
+)
 TASK_SCHEMA = ROOT / "contracts/task-contract.schema.json"
 INPUT_SCHEMA = ROOT / "contracts/execution-input.schema.json"
 REPO_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
@@ -31,7 +34,7 @@ FAILURE_CATEGORIES = {
     "repository-routing", "publication", "unknown",
 }
 REGISTRY_FIELDS = {
-    "enabled", "workflow_ref", "allowed_task_types", "codex_environment",
+    "workflow_ref", "allowed_task_types", "codex_environment",
     "max_parallel_tasks", "draft_pr_only", "contract_version", "idempotency",
 }
 
@@ -113,7 +116,7 @@ def validate_registry() -> dict[str, Any]:
         missing = REGISTRY_FIELDS - entry.keys()
         if missing:
             reject("repository-routing", f"Registry entry {name} is missing: {', '.join(sorted(missing))}")
-        if not isinstance(entry["enabled"], bool) or not isinstance(entry["draft_pr_only"], bool):
+        if not isinstance(entry["draft_pr_only"], bool):
             reject("repository-routing", f"Registry entry {name} has invalid boolean policy.")
         if entry["draft_pr_only"] is not True:
             reject("repository-routing", f"Registry entry {name} must enforce draft_pr_only.")
@@ -121,13 +124,7 @@ def validate_registry() -> dict[str, Any]:
             reject("repository-routing", f"Registry entry {name} has invalid max_parallel_tasks.")
         if not isinstance(entry["allowed_task_types"], list) or not entry["allowed_task_types"] or not set(entry["allowed_task_types"]) <= supported_types:
             reject("repository-routing", f"Registry entry {name} has invalid allowed_task_types.")
-        _, workflow_revision = parse_workflow_ref(name, entry["workflow_ref"])
-        if entry["enabled"] and not IMMUTABLE_ADAPTER_TAG_RE.fullmatch(workflow_revision):
-            reject(
-                "repository-routing",
-                f"Enabled registry entry {name} must use a governed immutable "
-                "codex-adapter-v* release tag.",
-            )
+        parse_workflow_ref(name, entry["workflow_ref"])
         if not isinstance(entry["codex_environment"], str) or not entry["codex_environment"]:
             reject("repository-routing", f"Registry entry {name} has an invalid codex_environment.")
         idempotency = entry.get("idempotency")
@@ -136,6 +133,33 @@ def validate_registry() -> dict[str, Any]:
         if entry["contract_version"] != read_json(INPUT_SCHEMA)["properties"]["contract_version"]["const"]:
             reject("repository-routing", f"Registry entry {name} has an unsupported contract_version.")
     return repositories
+
+
+def validate_activation(repositories: dict[str, Any]) -> dict[str, bool]:
+    """Load current control-plane activation independently of capabilities."""
+    try:
+        data = read_json(ACTIVATION)
+    except (OSError, json.JSONDecodeError) as exc:
+        reject("repository-routing", f"Activation state cannot be loaded: {exc}")
+    targets = data.get("targets")
+    if data.get("activation_format_version") != 1 or not isinstance(targets, dict):
+        reject("repository-routing", "Activation state must declare supported activation_format_version 1.")
+    if set(targets) != set(repositories) or any(not isinstance(value, bool) for value in targets.values()):
+        reject("repository-routing", "Activation state must contain one boolean for every registered target.")
+    return targets
+
+
+def routing_configuration() -> tuple[dict[str, Any], dict[str, bool]]:
+    repositories = validate_registry()
+    activation = validate_activation(repositories)
+    for name, enabled in activation.items():
+        _, revision = parse_workflow_ref(name, repositories[name]["workflow_ref"])
+        if enabled and not IMMUTABLE_ADAPTER_TAG_RE.fullmatch(revision):
+            reject(
+                "repository-routing",
+                f"Enabled target {name} must use a governed immutable codex-adapter-v* release tag.",
+            )
+    return repositories, activation
 
 
 def slug(value: str) -> str:
@@ -158,7 +182,7 @@ def load_task() -> dict[str, Any]:
 
 
 def validate() -> dict[str, Any]:
-    repositories = validate_registry()
+    repositories, activation = routing_configuration()
     task = load_task()
     correlation_id = task["task_id"]
     delivery_id = task["task_id"]
@@ -178,7 +202,7 @@ def validate() -> dict[str, Any]:
     entry = repositories.get(target)
     if entry is None:
         reject("repository-routing", f"Repository {target} is not registered.", correlation_id)
-    if not entry["enabled"]:
+    if not activation[target]:
         reject("repository-routing", f"Repository {target} is disabled.", correlation_id)
     if task["task_type"] not in entry["allowed_task_types"]:
         reject("repository-routing", f"Task type {task['task_type']} is not allowed for {target}.", correlation_id)
@@ -237,11 +261,13 @@ def dispatch() -> None:
     if not isinstance(concurrency_group, str) or not concurrency_group.strip():
         reject("contract-validation", "Execution input requires a non-empty concurrency_group.", correlation_id)
 
-    repositories = validate_registry()
+    repositories, activation = routing_configuration()
     target_repository = execution["target_repository"]
     entry = repositories.get(target_repository)
     if entry is None:
         reject("repository-routing", f"Repository {target_repository} is not registered.", correlation_id)
+    if not activation[target_repository]:
+        reject("repository-routing", f"Repository {target_repository} is disabled.", correlation_id)
     workflow_ref = os.environ.get("WORKFLOW_REF", "")
     if workflow_ref != entry["workflow_ref"]:
         reject("repository-routing", "Workflow reference does not match the target registry entry.", correlation_id)
@@ -323,5 +349,5 @@ if __name__ == "__main__":
     elif sys.argv[1] == "dispatch":
         dispatch()
     else:
-        validate_registry()
-        print("Registry validation passed.")
+        routing_configuration()
+        print("Capability registry and activation validation passed.")

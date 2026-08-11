@@ -80,6 +80,7 @@
     },
     "disabled-target": {
       "decision": "rejected",
+      "rejection_boundary": "router-activation",
       "codex_calls": 0,
       "real_branches_created": 0,
       "real_pull_requests_created": 0,

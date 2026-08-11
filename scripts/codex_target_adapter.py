@@ -95,6 +95,8 @@ def admit(raw: str, transport_group: str, caller: str, trusted_callers: set[str]
         raise AdapterError("contract-validation", "Execution input does not conform to execution-input/v2")
     if payload["concurrency_group"] != transport_group or not re.fullmatch(r"[a-z0-9][a-z0-9._-]{0,254}", transport_group):
         raise AdapterError("contract-validation", "Transport concurrency group is invalid or does not match payload")
+    # This target consumes only immutable capability data.  Live activation is
+    # control-plane policy and is enforced by the router before dispatch.
     entry = registry.get("repositories", {}).get(TARGET)
     if not entry:
         raise AdapterError("repository-routing", "Target identity is not present in the registry")

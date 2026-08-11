@@ -7,6 +7,7 @@ on:
   pull_request:
     paths:
       - 'config/codex-repositories.json'
+      - 'config/codex-activation.json'
       - 'scripts/verify_target_workflows.py'
       - 'tests/test_target_workflow_compatibility.py'
       - 'release/release-manifest.json'

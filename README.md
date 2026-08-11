@@ -6,8 +6,10 @@ Read the [approved requirements baseline](docs/requirements/README.md) and then
 the [next-MVP software architecture](docs/architecture/README.md) before
 changing control-plane behavior.
 
-The router, reusable interface, schemas, registry, and Python package are
-released as one immutable compatibility unit. See [release, upgrade,
+The router, reusable interface, schemas, target-capability registry, and Python
+package are released as one immutable compatibility unit. Current activation in
+`config/codex-activation.json` is mutable control-plane state and is not part of
+that consumer compatibility unit. See [release, upgrade,
 deprecation, and rollback procedures](docs/releases.md).
 
 ## AI-SDLC contract validation
@@ -69,9 +71,10 @@ request.
 ## Platform and execution ownership
 
 `Young-Consultations/.github` is the organization AI-SDLC platform repository.
-It owns the canonical schemas, shared Python validator, repository registry,
-organization router, result-receiver boundary, and contract tests. It validates
-and routes work but does not execute repository changes. All targets remain
+It owns the canonical schemas, shared Python validator, immutable
+target-capability registry, mutable target activation state, organization
+router, result-receiver boundary, and contract tests. It validates and routes
+work but does not execute repository changes. All targets remain
 disabled until their owners approve immutable adapter revisions and publish the
 required conformance evidence.
 

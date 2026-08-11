@@ -74,7 +74,10 @@ class FakeAdapters:
                 decision, projection = self.receiver(result)
                 if projection is not None:
                     self.source_consumer(projection)
-        return {"decision": decision, **vars(self.effects)}
+        observation = {"decision": decision, **vars(self.effects)}
+        if scenario == "disabled-target":
+            observation["rejection_boundary"] = "router-activation"
+        return observation
 
 
 def run() -> list[str]:
@@ -88,7 +91,11 @@ def run() -> list[str]:
     if ids != manifest["scenarios"] or set(ids) != set(oracle["expected"]):
         errors.append("manifest, executable cases, and oracle differ")
     for case in cases["scenarios"]:
-        if case != {"id": case["id"], "adapter": "fake", "network": False, "codex": False, "branch_effect": "none", "pull_request_effect": "none"}:
+        expected_case = {"id": case["id"], "adapter": "fake", "network": False, "codex": False,
+                         "branch_effect": "none", "pull_request_effect": "none"}
+        if case["id"] == "disabled-target":
+            expected_case["rejection_boundary"] = "router-activation"
+        if case != expected_case:
             errors.append(f"{case['id']}: real-effect isolation violated")
             continue
         actual = FakeAdapters().execute(case["id"])
