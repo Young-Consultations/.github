@@ -211,11 +211,17 @@ class GitHubEffects:
         if pushed.returncode:
             raise AdapterError("publication", "create-race")
         body = f"<!-- {MARKER}: {delivery_id}; payload-sha256: {digest} -->\n\nAutomated draft; human review and merge are required."
-        try:
-            return self._gh("pr", "create", "--repo", TARGET, "--draft", "--head", branch, "--title",
-                            f"AI-SDLC delivery {delivery_id}", "--body", body).strip()
-        except subprocess.CalledProcessError:
-            raise AdapterError("publication", "create-race")
+        # The commit is already durable on the remote branch. Retry only PR
+        # creation so a transient GitHub CLI/API failure cannot strand that
+        # branch and make every later delivery attempt fail its non-force push.
+        for attempt in range(3):
+            try:
+                return self._gh("pr", "create", "--repo", TARGET, "--draft", "--head", branch, "--title",
+                                f"AI-SDLC delivery {delivery_id}", "--body", body).strip()
+            except subprocess.CalledProcessError:
+                if attempt == 2:
+                    raise AdapterError("publication", "create-race")
+        raise AssertionError("unreachable")
 
 
 def main() -> int:

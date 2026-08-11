@@ -1,10 +1,11 @@
 import copy
 import json
+import subprocess
 from pathlib import Path
 
 import pytest
 
-from scripts.codex_target_adapter import AdapterError, TARGET, canonical_digest, run_adapter
+from scripts.codex_target_adapter import AdapterError, GitHubEffects, TARGET, canonical_digest, run_adapter
 
 ROOT = Path(__file__).parents[1]
 
@@ -140,6 +141,31 @@ def test_create_race_requeries_and_converges(payload, registry):
     result, effects = execute(payload, registry, effects)
     assert result["execution_status"] == "duplicate-reused"
     assert effects.calls["discover"] == 2
+
+
+def test_publish_retries_pr_creation_from_pushed_commit(monkeypatch):
+    effects = GitHubEffects()
+    gh_calls = []
+
+    monkeypatch.setenv("TARGET_PUBLICATION_TOKEN", "test-token")
+
+    def git_run(command, **kwargs):
+        returncode = 1 if command[1:4] == ["diff", "--cached", "--quiet"] else 0
+        return type("Result", (), {"returncode": returncode})()
+
+    monkeypatch.setattr("scripts.codex_target_adapter.subprocess.run", git_run)
+
+    def create_pr(*args):
+        gh_calls.append(args)
+        if len(gh_calls) < 3:
+            raise subprocess.CalledProcessError(1, args)
+        return "https://github.com/Young-Consultations/.github/pull/7\n"
+
+    monkeypatch.setattr(effects, "_gh", create_pr)
+
+    assert effects.publish("codex/delivery", "delivery", "0" * 64).endswith("/pull/7")
+    assert len(gh_calls) == 3
+    assert all(call[:2] == ("pr", "create") for call in gh_calls)
 
 
 @pytest.mark.parametrize("effects,category", [
