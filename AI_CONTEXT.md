@@ -19,11 +19,12 @@ Interpret repository evidence in this order:
 
 1. The approved [vision](docs/VISION.md) defines product direction, purpose,
    intended outcomes, scope, and boundaries.
-2. The approved [next-MVP baseline](docs/releases/next-mvp.md) selects the
-   currently authorized realization increment, responsibility allocation,
-   acceptance scenario, exclusions, and deferrals.
-3. The approved [requirements baseline](docs/requirements/README.md) defines
+2. The approved [requirements baseline](docs/requirements/README.md) defines
    behavior, constraints, interfaces, and acceptance conditions.
+3. The [next-MVP planning baseline](docs/releases/next-mvp.md) selects and
+   allocates the currently planned realization increment, acceptance scenario,
+   exclusions, and deferrals within the approved requirements. It does not
+   override or relax a normative requirement.
 4. Approved [architecture and design](docs/architecture/README.md), including
    accepted [ADRs](docs/architecture/ADR.md), defines system structure,
    responsibility allocation, security boundaries, and architectural decisions.
@@ -78,9 +79,7 @@ applies:
 
 1. [Vision](docs/VISION.md) — product intent, repository responsibilities,
    non-responsibilities, principles, guardrails, and evolutionary direction.
-2. [Next-MVP baseline](docs/releases/next-mvp.md) — the approved objective,
-   responsibility allocation, acceptance scenario, exclusions, and deferrals.
-3. [Requirements index](docs/requirements/README.md) — approval status,
+2. [Requirements index](docs/requirements/README.md) — approval status,
    normative conventions, governance, and the complete requirements map. Then
    consult:
    - [project requirements](docs/requirements/project-requirements.md) for
@@ -93,6 +92,9 @@ applies:
      [repository interfaces](docs/requirements/repository-interfaces.md), and
      [external interfaces](docs/requirements/external-interfaces.md) for
      ownership and integration boundaries.
+3. [Next-MVP planning baseline](docs/releases/next-mvp.md) — the objective,
+   responsibility allocation, acceptance scenario, exclusions, and deferrals
+   that select and allocate work compliant with the requirements above.
 4. [Architecture index](docs/architecture/README.md) — approved next-MVP design
    map and interpretation rules. Always consult [ADRs](docs/architecture/ADR.md)
    and [repository boundaries](docs/architecture/RepositoryBoundaries.md);
@@ -119,8 +121,10 @@ silently override approved higher-authority product documentation.
 
 ## Implementation authority and compatibility policy
 
-- The approved vision, next-MVP baseline, requirements, architecture/design,
-  and accepted ADRs are implementation authority. Before **every**
+- The approved vision and requirements, followed by applicable approved
+  architecture/design and accepted ADRs, are implementation authority. The
+  next-MVP planning baseline selects and allocates compliant work but cannot
+  override their normative obligations. Before **every**
   implementation task, load this file first and follow its ordered reading path
   and repository boundaries before inspecting implementation details or editing.
 - Per the approved requirements baseline and current release documentation,
@@ -287,14 +291,15 @@ decided and justified during the relevant implementation task.
   next-MVP architecture as approved and normative, while
   [Software Architecture](docs/architecture/SoftwareArchitecture.md) and
   [Architecture Traceability](docs/architecture/ArchitectureTraceability.md)
-  retain pre-approval language. Follow the approved index and accepted
-  next-MVP ADRs, but treat the stale status text as an owner reconciliation item
-  rather than inventing a different authority state during implementation.
+  expressly retain pre-approval language. This status conflict requires owner
+  reconciliation. When implementation depends on either named document, fail
+  closed and report the conflicting status; do not treat its content as
+  approved or dismiss its stated status as stale.
 
 No other material contradiction among the locally approved vision,
-requirements, next-MVP architecture, and v2 interface direction was identified
-during this task. The gaps above must remain visible and fail closed where
-applicable.
+requirements, applicable approved architecture, and v2 interface direction was
+identified during this task. The gaps above must remain visible and fail closed
+where applicable.
 
 ## Maintenance rule
 
