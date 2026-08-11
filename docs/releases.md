@@ -52,10 +52,10 @@ validated keys; changing their meaning is breaking.
    reviewed 40-character merge SHA. Package consumers pin exactly the manifest
    package version and schema consumers retrieve the same tag or SHA.
 
-For the 2.2.0 MVP baseline, the approved reference is
-`f2491872976a4dcc1633997954c03c07cbc4fced`. The declared
-`ai-sdlc-v2.2.0` tag has not been published. A published
-`ai-sdlc-contracts==2.2.0` distribution has also not been verified, so MVP
+For the 2.3.0 receiver and fixture baseline, the available immutable implementation
+reference is `187e9f8efcaa042b1af650baa6cee62a6d4b7bf3`. The declared
+`ai-sdlc-v2.3.0` tag has not been published. A published
+`ai-sdlc-contracts==2.3.0` distribution has also not been verified, so MVP
 consumers must retrieve the canonical schemas directly at the approved SHA
 rather than require that package.
 
@@ -83,7 +83,7 @@ must record those three consumer PRs or confirm that no router call exists.
 
 ## Current compatibility update
 
-Registering `.github` as a fourth disabled-first target changes the supported-target compatibility unit. Prepare the new immutable MINOR release `ai-sdlc-v2.2.0` through this documented process before consumers pin it; do not move or rewrite `ai-sdlc-v2.1.0`. A later enablement-only change would not require another release, but adding the registration does.
+The `ai-sdlc-v2.3.0` candidate adds the receiver implementation and complete TC-MVP-CI-001 fixture oracle without enabling a target. Consumers must pin the published tag or the recorded full implementation commit; `@main` is never a compatibility unit.
 
 ## Rollback
 
@@ -95,3 +95,11 @@ registered target check, and the verify-mode smoke test before resuming. Do not
 move the failed tag and do not weaken the allowlist. The first managed release
 records the pre-versioning known-good commit as its rollback point. A corrective
 PATCH release updates `previous_known_good` to the last successful release.
+
+### 2.3.0 receiver rollback
+
+Disable result calls and target dispatch first. Re-pin consumers to the 2.2.0
+known-good commit in the release manifest, revoke the result-only credential,
+and retain admission/result journal comments for reconciliation. Do not delete
+receipts or reinterpret an acknowledged transport as execution success. Re-run
+the offline fixture harness and receiver tests before restoring dispatch.

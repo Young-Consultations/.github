@@ -1,0 +1,237 @@
+{
+  "fixture_version": "2.3.0",
+  "scenarios": [
+    {
+      "id": "valid-verify",
+      "adapter": "fake",
+      "network": false,
+      "codex": false,
+      "branch_effect": "none",
+      "pull_request_effect": "none"
+    },
+    {
+      "id": "valid-implement-fake-executor",
+      "adapter": "fake",
+      "network": false,
+      "codex": false,
+      "branch_effect": "none",
+      "pull_request_effect": "none"
+    },
+    {
+      "id": "valid-result",
+      "adapter": "fake",
+      "network": false,
+      "codex": false,
+      "branch_effect": "none",
+      "pull_request_effect": "none"
+    },
+    {
+      "id": "unsupported-version",
+      "adapter": "fake",
+      "network": false,
+      "codex": false,
+      "branch_effect": "none",
+      "pull_request_effect": "none"
+    },
+    {
+      "id": "malformed-payload",
+      "adapter": "fake",
+      "network": false,
+      "codex": false,
+      "branch_effect": "none",
+      "pull_request_effect": "none"
+    },
+    {
+      "id": "unauthorized-approval",
+      "adapter": "fake",
+      "network": false,
+      "codex": false,
+      "branch_effect": "none",
+      "pull_request_effect": "none"
+    },
+    {
+      "id": "stale-approval",
+      "adapter": "fake",
+      "network": false,
+      "codex": false,
+      "branch_effect": "none",
+      "pull_request_effect": "none"
+    },
+    {
+      "id": "withdrawn-approval",
+      "adapter": "fake",
+      "network": false,
+      "codex": false,
+      "branch_effect": "none",
+      "pull_request_effect": "none"
+    },
+    {
+      "id": "queued-task-at-admission",
+      "adapter": "fake",
+      "network": false,
+      "codex": false,
+      "branch_effect": "none",
+      "pull_request_effect": "none"
+    },
+    {
+      "id": "material-change-old-task-id",
+      "adapter": "fake",
+      "network": false,
+      "codex": false,
+      "branch_effect": "none",
+      "pull_request_effect": "none"
+    },
+    {
+      "id": "unknown-target",
+      "adapter": "fake",
+      "network": false,
+      "codex": false,
+      "branch_effect": "none",
+      "pull_request_effect": "none"
+    },
+    {
+      "id": "disabled-target",
+      "adapter": "fake",
+      "network": false,
+      "codex": false,
+      "branch_effect": "none",
+      "pull_request_effect": "none"
+    },
+    {
+      "id": "duplicate-delivery",
+      "adapter": "fake",
+      "network": false,
+      "codex": false,
+      "branch_effect": "none",
+      "pull_request_effect": "none"
+    },
+    {
+      "id": "existing-managed-draft-pr",
+      "adapter": "fake",
+      "network": false,
+      "codex": false,
+      "branch_effect": "none",
+      "pull_request_effect": "none"
+    },
+    {
+      "id": "identical-duplicate-result",
+      "adapter": "fake",
+      "network": false,
+      "codex": false,
+      "branch_effect": "none",
+      "pull_request_effect": "none"
+    },
+    {
+      "id": "conflicting-duplicate-result",
+      "adapter": "fake",
+      "network": false,
+      "codex": false,
+      "branch_effect": "none",
+      "pull_request_effect": "none"
+    },
+    {
+      "id": "target-rejection",
+      "adapter": "fake",
+      "network": false,
+      "codex": false,
+      "branch_effect": "none",
+      "pull_request_effect": "none"
+    },
+    {
+      "id": "execution-failure",
+      "adapter": "fake",
+      "network": false,
+      "codex": false,
+      "branch_effect": "none",
+      "pull_request_effect": "none"
+    },
+    {
+      "id": "validation-failure",
+      "adapter": "fake",
+      "network": false,
+      "codex": false,
+      "branch_effect": "none",
+      "pull_request_effect": "none"
+    },
+    {
+      "id": "test-failure",
+      "adapter": "fake",
+      "network": false,
+      "codex": false,
+      "branch_effect": "none",
+      "pull_request_effect": "none"
+    },
+    {
+      "id": "publication-failure",
+      "adapter": "fake",
+      "network": false,
+      "codex": false,
+      "branch_effect": "none",
+      "pull_request_effect": "none"
+    },
+    {
+      "id": "missing-result",
+      "adapter": "fake",
+      "network": false,
+      "codex": false,
+      "branch_effect": "none",
+      "pull_request_effect": "none"
+    },
+    {
+      "id": "delayed-result",
+      "adapter": "fake",
+      "network": false,
+      "codex": false,
+      "branch_effect": "none",
+      "pull_request_effect": "none"
+    },
+    {
+      "id": "ambiguous-result",
+      "adapter": "fake",
+      "network": false,
+      "codex": false,
+      "branch_effect": "none",
+      "pull_request_effect": "none"
+    },
+    {
+      "id": "receiver-rejection",
+      "adapter": "fake",
+      "network": false,
+      "codex": false,
+      "branch_effect": "none",
+      "pull_request_effect": "none"
+    },
+    {
+      "id": "ownership-conflict",
+      "adapter": "fake",
+      "network": false,
+      "codex": false,
+      "branch_effect": "none",
+      "pull_request_effect": "none"
+    },
+    {
+      "id": "create-race-reused",
+      "adapter": "fake",
+      "network": false,
+      "codex": false,
+      "branch_effect": "none",
+      "pull_request_effect": "none"
+    },
+    {
+      "id": "create-race-ambiguous",
+      "adapter": "fake",
+      "network": false,
+      "codex": false,
+      "branch_effect": "none",
+      "pull_request_effect": "none"
+    },
+    {
+      "id": "no-real-effects",
+      "adapter": "fake",
+      "network": false,
+      "codex": false,
+      "branch_effect": "none",
+      "pull_request_effect": "none"
+    }
+  ]
+}

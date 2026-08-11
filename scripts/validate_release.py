@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -29,8 +30,16 @@ def validate(root: Path = ROOT) -> list[str]:
         errors.append("tag must map exactly to release_version")
     if not isinstance(manifest.get("tag_published"), bool):
         errors.append("tag_published must explicitly record publication state")
-    if not re.fullmatch(r"[0-9a-f]{40}", manifest.get("immutable_reference", "")):
+    immutable_reference = manifest.get("immutable_reference", "")
+    if not re.fullmatch(r"[0-9a-f]{40}", immutable_reference):
         errors.append("immutable_reference must be a full commit SHA")
+    elif (root / ".git").exists():
+        resolved = subprocess.run(
+            ["git", "cat-file", "-e", f"{immutable_reference}^{{commit}}"],
+            cwd=root, capture_output=True, check=False,
+        )
+        if resolved.returncode:
+            errors.append("immutable_reference must resolve to a repository commit")
 
     pyproject = (root / "pyproject.toml").read_text(encoding="utf-8")
     package_match = re.search(r'^version = "([^"]+)"$', pyproject, re.MULTILINE)
@@ -56,6 +65,19 @@ def validate(root: Path = ROOT) -> list[str]:
     previous = manifest.get("previous_known_good", {})
     if not re.fullmatch(r"[0-9a-f]{40}", previous.get("commit_sha", "")):
         errors.append("previous known-good release must have a full commit SHA")
+
+    fixture_path = manifest.get("fixture_manifest")
+    if not isinstance(fixture_path, str) or not (root / fixture_path).is_file():
+        errors.append("release fixture manifest must exist")
+    else:
+        fixture = load_json(root / fixture_path)
+        if fixture.get("fixture_version") != manifest.get("fixture_version"):
+            errors.append("fixture version does not match release manifest")
+        if fixture.get("immutable_reference") != manifest.get("immutable_reference"):
+            errors.append("fixture immutable reference does not match release manifest")
+    receiver = manifest.get("result_receiver_workflow")
+    if not isinstance(receiver, str) or not (root / receiver).is_file():
+        errors.append("release result receiver workflow must exist")
 
     paths = [*root.glob(".github/workflows/*.yml"), *root.glob("docs/*.md"), root / "README.md"]
     for path in paths:

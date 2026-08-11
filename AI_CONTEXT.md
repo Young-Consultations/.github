@@ -266,13 +266,10 @@ decided and justified during the relevant implementation task.
 
 ## Known gaps or conflicts
 
-- The organization-owned [MVP v2 interface baseline](docs/interfaces/mvp-v2-compatibility.md)
-  records that the declared `ai-sdlc-v2.2.0` tag does not exist and that its
-  complete fixture manifest is identified only at a recorded commit. The
-  next-MVP baseline also states that executable inputs, expected outputs, and
-  deterministic fake adapters are not complete for every `TC-MVP-CI-001`
-  scenario. These are implementation and release-evidence gaps, not permission
-  to create another active contract.
+- The organization-owned receiver and complete deterministic `TC-MVP-CI-001`
+  fixture oracle are implemented in the 2.3.0 candidate. Its declared tag is
+  not published; source-consumer deployment and credential/retention approval
+  remain external release evidence, not permission to create another path.
 - `CC-MVP-SOURCE` and `CC-MVP-TARGET` conformance, sibling-repository-specific
   requirement IDs, immutable adapter revisions, target enablement, credentials,
   retention duration, and reconciliation deadline remain pending their

@@ -270,6 +270,19 @@ def dispatch() -> None:
             output("diagnostic_summary", "Duplicate canonical delivery matched prior immutable routing metadata.")
             return
     payload = json.dumps(execution, separators=(",", ":"), sort_keys=True)
+    issue_match = re.fullmatch(r"([^#]+)#([1-9][0-9]*)", execution["source_issue"])
+    if not issue_match:
+        reject("contract-validation", "Execution input source issue is malformed.", correlation_id)
+    binding = {key: execution[key] for key in (
+        "contract_version", "delivery_id", "correlation_id", "source_issue", "target_repository",
+    )}
+    admission_body = "<!-- ai-sdlc-admission:v2 " + json.dumps(
+        binding, separators=(",", ":"), sort_keys=True
+    ) + " -->"
+    admission_cmd = [
+        "gh", "api", f"repos/{issue_match.group(1)}/issues/{issue_match.group(2)}/comments",
+        "--method", "POST", "-f", f"body={admission_body}",
+    ]
     cmd = [
         "gh", "workflow", "run", workflow_path,
         "--repo", target_repository,
@@ -278,6 +291,10 @@ def dispatch() -> None:
         "-f", f"concurrency_group={concurrency_group}",
     ]
     try:
+        # The source-owned journal is written before dispatch.  A retry may add
+        # an identical admission marker; the receiver requires one unique
+        # binding value, not one physical comment.
+        subprocess.run(admission_cmd, check=True, text=True, capture_output=True)
         subprocess.run(cmd, check=True, text=True, capture_output=True)
     except (OSError, subprocess.CalledProcessError) as exc:
         detail = getattr(exc, "stderr", None) or getattr(exc, "stdout", None) or str(exc)

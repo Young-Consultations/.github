@@ -47,3 +47,14 @@ def test_previous_known_good_is_a_restorable_commit():
         check=False,
     )
     assert result.returncode == 0, result.stderr.decode()
+
+
+def test_implementation_reference_is_a_resolvable_commit():
+    manifest = json.loads((ROOT / "release/release-manifest.json").read_text(encoding="utf-8"))
+    result = subprocess.run(
+        ["git", "cat-file", "-e", f"{manifest['immutable_reference']}^{{commit}}"],
+        cwd=ROOT,
+        capture_output=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr.decode()

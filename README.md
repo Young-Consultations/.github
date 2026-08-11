@@ -93,7 +93,8 @@ Codex execution.
 The sole supported organization path is approved `task-contract/v2` admission
 through [`codex-router.yml`](.github/workflows/codex-router.yml), target-owned
 `execution-input/v2` handling, and canonical `execution-result/v2` return through
-[`codex-result-receiver.yml`](.github/workflows/codex-result-receiver.yml). The
-receiver currently fails closed because durable binding, deduplication, and source
-projection are not deployed; therefore no target is enabled for execution. See
-the [next-MVP path audit](docs/next-mvp-path-audit.md).
+[`codex-result-receiver.yml`](.github/workflows/codex-result-receiver.yml). The receiver validates the authenticated caller and canonical result against the
+source-owned admission journal, records a digest-only durable receipt, deduplicates
+by delivery ID, and forwards one validated `repository_dispatch` projection. All
+targets remain disabled pending owner conformance and deployment evidence. See the
+[next-MVP path audit](docs/next-mvp-path-audit.md).
