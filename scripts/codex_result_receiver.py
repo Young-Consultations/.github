@@ -24,6 +24,7 @@ SCHEMA = ROOT / "contracts/execution-result.schema.json"
 ISSUE = re.compile(r"^([A-Za-z0-9][A-Za-z0-9-]{0,38}/[A-Za-z0-9._-]{1,100})#([1-9][0-9]*)$")
 ADMISSION = "<!-- ai-sdlc-admission:v2 "
 RECEIPT = "<!-- ai-sdlc-result-receipt:v2 "
+FORWARDED = "<!-- ai-sdlc-result-forwarded:v2 "
 
 
 class ReceiverError(ValueError):
@@ -34,7 +35,8 @@ class ReceiverError(ValueError):
 
 class Journal(Protocol):
     def authenticate(self, repository: str) -> None: ...
-    def comments(self, repository: str, issue: int) -> list[str]: ...
+    def comments(self, repository: str, issue: int) -> list[JournalComment]: ...
+    def trusted_author(self, author: str) -> bool: ...
     def append(self, repository: str, issue: int, body: str) -> None: ...
     def forward(self, repository: str, projection: dict[str, Any]) -> None: ...
 
@@ -48,11 +50,19 @@ def marker(prefix: str, value: dict[str, Any]) -> str:
     return prefix + json.dumps(value, separators=(",", ":"), sort_keys=True) + " -->"
 
 
-def parse_markers(comments: list[str], prefix: str) -> list[dict[str, Any]]:
+@dataclass(frozen=True)
+class JournalComment:
+    body: str
+    author: str
+
+
+def parse_markers(comments: list[JournalComment], prefix: str, journal: Journal) -> list[dict[str, Any]]:
     found = []
     pattern = re.compile(re.escape(prefix) + r"(\{[^\n]*\}) -->")
     for comment in comments:
-        for match in pattern.finditer(comment):
+        if not journal.trusted_author(comment.author):
+            continue
+        for match in pattern.finditer(comment.body):
             try:
                 value = json.loads(match.group(1))
             except json.JSONDecodeError:
@@ -95,7 +105,7 @@ def receive(raw: str, source_issue: str, caller: str, journal: Journal) -> Recei
         raise ReceiverError("authentication", "caller does not match target identity")
     journal.authenticate(source_repository)
     comments = journal.comments(source_repository, issue_number)
-    bindings = [item for item in parse_markers(comments, ADMISSION) if item.get("delivery_id") == result["delivery_id"]]
+    bindings = [item for item in parse_markers(comments, ADMISSION, journal) if item.get("delivery_id") == result["delivery_id"]]
     expected = {
         "contract_version": result["contract_version"],
         "delivery_id": result["delivery_id"],
@@ -107,18 +117,29 @@ def receive(raw: str, source_issue: str, caller: str, journal: Journal) -> Recei
     if len(unique_bindings) != 1 or any(bindings[0].get(key) != value for key, value in expected.items()):
         raise ReceiverError("authorization", "result does not match one admitted delivery binding")
     digest = canonical_digest(result)
-    receipts = [item for item in parse_markers(comments, RECEIPT) if item.get("delivery_id") == result["delivery_id"]]
+    receipts = [item for item in parse_markers(comments, RECEIPT, journal) if item.get("delivery_id") == result["delivery_id"]]
     if receipts:
-        if len(receipts) == 1 and receipts[0].get("result_sha256") == digest:
-            return Receipt(True, result["delivery_id"], result["correlation_id"], result["execution_status"], result["failure_category"], "Identical result already received; no projection repeated.", True)
-        raise ReceiverError("unknown", "conflicting result exists for delivery", ambiguous=True)
-    evidence = {**expected, "result_sha256": digest, "receiver_run_id": os.getenv("GITHUB_RUN_ID", "offline")}
-    journal.append(source_repository, issue_number, marker(RECEIPT, evidence))
+        if len(receipts) != 1 or receipts[0].get("result_sha256") != digest:
+            raise ReceiverError("unknown", "conflicting result exists for delivery", ambiguous=True)
+    else:
+        evidence = {**expected, "result_sha256": digest, "receiver_run_id": os.getenv("GITHUB_RUN_ID", "offline")}
+        journal.append(source_repository, issue_number, marker(RECEIPT, evidence))
+    forwarded = [item for item in parse_markers(comments, FORWARDED, journal) if item.get("delivery_id") == result["delivery_id"]]
+    if forwarded:
+        if len(forwarded) == 1 and forwarded[0].get("result_sha256") == digest:
+            return Receipt(True, result["delivery_id"], result["correlation_id"], result["execution_status"], result["failure_category"], "Identical result already forwarded; no projection repeated.", True)
+        raise ReceiverError("unknown", "conflicting forwarded state exists for delivery", ambiguous=True)
     journal.forward(source_repository, {"source_issue": source_issue, "execution_result": result})
+    journal.append(source_repository, issue_number, marker(FORWARDED, {**expected, "result_sha256": digest}))
     return Receipt(True, result["delivery_id"], result["correlation_id"], result["execution_status"], result["failure_category"], "Validated result durably recorded and forwarded.")
 
 
 class GitHubJournal:
+    def __init__(self) -> None:
+        self._trusted_authors = {name.strip().casefold() for name in os.getenv("CODEX_TRUSTED_JOURNAL_AUTHORS", "").split(",") if name.strip()}
+        if not self._trusted_authors:
+            raise ReceiverError("authentication", "CODEX_TRUSTED_JOURNAL_AUTHORS is required")
+
     def _api(self, *args: str, input_value: dict[str, Any] | None = None) -> Any:
         cmd = ["gh", "api", *args]
         completed = subprocess.run(cmd, input=json.dumps(input_value) if input_value else None, text=True, capture_output=True, check=True)
@@ -129,9 +150,12 @@ class GitHubJournal:
         if not isinstance(data, dict) or data.get("full_name") != repository:
             raise ReceiverError("authentication", "result credential is not authorized for source repository")
 
-    def comments(self, repository: str, issue: int) -> list[str]:
+    def comments(self, repository: str, issue: int) -> list[JournalComment]:
         data = self._api(f"repos/{repository}/issues/{issue}/comments?per_page=100")
-        return [item.get("body", "") for item in data if isinstance(item, dict)]
+        return [JournalComment(str(item.get("body", "")), str(item.get("user", {}).get("login", ""))) for item in data if isinstance(item, dict)]
+
+    def trusted_author(self, author: str) -> bool:
+        return author.casefold() in self._trusted_authors
 
     def append(self, repository: str, issue: int, body: str) -> None:
         self._api(f"repos/{repository}/issues/{issue}/comments", "--method", "POST", "-f", f"body={body}")

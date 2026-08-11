@@ -15,6 +15,9 @@ on:
       CODEX_RESULT_TOKEN:
         description: Result-only repository-scoped identity; no target write, merge, release, or deploy authority.
         required: true
+      CODEX_TRUSTED_JOURNAL_AUTHORS:
+        description: Comma-separated GitHub App or bot logins authorized to write admission and receiver markers.
+        required: true
     outputs:
       accepted:
         description: Receipt acceptance only; never execution success.
@@ -59,4 +62,5 @@ jobs:
           EXECUTION_RESULT: ${{ inputs.execution_result }}
           SOURCE_ISSUE: ${{ inputs.source_issue }}
           CALLER_REPOSITORY: ${{ github.repository }}
+          CODEX_TRUSTED_JOURNAL_AUTHORS: ${{ secrets.CODEX_TRUSTED_JOURNAL_AUTHORS }}
         run: python3 scripts/codex_result_receiver.py

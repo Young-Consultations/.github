@@ -1,7 +1,7 @@
 {
   "fixture_set": "TC-MVP-CI-001",
   "contract_version": "ai-sdlc-contract/v2",
-  "immutable_reference": "187e9f8efcaa042b1af650baa6cee62a6d4b7bf3",
+  "immutable_reference": "d646f0eea83530b269aec3d621cda7730a8c1364",
   "schemas": {
     "task": "contracts/task-contract.schema.json",
     "execution_input": "contracts/execution-input.schema.json",

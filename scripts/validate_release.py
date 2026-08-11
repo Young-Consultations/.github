@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -29,8 +30,16 @@ def validate(root: Path = ROOT) -> list[str]:
         errors.append("tag must map exactly to release_version")
     if not isinstance(manifest.get("tag_published"), bool):
         errors.append("tag_published must explicitly record publication state")
-    if not re.fullmatch(r"[0-9a-f]{40}", manifest.get("immutable_reference", "")):
+    immutable_reference = manifest.get("immutable_reference", "")
+    if not re.fullmatch(r"[0-9a-f]{40}", immutable_reference):
         errors.append("immutable_reference must be a full commit SHA")
+    elif (root / ".git").exists():
+        resolved = subprocess.run(
+            ["git", "cat-file", "-e", f"{immutable_reference}^{{commit}}"],
+            cwd=root, capture_output=True, check=False,
+        )
+        if resolved.returncode:
+            errors.append("immutable_reference must resolve to a repository commit")
 
     pyproject = (root / "pyproject.toml").read_text(encoding="utf-8")
     package_match = re.search(r'^version = "([^"]+)"$', pyproject, re.MULTILINE)
