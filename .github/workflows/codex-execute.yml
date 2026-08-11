@@ -22,6 +22,9 @@ concurrency:
 jobs:
   execute:
     runs-on: ubuntu-latest
+    # Adapter enforcement is exact; this is a runner-level backstop so a stuck
+    # setup step cannot retain the repository concurrency group indefinitely.
+    timeout-minutes: 360
     environment: github-target-codex
     outputs:
       execution_result: ${{ steps.execute.outputs.execution_result }}
