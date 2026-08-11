@@ -55,10 +55,15 @@ def test_github_target_is_bounded_and_idempotent():
     }
 
 
-def test_organization_target_executor_is_not_implemented_yet():
-    assert not (WORKFLOWS / "codex-execute.yml").exists()
+def test_organization_target_executor_is_canonical_v2_path():
+    workflow = (WORKFLOWS / "codex-execute.yml").read_text()
+    assert "execution_input_json:" in workflow
+    assert "concurrency_group:" in workflow
+    assert "scripts/codex_target_adapter.py" in workflow
+    assert "@d646f0eea83530b269aec3d621cda7730a8c1364" in workflow
     assert {
         "ai-sdlc-contract-tests.yml",
+        "codex-execute.yml",
         "codex-router.yml",
         "router-smoke-test.yml",
     }.issubset({path.name for path in WORKFLOWS.glob("*.yml")})
