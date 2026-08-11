@@ -28,7 +28,7 @@ Registry and release policy are immutable snapshots for the duration of a decisi
 
 ## Onboarding/offboarding
 
-A target starts disabled, supplies owner/security/interface/idempotency evidence, passes compatibility and approval, then is enabled in a release-controlled registry change. Isolation disables only that target. Offboarding revokes credentials/permissions, disables dispatch, preserves required audit/evidence, documents in-flight reconciliation, and follows retention/deletion policy.
+A target starts disabled, supplies owner/security/interface/idempotency evidence, passes compatibility and approval, then is enabled by a reviewed control-plane activation change. That operational change does not modify the immutable compatibility release or require consumer repinning. Isolation disables only that target. Offboarding revokes credentials/permissions, disables dispatch, preserves required audit/evidence, documents in-flight reconciliation, and follows retention/deletion policy.
 
 ## Integration failure policy
 

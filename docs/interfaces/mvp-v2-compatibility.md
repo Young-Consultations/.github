@@ -2,8 +2,7 @@
 
 **Normative status:** organization-owned baseline for consumer alignment.  
 **Payload version:** `ai-sdlc-contract/v2` (v3 is out of scope).  
-**Immutable organization reference:** `d646f0eea83530b269aec3d621cda7730a8c1364`.
-**Fixture identity:** release `2.3.0`, fixture `2.3.0`, at implementation commit `187e9f8efcaa042b1af650baa6cee62a6d4b7bf3`. The declared `ai-sdlc-v2.3.0` tag is not yet published, and mutable `main` is not a compatibility pin.
+**Compatibility candidate:** release `2.3.0`, fixture `2.3.0`. The final immutable reference is the resulting merge commit or subsequently published `ai-sdlc-v2.3.0` tag; it is intentionally not embedded in its own contents. Mutable `main` is not a compatibility pin.
 
 This document is self-contained so a consumer needs no access to another consumer repository. The four and only four MVP targets are `Young-Consultations/.github`, `Young-Consultations/portfolio-tasks`, `Young-Consultations/slugger`, and `Young-Consultations/consulting-playbook`. The new `.github` entry is disabled-first, and registry enablement remains an explicit reviewed gate; sibling conformance is **pending owner confirmation**.
 
@@ -13,7 +12,7 @@ All three schemas use JSON Schema Draft 2020-12, require format checking, and se
 
 | Payload | Schema | Required fields | Normative rules |
 | --- | --- | --- | --- |
-| Canonical task | `contracts/task-contract.schema.json` | `contract_version`, `task_id`, `source_issue`, `status`, `executor`, `project`, `priority`, `task_type`, `target_repository`, `parallel_safe`, `dependencies`, `risk`, `scope`, `instructions`, `created_by` | Router admission requires v2, `status: approved`, `executor: codex`, empty `dependencies`, and an enabled registry target/type. Every material change gets a new `task_id` and new human approval. `queued` is only a post-admission source projection and is rejected as fresh authorization. Approval ID, approver, timestamp, revision digest, and revocation record are deferred to v3 and shall not be added to v2. |
+| Canonical task | `contracts/task-contract.schema.json` | `contract_version`, `task_id`, `source_issue`, `status`, `executor`, `project`, `priority`, `task_type`, `target_repository`, `parallel_safe`, `dependencies`, `risk`, `scope`, `instructions`, `created_by` | Router admission requires v2, `status: approved`, `executor: codex`, empty `dependencies`, a matching capability profile, and current control-plane activation. Every material change gets a new `task_id` and new human approval. `queued` is only a post-admission source projection and is rejected as fresh authorization. Approval ID, approver, timestamp, revision digest, and revocation record are deferred to v3 and shall not be added to v2. |
 | Execution input | `contracts/execution-input.schema.json` | `contract_version`, `correlation_id`, `delivery_id`, `source_issue`, `target_repository`, `task_type`, `execution_mode`, `project`, `priority`, `executor`, `parallel_safe`, `draft_pr_only`, `instructions`, `requested_branch`, `concurrency_group`, `timeout_minutes` | v2; mode is `verify` or `implement`; executor is `codex`; `draft_pr_only` is true. Verify calls no Codex and creates no branch/PR. Implement may call Codex and create or reuse only one managed open draft PR. |
 | Execution result | `contracts/execution-result.schema.json` | `contract_version`, `correlation_id`, `delivery_id`, `execution_status`, `target_repository`, `branch_name`, `pull_request_url`, `workflow_url`, `validation_result`, `test_result`, `failure_category`, `failure_message`, `started_at`, `completed_at` | Status is one of `accepted`, `rejected`, `queued`, `running`, `verified`, `no-changes`, `draft-pr-created`, `blocked`, `failed`, `duplicate-reused`, `ambiguous-rejected`; validation/test are `not-run`, `passed`, or `failed`; failure category is `none`, `contract-validation`, `authorization`, `dependency`, `repository-routing`, `authentication`, `codex-runtime`, `no-changes`, `validation`, `tests`, `publication`, `timeout`, or `unknown`. Verify success is `verified` with null branch/PR. Implementation success is `draft-pr-created` or `duplicate-reused`. Input correlation, delivery, and target identities are copied unchanged. |
 
@@ -23,11 +22,20 @@ All three schemas use JSON Schema Draft 2020-12, require format checking, and se
 
 | Interface / owner | Workflow | Required inputs | Required secret | Outputs | Consumer rule |
 | --- | --- | --- | --- | --- | --- |
-| Router / `.github` control plane | `.github/workflows/codex-router.yml` | Required `task_payload`; optional `execution_mode` (defaults to `implement`) | `CODEX_ROUTER_TOKEN` | `execution_result`, `correlation_id`, `delivery_id`, `failure_category`, `diagnostic_summary`, `concurrency_group` | Admit only the task rules above and an enabled exact registry entry. Rejections are represented in `execution_result`; there is no separate `accepted` output. |
+| Router / `.github` control plane | `.github/workflows/codex-router.yml` | Required `task_payload`; optional `execution_mode` (defaults to `implement`) | `CODEX_ROUTER_TOKEN` | `execution_result`, `correlation_id`, `delivery_id`, `failure_category`, `diagnostic_summary`, `concurrency_group` | Admit only the task rules above, an exact capability entry, and current activation. Rejections are represented in `execution_result`; there is no separate `accepted` output. |
 | Target adapter / each selected repository | `.github/workflows/codex-execute.yml` in that target, referenced by its registry entry | `execution_input_json` containing the complete canonical input; required `concurrency_group` transport input | Target-owned executor credential; exact local name is owned and documented by that target | No reusable-workflow output is returned to the router; the adapter delivers a canonical result to the receiver separately | Must validate again; target credentials cannot route, approve, write another repository, merge, release, or deploy. |
 | Result receiver / `.github` control plane | `.github/workflows/codex-result-receiver.yml` | `execution_result` (complete result JSON string), `source_issue` (must equal admitted binding) | `CODEX_RESULT_TOKEN` | String outputs `accepted` (`true`/`false`), `delivery_id`, `correlation_id`, `execution_status`, `failure_category`, `diagnostic_summary` | Behavior is defined below. |
 
-The registry snapshot currently records `Young-Consultations/<repo>/.github/workflows/codex-execute.yml@main`, including the `.github` target. Those values are routing configuration, not normative compatibility pins. Before controlled MVP execution, the deployment gate must replace the selected adapter ref with an owner-reviewed, non-moving `codex-adapter-vMAJOR.MINOR.PATCH` release tag. This governed tag is both immutable by policy and accepted as the branch-or-tag `workflow_dispatch` ref; raw commit SHAs cannot be used by that dispatch interface. Registry enabled/disabled state, routing rules, and task-type allowlists remain canonical in `config/codex-repositories.json`.
+Target-side defense in depth remains mandatory after router activation checks.
+Each adapter independently authenticates and authorizes the admitted caller;
+validates the exact target, contract version, closed schema and formats,
+supported task type and mode, `draft_pr_only: true`, concurrency transport,
+delivery identity, idempotency and deterministic ownership; and applies its
+local repository security/execution policy. It must not reject solely because
+an immutable historical compatibility snapshot happened to record the target
+as disabled.
+
+The immutable target-capability registry in `config/codex-repositories.json` records identity, workflow, version, task-type, draft-only, concurrency, environment, and idempotency policy. The mutable activation map in `config/codex-activation.json` records only whether the control plane may currently route to each target. Before controlled MVP execution, the selected workflow ref must be an owner-reviewed, non-moving `codex-adapter-vMAJOR.MINOR.PATCH` release tag. The router validates current activation before both construction and dispatch. Target adapters validate the immutable capability and protocol rules but do not consult activation. Consequently a target may keep one compatibility SHA when activation later changes.
 
 ## Result receiver and source-projection handoff
 
@@ -61,7 +69,7 @@ Every row runs for all four target profiles using the released fixtures and fake
 | Unsupported contract version / malformed payload | Reject `contract-validation`; no dispatch/effect. |
 | Non-approved task / queued task at admission | Reject `authorization`; no dispatch/effect. |
 | Material change reusing old task ID | Source/router test rejects `authorization`; new ID and approval required. |
-| Unknown target / disabled target | Reject `repository-routing`; a disabled profile remains disabled until evidence and approval. |
+| Unknown target / disabled target | Router rejects `repository-routing` before dispatch; target execution is never invoked. A disabled profile remains disabled until evidence and approval. |
 | Duplicate delivery | Retry preserves input and ID; no second executor/publication effect. |
 | Existing managed draft PR | Verify marker and binding; reuse with `duplicate-reused`; ambiguity fails closed. |
 | Identical duplicate result | Accept success; no second evidence projection visible effect. |
@@ -76,7 +84,7 @@ Every row runs for all four target profiles using the released fixtures and fake
 | Ambiguous result | `ambiguous-rejected`; no new effect; human reconciliation required. |
 | No-real-effects proof | Codex, branch, and PR adapter counters are zero and CI token permissions are read-only. |
 
-Consumer evidence records the immutable fixture reference, registry profile, adapter revision, scenario results, and no-real-effects counters. `.github` evidence is locally verifiable; evidence for the three sibling repositories remains **pending owner confirmation** and this baseline does not claim their conformance.
+Consumer evidence records the externally pinned immutable fixture reference, capability profile, adapter revision, scenario results, and no-real-effects counters. `.github` evidence is locally verifiable; evidence for the three sibling repositories remains **pending owner confirmation** and this baseline does not claim their conformance.
 
 ## Deployment/governance gates (not open interface decisions)
 

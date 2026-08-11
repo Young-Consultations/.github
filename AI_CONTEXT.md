@@ -51,8 +51,9 @@ owners.
 
 This repository is the organization AI-SDLC control plane. It owns the shared
 canonical task, execution-input, and execution-result semantics; schemas and
-validation; repository registration and routing policy; admission and result
-boundaries; shared failure, identity, correlation, compatibility, verification,
+validation; immutable target capabilities, mutable activation, and routing
+policy; admission and result boundaries; shared failure, identity, correlation,
+compatibility, verification,
 and release policy; and the related architecture and boundary documentation.
 For the next MVP it may also be a target for explicitly selected documentation,
 CI, repository-maintenance, and testing work, but only through the separate,

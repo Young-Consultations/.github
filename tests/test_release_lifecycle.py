@@ -15,14 +15,16 @@ def test_mvp_fixture_uses_current_release_identity_and_targets():
     manifest = json.loads((ROOT / "release/release-manifest.json").read_text(encoding="utf-8"))
     fixture = json.loads((ROOT / "tests/fixtures/mvp-v2/manifest.json").read_text(encoding="utf-8"))
     assert manifest["tag_published"] is False
-    assert fixture["immutable_reference"] == manifest["immutable_reference"]
+    assert "immutable_reference" not in fixture
+    assert "immutable_reference" not in manifest
     assert sorted(fixture["targets"]) == manifest["supported_targets"]
 
 
 def test_mutable_router_reference_is_rejected(tmp_path):
     for path in (
         "release/release-manifest.json", "contracts/contract-version.txt",
-        "config/codex-repositories.json", "pyproject.toml", "README.md",
+        "config/codex-repositories.json", "config/codex-activation.json",
+        "pyproject.toml", "README.md",
     ):
         destination = tmp_path / path
         destination.parent.mkdir(parents=True, exist_ok=True)
@@ -49,12 +51,6 @@ def test_previous_known_good_is_a_restorable_commit():
     assert result.returncode == 0, result.stderr.decode()
 
 
-def test_implementation_reference_is_a_resolvable_commit():
+def test_candidate_does_not_embed_its_own_future_commit_identity():
     manifest = json.loads((ROOT / "release/release-manifest.json").read_text(encoding="utf-8"))
-    result = subprocess.run(
-        ["git", "cat-file", "-e", f"{manifest['immutable_reference']}^{{commit}}"],
-        cwd=ROOT,
-        capture_output=True,
-        check=False,
-    )
-    assert result.returncode == 0, result.stderr.decode()
+    assert "immutable_reference" not in manifest

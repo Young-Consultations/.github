@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import re
-import subprocess
 import sys
 from pathlib import Path
 
@@ -30,17 +29,6 @@ def validate(root: Path = ROOT) -> list[str]:
         errors.append("tag must map exactly to release_version")
     if not isinstance(manifest.get("tag_published"), bool):
         errors.append("tag_published must explicitly record publication state")
-    immutable_reference = manifest.get("immutable_reference", "")
-    if not re.fullmatch(r"[0-9a-f]{40}", immutable_reference):
-        errors.append("immutable_reference must be a full commit SHA")
-    elif (root / ".git").exists():
-        resolved = subprocess.run(
-            ["git", "cat-file", "-e", f"{immutable_reference}^{{commit}}"],
-            cwd=root, capture_output=True, check=False,
-        )
-        if resolved.returncode:
-            errors.append("immutable_reference must resolve to a repository commit")
-
     pyproject = (root / "pyproject.toml").read_text(encoding="utf-8")
     package_match = re.search(r'^version = "([^"]+)"$', pyproject, re.MULTILINE)
     if not package_match or package_match.group(1) != manifest.get("contract_package_version"):
@@ -57,10 +45,18 @@ def validate(root: Path = ROOT) -> list[str]:
     if sorted(registry) != manifest.get("supported_targets"):
         errors.append("release targets do not exactly match the registry allowlist")
     for repository, entry in registry.items():
+        if "enabled" in entry:
+            errors.append(f"{repository}: mutable activation must not be embedded in capabilities")
         if entry.get("contract_version") != contract_version:
             errors.append(f"{repository}: contract version drift")
         if entry.get("draft_pr_only") is not True:
             errors.append(f"{repository}: draft-only execution is required")
+    activation = load_json(root / "config/codex-activation.json")
+    targets = activation.get("targets")
+    if activation.get("activation_format_version") != 1 or not isinstance(targets, dict):
+        errors.append("activation configuration has an unsupported format")
+    elif set(targets) != set(registry) or any(not isinstance(value, bool) for value in targets.values()):
+        errors.append("activation configuration must contain one boolean per capability")
 
     previous = manifest.get("previous_known_good", {})
     if not re.fullmatch(r"[0-9a-f]{40}", previous.get("commit_sha", "")):
@@ -73,8 +69,6 @@ def validate(root: Path = ROOT) -> list[str]:
         fixture = load_json(root / fixture_path)
         if fixture.get("fixture_version") != manifest.get("fixture_version"):
             errors.append("fixture version does not match release manifest")
-        if fixture.get("immutable_reference") != manifest.get("immutable_reference"):
-            errors.append("fixture immutable reference does not match release manifest")
     receiver = manifest.get("result_receiver_workflow")
     if not isinstance(receiver, str) or not (root / receiver).is_file():
         errors.append("release result receiver workflow must exist")

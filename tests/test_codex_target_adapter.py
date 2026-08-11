@@ -54,9 +54,7 @@ def payload():
 
 @pytest.fixture
 def registry():
-    value = json.loads((ROOT / "config/codex-repositories.json").read_text())
-    value["repositories"][TARGET]["enabled"] = True
-    return value
+    return json.loads((ROOT / "config/codex-repositories.json").read_text())
 
 
 def execute(payload, registry, effects=None, **overrides):
@@ -93,7 +91,9 @@ def test_rejected_policy_paths_have_no_effects(payload, registry, mutation, cate
     assert effects.calls["codex"] == effects.calls["publish"] == 0
 
 
-def test_historical_disabled_snapshot_does_not_block_router_admission(payload, registry):
+def test_historical_activation_metadata_does_not_block_adapter(payload, registry):
+    # Older compatibility snapshots may contain the former field.  It is not
+    # target-side authorization and therefore cannot invalidate a dispatch.
     registry["repositories"][TARGET]["enabled"] = False
     result, effects = execute(payload, registry)
     assert result["execution_status"] == "draft-pr-created"

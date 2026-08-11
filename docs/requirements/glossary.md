@@ -33,7 +33,7 @@
 | Organization control repository | Repository that owns shared standards and interfaces rather than application features. |
 | Producer | Authorized repository/domain that presents canonical approved work to the router. |
 | Registered target | Explicitly governed repository eligible to receive compatible authorized execution input. |
-| Repository registry | Authoritative target identity, eligibility, capability, policy, and enablement catalog. |
+| Repository registry | Authoritative target identity and capability catalog, paired with separately governed mutable control-plane enablement state. |
 | Requirement baseline | Approved, versioned set of requirements governing downstream lifecycle work. |
 | Router | Control-plane boundary that validates, authorizes, selects, and delivers; it does not execute target changes. |
 | SBOM | Software bill of materials identifying components in a released software artifact. |

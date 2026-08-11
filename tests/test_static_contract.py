@@ -1,4 +1,5 @@
 import json
+import hashlib
 import re
 import subprocess
 from pathlib import Path
@@ -26,17 +27,32 @@ def test_registry_json_syntax_and_required_fields():
     assert "Young-Consultations/portfolio-tasks" in repos
     assert "Young-Consultations/.github" in repos
     assert len(repos) == 4
-    assert repos["Young-Consultations/.github"]["enabled"] is False
+    activation = json.loads(Path("config/codex-activation.json").read_text(encoding="utf-8"))
+    assert activation["activation_format_version"] == 1
+    assert activation["targets"] == {name: False for name in repos}
     for name, entry in repos.items():
-        assert isinstance(entry["enabled"], bool), name
+        assert "enabled" not in entry, name
         assert entry["allowed_task_types"], name
         assert entry["codex_environment"], name
         assert entry["max_parallel_tasks"] >= 1, name
         assert entry["draft_pr_only"] is True, name
         assert entry["workflow_ref"] == f"{name}/.github/workflows/codex-execute.yml@main", name
         assert entry["contract_version"] == "ai-sdlc-contract/v2", name
-        if entry["enabled"]:
-            assert re.search(r"@codex-adapter-v[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?$", entry["workflow_ref"]), name
+
+
+def test_activation_change_does_not_change_compatibility_contents(tmp_path):
+    capability = Path("config/codex-repositories.json").read_bytes()
+    release = Path("release/release-manifest.json").read_bytes()
+    activation = json.loads(Path("config/codex-activation.json").read_text())
+    activation["targets"]["Young-Consultations/.github"] = True
+    (tmp_path / "activation.json").write_text(json.dumps(activation))
+
+    assert hashlib.sha256(capability).hexdigest() == hashlib.sha256(
+        Path("config/codex-repositories.json").read_bytes()
+    ).hexdigest()
+    assert hashlib.sha256(release).hexdigest() == hashlib.sha256(
+        Path("release/release-manifest.json").read_bytes()
+    ).hexdigest()
 
 
 def test_github_target_is_bounded_and_idempotent():
@@ -99,7 +115,6 @@ def test_active_workflows_do_not_expose_obsolete_executor_inputs():
 def test_portfolio_tasks_registration_contract():
     data = json.loads(Path("config/codex-repositories.json").read_text(encoding="utf-8"))
     entry = data["repositories"]["Young-Consultations/portfolio-tasks"]
-    assert entry["enabled"] is False
     assert entry["allowed_task_types"] == [
         "automation",
         "backlog-governance",

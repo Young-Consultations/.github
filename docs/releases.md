@@ -3,7 +3,7 @@
 The repository release is one atomic compatibility unit. The current unit is
 declared in [the release manifest](../release/release-manifest.json): the router
 behavior and reusable-workflow interface, packaged `ai-sdlc-contracts` API,
-canonical schemas, registry format and snapshot, and supported-target set all
+canonical schemas, capability-registry format and snapshot, and supported-target set all
 receive one SemVer release. The immutable tag is
 `ai-sdlc-vMAJOR.MINOR.PATCH`; branches are development inputs, never releases.
 
@@ -38,7 +38,7 @@ validated keys; changing their meaning is breaking.
    the complete test suite, registry validation, YAML validation, actionlint,
    and `git diff --check`.
 2. Run `python scripts/verify_target_workflows.py` with the router token. Every
-   enabled registry entry must pass; movable target refs must be replaced with
+   target enabled by current activation state must pass; movable target refs must be replaced with
    reviewed, non-moving `codex-adapter-vMAJOR.MINOR.PATCH` tags before approval.
    Run the Router smoke test in `verify` mode, confirming it invokes
    no Codex runtime and creates no branch or pull request.
@@ -52,9 +52,16 @@ validated keys; changing their meaning is breaking.
    reviewed 40-character merge SHA. Package consumers pin exactly the manifest
    package version and schema consumers retrieve the same tag or SHA.
 
-For the 2.3.0 receiver and fixture baseline, the available immutable implementation
-reference is `187e9f8efcaa042b1af650baa6cee62a6d4b7bf3`. The declared
-`ai-sdlc-v2.3.0` tag has not been published. A published
+The candidate contents never name their own future merge SHA. Finalize and
+merge first, obtain the immutable commit identity second, and record the pin in
+each consumer's own configuration or documentation. This avoids a recursive
+release update.
+
+The 2.3.0 receiver and fixture baseline does not embed a prospective commit SHA.
+After merge, consumers may pin the resulting 40-character merge SHA; a release
+owner may later publish the declared `ai-sdlc-v2.3.0` tag through the governed
+process. Activation changes are separate operational changes and do not require
+consumers to repin that compatibility SHA. The tag has not been published. A published
 `ai-sdlc-contracts==2.3.0` distribution has also not been verified, so MVP
 consumers must retrieve the canonical schemas directly at the approved SHA
 rather than require that package.
@@ -83,7 +90,7 @@ must record those three consumer PRs or confirm that no router call exists.
 
 ## Current compatibility update
 
-The `ai-sdlc-v2.3.0` candidate adds the receiver implementation and complete TC-MVP-CI-001 fixture oracle without enabling a target. Consumers must pin the published tag or the recorded full implementation commit; `@main` is never a compatibility unit.
+The `ai-sdlc-v2.3.0` candidate adds the receiver implementation and complete TC-MVP-CI-001 fixture oracle without enabling a target. Consumers must pin the published tag or the resulting reviewed merge commit; `@main` is never a compatibility unit.
 
 ## Rollback
 

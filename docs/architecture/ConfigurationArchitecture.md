@@ -5,7 +5,8 @@
 | Domain | Examples | Owner |
 | --- | --- | --- |
 | Contract/release | Supported majors, artifact identities/digests, release and rollback identity | Contract/release authority |
-| Registration | Target identity/owner, enablement, endpoint, versions/modes/types, concurrency, draft policy, security environment, idempotency capabilities | Control-plane registry owner with target/security review |
+| Target capabilities | Target identity/owner, endpoint, versions/modes/types, concurrency, draft policy, security environment, idempotency capabilities | Control-plane registry owner with target/security review |
+| Activation | Current enabled/disabled boolean for every capability entry | Control-plane owner with target/security approval; router is sole enforcer |
 | Runtime request | Canonical task and explicit execution mode | Planning caller; validated by control plane |
 | Operational policy | Timeouts, retry budgets, SLO/alert thresholds, retention/classification | Operations/security governance |
 | Credentials | Dispatch/read-only identities and secret references | Security/platform owner |
