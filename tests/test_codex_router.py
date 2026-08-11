@@ -313,7 +313,8 @@ def test_dispatch_uses_canonical_json_transport_for_every_repository(
 
     codex_router.dispatch()
 
-    cmd, kwargs = calls[0]
+    assert calls[0][0][1:3] == ["api", f"repos/{repository}/issues/8/comments"]
+    cmd, kwargs = calls[-1]
     fields = [cmd[index + 1] for index, value in enumerate(cmd) if value == "-f"]
     assert len(fields) == 2
     assert [field.split("=", 1)[0] for field in fields] == [
@@ -343,11 +344,12 @@ def test_portfolio_tasks_dispatch_command_matches_workflow_interface(monkeypatch
 
     codex_router.dispatch()
 
-    assert commands[0][:8] == [
+    assert commands[0][1:3] == ["api", f"repos/{repository}/issues/8/comments"]
+    assert commands[-1][:8] == [
         "gh", "workflow", "run", "codex-execute.yml", "--repo", repository,
         "--ref", "main",
     ]
-    assert commands[0][8::2] == ["-f", "-f"]
+    assert commands[-1][8::2] == ["-f", "-f"]
 
 
 def test_dispatch_rejects_invalid_execution_without_running_gh(monkeypatch):

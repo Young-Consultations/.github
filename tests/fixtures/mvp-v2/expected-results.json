@@ -1,0 +1,208 @@
+{
+  "fixture_version": "2.3.0",
+  "expected": {
+    "valid-verify": {
+      "decision": "accepted",
+      "codex_calls": 0,
+      "real_branches_created": 0,
+      "real_pull_requests_created": 0,
+      "forward_count": 1
+    },
+    "valid-implement-fake-executor": {
+      "decision": "accepted",
+      "codex_calls": 0,
+      "real_branches_created": 0,
+      "real_pull_requests_created": 0,
+      "forward_count": 1
+    },
+    "valid-result": {
+      "decision": "accepted",
+      "codex_calls": 0,
+      "real_branches_created": 0,
+      "real_pull_requests_created": 0,
+      "forward_count": 1
+    },
+    "unsupported-version": {
+      "decision": "rejected",
+      "codex_calls": 0,
+      "real_branches_created": 0,
+      "real_pull_requests_created": 0,
+      "forward_count": 0
+    },
+    "malformed-payload": {
+      "decision": "rejected",
+      "codex_calls": 0,
+      "real_branches_created": 0,
+      "real_pull_requests_created": 0,
+      "forward_count": 0
+    },
+    "unauthorized-approval": {
+      "decision": "rejected",
+      "codex_calls": 0,
+      "real_branches_created": 0,
+      "real_pull_requests_created": 0,
+      "forward_count": 0
+    },
+    "stale-approval": {
+      "decision": "rejected",
+      "codex_calls": 0,
+      "real_branches_created": 0,
+      "real_pull_requests_created": 0,
+      "forward_count": 0
+    },
+    "withdrawn-approval": {
+      "decision": "rejected",
+      "codex_calls": 0,
+      "real_branches_created": 0,
+      "real_pull_requests_created": 0,
+      "forward_count": 0
+    },
+    "queued-task-at-admission": {
+      "decision": "rejected",
+      "codex_calls": 0,
+      "real_branches_created": 0,
+      "real_pull_requests_created": 0,
+      "forward_count": 0
+    },
+    "material-change-old-task-id": {
+      "decision": "rejected",
+      "codex_calls": 0,
+      "real_branches_created": 0,
+      "real_pull_requests_created": 0,
+      "forward_count": 0
+    },
+    "unknown-target": {
+      "decision": "rejected",
+      "codex_calls": 0,
+      "real_branches_created": 0,
+      "real_pull_requests_created": 0,
+      "forward_count": 0
+    },
+    "disabled-target": {
+      "decision": "rejected",
+      "codex_calls": 0,
+      "real_branches_created": 0,
+      "real_pull_requests_created": 0,
+      "forward_count": 0
+    },
+    "duplicate-delivery": {
+      "decision": "accepted",
+      "codex_calls": 0,
+      "real_branches_created": 0,
+      "real_pull_requests_created": 0,
+      "forward_count": 0
+    },
+    "existing-managed-draft-pr": {
+      "decision": "accepted",
+      "codex_calls": 0,
+      "real_branches_created": 0,
+      "real_pull_requests_created": 0,
+      "forward_count": 1
+    },
+    "identical-duplicate-result": {
+      "decision": "accepted",
+      "codex_calls": 0,
+      "real_branches_created": 0,
+      "real_pull_requests_created": 0,
+      "forward_count": 0
+    },
+    "conflicting-duplicate-result": {
+      "decision": "ambiguous-rejected",
+      "codex_calls": 0,
+      "real_branches_created": 0,
+      "real_pull_requests_created": 0,
+      "forward_count": 0
+    },
+    "target-rejection": {
+      "decision": "accepted",
+      "codex_calls": 0,
+      "real_branches_created": 0,
+      "real_pull_requests_created": 0,
+      "forward_count": 1
+    },
+    "execution-failure": {
+      "decision": "accepted",
+      "codex_calls": 0,
+      "real_branches_created": 0,
+      "real_pull_requests_created": 0,
+      "forward_count": 1
+    },
+    "validation-failure": {
+      "decision": "accepted",
+      "codex_calls": 0,
+      "real_branches_created": 0,
+      "real_pull_requests_created": 0,
+      "forward_count": 1
+    },
+    "test-failure": {
+      "decision": "accepted",
+      "codex_calls": 0,
+      "real_branches_created": 0,
+      "real_pull_requests_created": 0,
+      "forward_count": 1
+    },
+    "publication-failure": {
+      "decision": "accepted",
+      "codex_calls": 0,
+      "real_branches_created": 0,
+      "real_pull_requests_created": 0,
+      "forward_count": 1
+    },
+    "missing-result": {
+      "decision": "pending-timeout",
+      "codex_calls": 0,
+      "real_branches_created": 0,
+      "real_pull_requests_created": 0,
+      "forward_count": 0
+    },
+    "delayed-result": {
+      "decision": "accepted",
+      "codex_calls": 0,
+      "real_branches_created": 0,
+      "real_pull_requests_created": 0,
+      "forward_count": 1
+    },
+    "ambiguous-result": {
+      "decision": "ambiguous-rejected",
+      "codex_calls": 0,
+      "real_branches_created": 0,
+      "real_pull_requests_created": 0,
+      "forward_count": 0
+    },
+    "receiver-rejection": {
+      "decision": "rejected",
+      "codex_calls": 0,
+      "real_branches_created": 0,
+      "real_pull_requests_created": 0,
+      "forward_count": 0
+    },
+    "ownership-conflict": {
+      "decision": "ambiguous-rejected",
+      "codex_calls": 0,
+      "real_branches_created": 0,
+      "real_pull_requests_created": 0,
+      "forward_count": 0
+    },
+    "create-race-reused": {
+      "decision": "accepted",
+      "codex_calls": 0,
+      "real_branches_created": 0,
+      "real_pull_requests_created": 0,
+      "forward_count": 1
+    },
+    "create-race-ambiguous": {
+      "decision": "ambiguous-rejected",
+      "codex_calls": 0,
+      "real_branches_created": 0,
+      "real_pull_requests_created": 0,
+      "forward_count": 0
+    },
+    "no-real-effects": {
+      "decision": "accepted",
+      "codex_calls": 0,
+      "real_branches_created": 0,
+      "real_pull_requests_created": 0,
+      "forward_count": 0
+    }
+  }
+}

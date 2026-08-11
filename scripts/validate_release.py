@@ -57,6 +57,19 @@ def validate(root: Path = ROOT) -> list[str]:
     if not re.fullmatch(r"[0-9a-f]{40}", previous.get("commit_sha", "")):
         errors.append("previous known-good release must have a full commit SHA")
 
+    fixture_path = manifest.get("fixture_manifest")
+    if not isinstance(fixture_path, str) or not (root / fixture_path).is_file():
+        errors.append("release fixture manifest must exist")
+    else:
+        fixture = load_json(root / fixture_path)
+        if fixture.get("fixture_version") != manifest.get("fixture_version"):
+            errors.append("fixture version does not match release manifest")
+        if fixture.get("immutable_reference") != manifest.get("immutable_reference"):
+            errors.append("fixture immutable reference does not match release manifest")
+    receiver = manifest.get("result_receiver_workflow")
+    if not isinstance(receiver, str) or not (root / receiver).is_file():
+        errors.append("release result receiver workflow must exist")
+
     paths = [*root.glob(".github/workflows/*.yml"), *root.glob("docs/*.md"), root / "README.md"]
     for path in paths:
         if match := MUTABLE_REUSABLE.search(path.read_text(encoding="utf-8")):

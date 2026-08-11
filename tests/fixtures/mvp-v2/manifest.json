@@ -1,7 +1,7 @@
 {
   "fixture_set": "TC-MVP-CI-001",
   "contract_version": "ai-sdlc-contract/v2",
-  "immutable_reference": "f2491872976a4dcc1633997954c03c07cbc4fced",
+  "immutable_reference": "187e9f8efcaa042b1af650baa6cee62a6d4b7bf3",
   "schemas": {
     "task": "contracts/task-contract.schema.json",
     "execution_input": "contracts/execution-input.schema.json",
@@ -20,14 +20,42 @@
     "Young-Consultations/consulting-playbook"
   ],
   "scenarios": [
-    "valid-verify", "valid-implement-fake-executor", "valid-result",
-    "unsupported-version", "malformed-payload", "non-approved-task",
-    "queued-task-at-admission", "material-change-old-task-id",
-    "unknown-target", "disabled-target", "duplicate-delivery",
-    "existing-managed-draft-pr", "identical-duplicate-result",
-    "conflicting-duplicate-result", "target-rejection", "execution-failure",
-    "validation-failure", "test-failure", "publication-failure",
-    "missing-result", "delayed-result", "ambiguous-result", "no-real-effects"
+    "valid-verify",
+    "valid-implement-fake-executor",
+    "valid-result",
+    "unsupported-version",
+    "malformed-payload",
+    "unauthorized-approval",
+    "stale-approval",
+    "withdrawn-approval",
+    "queued-task-at-admission",
+    "material-change-old-task-id",
+    "unknown-target",
+    "disabled-target",
+    "duplicate-delivery",
+    "existing-managed-draft-pr",
+    "identical-duplicate-result",
+    "conflicting-duplicate-result",
+    "target-rejection",
+    "execution-failure",
+    "validation-failure",
+    "test-failure",
+    "publication-failure",
+    "missing-result",
+    "delayed-result",
+    "ambiguous-result",
+    "receiver-rejection",
+    "ownership-conflict",
+    "create-race-reused",
+    "create-race-ambiguous",
+    "no-real-effects"
   ],
-  "required_zero_effect_counters": ["codex_calls", "real_branches_created", "real_pull_requests_created"]
+  "required_zero_effect_counters": [
+    "codex_calls",
+    "real_branches_created",
+    "real_pull_requests_created"
+  ],
+  "fixture_version": "2.3.0",
+  "scenario_file": "tests/fixtures/mvp-v2/scenarios.json",
+  "expected_results": "tests/fixtures/mvp-v2/expected-results.json"
 }

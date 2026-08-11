@@ -1,4 +1,4 @@
-name: Codex result receiver interface (not implemented)
+name: Codex result receiver
 
 on:
   workflow_call:
@@ -17,40 +17,46 @@ on:
         required: true
     outputs:
       accepted:
-        description: String true or false; never an execution-success reinterpretation.
-        value: ${{ jobs.interface-only.outputs.accepted }}
+        description: Receipt acceptance only; never execution success.
+        value: ${{ jobs.receive.outputs.accepted }}
       delivery_id:
-        value: ${{ jobs.interface-only.outputs.delivery_id }}
+        value: ${{ jobs.receive.outputs.delivery_id }}
       correlation_id:
-        value: ${{ jobs.interface-only.outputs.correlation_id }}
+        value: ${{ jobs.receive.outputs.correlation_id }}
       execution_status:
-        value: ${{ jobs.interface-only.outputs.execution_status }}
+        value: ${{ jobs.receive.outputs.execution_status }}
       failure_category:
-        value: ${{ jobs.interface-only.outputs.failure_category }}
+        value: ${{ jobs.receive.outputs.failure_category }}
       diagnostic_summary:
-        value: ${{ jobs.interface-only.outputs.diagnostic_summary }}
+        value: ${{ jobs.receive.outputs.diagnostic_summary }}
 
-permissions: {}
+permissions:
+  contents: read
 
 jobs:
-  interface-only:
+  receive:
     runs-on: ubuntu-latest
+    concurrency:
+      group: result-${{ inputs.source_issue }}
+      cancel-in-progress: false
     outputs:
-      accepted: ${{ steps.refuse.outputs.accepted }}
-      delivery_id: ${{ steps.refuse.outputs.delivery_id }}
-      correlation_id: ${{ steps.refuse.outputs.correlation_id }}
-      execution_status: ${{ steps.refuse.outputs.execution_status }}
-      failure_category: ${{ steps.refuse.outputs.failure_category }}
-      diagnostic_summary: ${{ steps.refuse.outputs.diagnostic_summary }}
+      accepted: ${{ steps.receive.outputs.accepted }}
+      delivery_id: ${{ steps.receive.outputs.delivery_id }}
+      correlation_id: ${{ steps.receive.outputs.correlation_id }}
+      execution_status: ${{ steps.receive.outputs.execution_status }}
+      failure_category: ${{ steps.receive.outputs.failure_category }}
+      diagnostic_summary: ${{ steps.receive.outputs.diagnostic_summary }}
     steps:
-      - id: refuse
-        shell: bash
-        run: |
-          echo 'accepted=false' >> "$GITHUB_OUTPUT"
-          echo 'delivery_id=' >> "$GITHUB_OUTPUT"
-          echo 'correlation_id=' >> "$GITHUB_OUTPUT"
-          echo 'execution_status=rejected' >> "$GITHUB_OUTPUT"
-          echo 'failure_category=unknown' >> "$GITHUB_OUTPUT"
-          echo 'diagnostic_summary=Receiver implementation is not deployed.' >> "$GITHUB_OUTPUT"
-          echo 'Interface declaration only; refusing result processing.' >&2
-          exit 1
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: Young-Consultations/.github
+          ref: ${{ github.workflow_sha }}
+          persist-credentials: false
+      - run: python -m pip install --disable-pip-version-check 'jsonschema[format]>=4.18,<5'
+      - id: receive
+        env:
+          GH_TOKEN: ${{ secrets.CODEX_RESULT_TOKEN }}
+          EXECUTION_RESULT: ${{ inputs.execution_result }}
+          SOURCE_ISSUE: ${{ inputs.source_issue }}
+          CALLER_REPOSITORY: ${{ github.repository }}
+        run: python3 scripts/codex_result_receiver.py

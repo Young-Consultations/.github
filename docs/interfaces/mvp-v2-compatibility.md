@@ -3,7 +3,7 @@
 **Normative status:** organization-owned baseline for consumer alignment.  
 **Payload version:** `ai-sdlc-contract/v2` (v3 is out of scope).  
 **Immutable organization reference:** `f2491872976a4dcc1633997954c03c07cbc4fced`.
-**Fixture identity:** `tests/fixtures/mvp-v2/manifest.json` at that complete SHA. The declared `ai-sdlc-v2.2.0` tag does not exist, and mutable `main` is not a compatibility pin.
+**Fixture identity:** release `2.3.0`, fixture `2.3.0`, at implementation commit `187e9f8efcaa042b1af650baa6cee62a6d4b7bf3`. The declared `ai-sdlc-v2.3.0` tag is not yet published, and mutable `main` is not a compatibility pin.
 
 This document is self-contained so a consumer needs no access to another consumer repository. The four and only four MVP targets are `Young-Consultations/.github`, `Young-Consultations/portfolio-tasks`, `Young-Consultations/slugger`, and `Young-Consultations/consulting-playbook`. The new `.github` entry is disabled-first, and registry enablement remains an explicit reviewed gate; sibling conformance is **pending owner confirmation**.
 
