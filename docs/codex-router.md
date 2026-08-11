@@ -78,7 +78,8 @@ The organization repository owns these active workflows:
 
 - `ai-sdlc-contract-tests.yml` validates schemas, the shared Python validator,
   registry policy, router behavior, and static contract boundaries;
-- `codex-router.yml` is the only organization dispatch boundary; and
+- `codex-router.yml` is the only organization dispatch boundary;
+- `codex-result-receiver.yml` is the sole canonical result-return boundary and currently fails closed pending its durable implementation; and
 - `router-smoke-test.yml` exercises the router with read-only verification.
 
 `Young-Consultations/.github` also owns the canonical schemas, shared Python

@@ -17,10 +17,9 @@ independently of their installation prefix or current working directory.
 | `task-contract.schema.json` | Planning and approved-task record shared across task sources |
 | `execution-input.schema.json` | Request submitted to the single Codex execution path |
 | `execution-result.schema.json` | Machine-readable state or terminal outcome from that path |
-| `v1/` | Immutable version 1 schemas retained for pinned consumers during migration |
 | `examples/` | Complete payloads for producer/consumer fixtures and integration tests |
 
-All objects are closed with `additionalProperties: false`. An unrecognized field therefore fails validation rather than being silently discarded. This is deliberate: there is no v1 compatibility reason to permit extension fields.
+All objects are closed with `additionalProperties: false`. An unrecognized field therefore fails validation rather than being silently discarded. This ensures the single v2 contract is interpreted exactly at every boundary.
 
 ## Consumption
 
@@ -40,19 +39,12 @@ The schemas neither authorize a repository nor route to it. Repository allowlist
 
 Versions use the namespace `ai-sdlc-contract/vN`, where `N` is the major contract version. The version is part of every payload and is matched exactly by each schema.
 
-* **Breaking changes require a new major version.** Removing or renaming a field or enum member, changing its meaning or type, making an optional field required, tightening validation for previously valid data, or changing a required invariant creates `/v2` (or the next major version). Existing versioned schemas remain available while consumers migrate.
+* **Breaking changes require a new major version.** Removing or renaming a field or enum member, changing its meaning or type, making an optional field required, tightening validation for previously valid data, or changing a required invariant creates `/v2` (or the next major version). Historical schemas remain available from immutable Git history and releases, not as active local interfaces.
 * **Backward-compatible additions are limited to optional fields.** An optional field may be added within a major version only after coordinated schema publication. Because objects are closed, consumers must update to the additive schema before producers emit the field. Producers must not send it until all relevant consumers accept it.
 * **Enum additions require care.** Consumers commonly treat enums as exhaustive, so a new enum value is considered breaking unless the version's consumer policy explicitly established an unknown-value fallback. Version 1 establishes no such fallback.
 * **Version mismatch is a hard failure.** Consumers never coerce an older or newer payload. They select the matching schema or reject it as `contract-validation`.
 
-During a major-version migration, producers may generate old and new payloads at separate boundaries, but a single payload is valid for exactly one version. Changes to examples and automated positive and negative validation tests accompany every contract change.
-
-The root schemas and examples currently publish `ai-sdlc-contract/v2`. Version 2
-introduces the required execution mode and the `verified` execution result. The
-original closed version 1 schemas remain under [`v1/`](v1/) so existing producers
-and consumers can continue validating version 1 payloads while they coordinate
-their migration. The router and repository registry migrate together and emit
-only version 2 execution payloads.
+The root schemas and examples publish the sole active `ai-sdlc-contract/v2` family. Historical contract artifacts remain recoverable from immutable Git history and releases, but are not packaged or supported as a second local validation path.
 
 ## Local validation
 

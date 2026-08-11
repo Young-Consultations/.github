@@ -42,7 +42,7 @@ def registry(tmp_path: Path, entries: dict) -> Path:
 def entry(repo: str = "org/repo", **changes):
     value = {
         "enabled": True,
-        "workflow_ref": f"{repo}/.github/workflows/codex-execute.yml@main",
+        "workflow_ref": f"{repo}/.github/workflows/codex-execute.yml@0123456789abcdef0123456789abcdef01234567",
         "contract_version": checker.CANONICAL_VERSION,
         "draft_pr_only": True,
         "max_parallel_tasks": 1,
@@ -122,8 +122,8 @@ def test_network_fetch_is_mocked_for_success(tmp_path):
     entries = checker.load_registry(registry(tmp_path, {"org/repo": entry()}))
     with patch.object(checker, "fetch_workflow", return_value=CANONICAL) as fetch:
         report = checker.verify_registry(entries, "fake-token")
-    fetch.assert_called_once_with("org/repo", ".github/workflows/codex-execute.yml", "main", "fake-token")
-    assert report[0]["result"] == "pass (warning: movable ref)"
+    fetch.assert_called_once_with("org/repo", ".github/workflows/codex-execute.yml", "0123456789abcdef0123456789abcdef01234567", "fake-token")
+    assert report[0]["result"] == "pass"
 
 
 def test_fetch_workflow_accepts_line_wrapped_contents_api_payload():
@@ -185,7 +185,7 @@ def test_incompatible_required_input_is_rejected():
 
 
 def test_issue_to_codex_cannot_be_registered(tmp_path):
-    path = registry(tmp_path, {"org/repo": entry(workflow_ref="org/repo/.github/workflows/issue-to-codex.yml@main")})
+    path = registry(tmp_path, {"org/repo": entry(workflow_ref="org/repo/.github/workflows/issue-to-codex.yml@0123456789abcdef0123456789abcdef01234567")})
     with pytest.raises(checker.CompatibilityError, match="obsolete workflow_ref"):
         checker.load_registry(path)
 
@@ -224,7 +224,7 @@ def test_one_incompatible_target_does_not_block_unrelated_target(tmp_path):
         return CANONICAL
     with patch.object(checker, "fetch_workflow", side_effect=fake_fetch):
         report = checker.verify_registry(entries, None)
-    assert report[0]["result"] == "pass (warning: movable ref)"
+    assert report[0]["result"] == "pass"
     assert report[1]["result"].startswith("fail:")
 
 

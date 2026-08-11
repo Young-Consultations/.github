@@ -74,18 +74,6 @@ def test_mismatched_contract_versions_fail(name):
         validator.validate(instance)
 
 
-def test_v1_schemas_remain_available_and_unchanged_by_v2_features():
-    archived = CONTRACTS / "v1"
-    assert (archived / "contract-version.txt").read_text(encoding="utf-8").strip() == "ai-sdlc-contract/v1"
-
-    input_schema = load_json(archived / "execution-input.schema.json")
-    result_schema = load_json(archived / "execution-result.schema.json")
-    assert "execution_mode" not in input_schema["properties"]
-    assert "verified" not in result_schema["properties"]["execution_status"]["enum"]
-    assert input_schema["properties"]["contract_version"]["const"] == "ai-sdlc-contract/v1"
-    assert result_schema["properties"]["contract_version"]["const"] == "ai-sdlc-contract/v1"
-
-
 def test_codex_input_cannot_disable_draft_pr_only():
     validator, instance = case("input")
     instance["draft_pr_only"] = False

@@ -114,7 +114,9 @@ def validate_registry() -> dict[str, Any]:
             reject("repository-routing", f"Registry entry {name} has invalid max_parallel_tasks.")
         if not isinstance(entry["allowed_task_types"], list) or not entry["allowed_task_types"] or not set(entry["allowed_task_types"]) <= supported_types:
             reject("repository-routing", f"Registry entry {name} has invalid allowed_task_types.")
-        parse_workflow_ref(name, entry["workflow_ref"])
+        _, workflow_revision = parse_workflow_ref(name, entry["workflow_ref"])
+        if entry["enabled"] and not re.fullmatch(r"[0-9a-f]{40}", workflow_revision):
+            reject("repository-routing", f"Enabled registry entry {name} must use an immutable workflow revision.")
         if not isinstance(entry["codex_environment"], str) or not entry["codex_environment"]:
             reject("repository-routing", f"Registry entry {name} has an invalid codex_environment.")
         idempotency = entry.get("idempotency")

@@ -11,7 +11,3 @@ class UnsupportedContractVersionError(ContractValidationError):
 
 class ContractSchemaLoadError(RuntimeError):
     """A canonical schema or version file could not be loaded."""
-
-
-class TaskContractBuildError(ValueError):
-    """A GitHub issue cannot be converted to a canonical task contract."""
