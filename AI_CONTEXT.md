@@ -21,12 +21,16 @@ Interpret repository evidence in this order:
    intended outcomes, scope, and boundaries.
 2. The approved [requirements baseline](docs/requirements/README.md) defines
    behavior, constraints, interfaces, and acceptance conditions.
-3. Approved [architecture and design](docs/architecture/README.md), including
+3. The [next-MVP planning baseline](docs/releases/next-mvp.md) selects and
+   allocates the currently planned realization increment, acceptance scenario,
+   exclusions, and deferrals within the approved requirements. It does not
+   override or relax a normative requirement.
+4. Approved [architecture and design](docs/architecture/README.md), including
    accepted [ADRs](docs/architecture/ADR.md), defines system structure,
    responsibility allocation, security boundaries, and architectural decisions.
-4. Current organization and repository interface documentation defines
+5. Current organization and repository interface documentation defines
    cross-repository interactions and ownership boundaries.
-5. Code, workflows, schemas, tests, fixtures, packages, examples, release
+6. Code, workflows, schemas, tests, fixtures, packages, examples, release
    artifacts, and other implementation artifacts are authoritative evidence
    of current behavior and must be treated as such; they do not override
    higher-authority intent, requirements, or design decisions.
@@ -87,10 +91,11 @@ applies:
    - [repository context](docs/requirements/repository-context.md),
      [repository interfaces](docs/requirements/repository-interfaces.md), and
      [external interfaces](docs/requirements/external-interfaces.md) for
-     ownership and integration boundaries; and
-   - [next-MVP baseline](docs/releases/next-mvp.md) for the approved objective,
-     responsibility allocation, acceptance scenario, exclusions, and deferrals.
-3. [Architecture index](docs/architecture/README.md) — approved next-MVP design
+     ownership and integration boundaries.
+3. [Next-MVP planning baseline](docs/releases/next-mvp.md) — the objective,
+   responsibility allocation, acceptance scenario, exclusions, and deferrals
+   that select and allocate work compliant with the requirements above.
+4. [Architecture index](docs/architecture/README.md) — approved next-MVP design
    map and interpretation rules. Always consult [ADRs](docs/architecture/ADR.md)
    and [repository boundaries](docs/architecture/RepositoryBoundaries.md);
    consult [interface architecture](docs/architecture/InterfaceArchitecture.md),
@@ -99,11 +104,11 @@ applies:
    boundary changes; follow the index to the other component, flow, state,
    deployment, observability, error, configuration, extension, and traceability
    designs relevant to the task.
-4. [MVP v2 interface baseline](docs/interfaces/mvp-v2-compatibility.md) — the
+5. [MVP v2 interface baseline](docs/interfaces/mvp-v2-compatibility.md) — the
    single current organization payload family, workflow obligations,
    conformance matrix, trust separation, and deployment gates. Also consult the
    normative interface requirements linked above.
-5. [Repository README](README.md) — repository navigation and locally described
+6. [Repository README](README.md) — repository navigation and locally described
    package and verification usage; [contract overview](contracts/README.md),
    [router documentation](docs/codex-router.md), and [release policy](docs/releases.md)
    provide implementation and operational context only after the authorities
@@ -116,6 +121,12 @@ silently override approved higher-authority product documentation.
 
 ## Implementation authority and compatibility policy
 
+- The approved vision and requirements, followed by applicable approved
+  architecture/design and accepted ADRs, are implementation authority. The
+  next-MVP planning baseline selects and allocates compliant work but cannot
+  override their normative obligations. Before **every**
+  implementation task, load this file first and follow its ordered reading path
+  and repository boundaries before inspecting implementation details or editing.
 - Per the approved requirements baseline and current release documentation,
   the project is pre-production and no backward-compatibility requirement has
   been approved. These facts do not weaken governance or security controls.
@@ -131,18 +142,24 @@ silently override approved higher-authority product documentation.
   `execution-input/v2`, and `execution-result/v2` family. This statement is a
   policy and required target state, not a claim that every current artifact or
   consumer is already aligned.
-- Earlier contract shapes, compatibility adapters, legacy aliases, migration
-  layers, dual-schema validation, obsolete workflow inputs, and fallback
-  interfaces must not remain active unless a future approved requirement
-  explicitly requires them. A version field or discriminator may identify the
-  single current payload shape; it does not require support for earlier
-  versions.
+- Do not preserve backward compatibility, deprecated execution paths, duplicate
+  contracts, wrappers, aliases, transitional structures, earlier contract
+  shapes, compatibility adapters, migration layers, dual-schema validation,
+  obsolete workflow inputs, or fallback interfaces unless an authoritative
+  requirement explicitly requires them. A version field or discriminator may
+  identify the single current payload shape; it does not require support for
+  earlier versions.
 - Repository-local interfaces must conform to that single organization
   contract as defined by the locally available authoritative interface
   documentation. Historical releases may remain immutable evidence without
   being active interfaces.
 - This documentation-only task does not authorize deletion, replacement,
   contract modification, workflow modification, or other implementation work.
+- Do not invent missing requirements, architecture, external behavior, or
+  integration details. When work depends on an undecided external interface or
+  unavailable owner decision, fail closed and report the blocker; use only
+  explicit, versioned interface or release documents in this repository for
+  cross-repository assumptions.
 
 ## MVP boundaries
 
@@ -270,10 +287,19 @@ decided and justified during the relevant implementation task.
   been replaced by the authority hierarchy and single-active-contract policy
   above: implementation is evidence, and backward compatibility is not
   currently required.
+- The approved [architecture index](docs/architecture/README.md) identifies the
+  next-MVP architecture as approved and normative, while
+  [Software Architecture](docs/architecture/SoftwareArchitecture.md) and
+  [Architecture Traceability](docs/architecture/ArchitectureTraceability.md)
+  expressly retain pre-approval language. This status conflict requires owner
+  reconciliation. When implementation depends on either named document, fail
+  closed and report the conflicting status; do not treat its content as
+  approved or dismiss its stated status as stale.
 
-No material contradiction among the locally approved vision, requirements,
-next-MVP architecture, and v2 interface direction was identified during this
-task. The gaps above must remain visible and fail closed where applicable.
+No other material contradiction among the locally approved vision,
+requirements, applicable approved architecture, and v2 interface direction was
+identified during this task. The gaps above must remain visible and fail closed
+where applicable.
 
 ## Maintenance rule
 
