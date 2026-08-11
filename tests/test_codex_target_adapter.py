@@ -21,9 +21,11 @@ class FakeEffects:
         self.exception_phase = exception_phase
         self.exception = exception or OSError("sensitive operational detail")
         self.calls = {"discover": 0, "codex": 0, "validate": 0, "publish": 0}
+        self.timeouts = {}
 
-    def discover(self, branch, delivery_id):
+    def discover(self, branch, delivery_id, timeout_seconds):
         self.calls["discover"] += 1
+        self.timeouts["discover"] = timeout_seconds
         if self.exception_phase == "discover":
             raise self.exception
         if self.calls["discover"] > 1 and self.race is not None:
@@ -32,19 +34,22 @@ class FakeEffects:
 
     def codex(self, instructions, timeout_seconds):
         self.calls["codex"] += 1
+        self.timeouts["codex"] = timeout_seconds
         if self.exception_phase == "codex":
             raise self.exception
         if self.codex_failure:
             raise AdapterError("codex-runtime", "Codex execution failed", "failed")
 
-    def validate_candidate(self):
+    def validate_candidate(self, timeout_seconds):
         self.calls["validate"] += 1
+        self.timeouts["validate"] = timeout_seconds
         if self.exception_phase == "validation":
             raise self.exception
         return self.validation
 
-    def publish(self, branch, delivery_id, digest):
+    def publish(self, branch, delivery_id, digest, timeout_seconds):
         self.calls["publish"] += 1
+        self.timeouts["publish"] = timeout_seconds
         if self.exception_phase == "publish":
             raise self.exception
         if self.publish_failure:
@@ -190,7 +195,7 @@ def test_publish_retries_pr_creation_from_pushed_commit(monkeypatch):
 
     monkeypatch.setattr("scripts.codex_target_adapter.subprocess.run", git_run)
 
-    def create_pr(*args):
+    def create_pr(*args, **kwargs):
         gh_calls.append(args)
         if len(gh_calls) < 3:
             raise subprocess.CalledProcessError(1, args)
@@ -198,7 +203,7 @@ def test_publish_retries_pr_creation_from_pushed_commit(monkeypatch):
 
     monkeypatch.setattr(effects, "_gh", create_pr)
 
-    assert effects.publish("codex/delivery", "delivery", "0" * 64).endswith("/pull/7")
+    assert effects.publish("codex/delivery", "delivery", "0" * 64, 60).endswith("/pull/7")
     assert len(gh_calls) == 3
     assert all(call[:2] == ("pr", "create") for call in gh_calls)
 
@@ -239,6 +244,14 @@ def test_timeout_is_canonical_and_prevents_publication(payload, registry):
     assert result["execution_status"] == "failed"
     assert result["failure_category"] == "timeout"
     assert effects.calls == {"discover": 1, "codex": 1, "validate": 0, "publish": 0}
+
+
+def test_remaining_deadline_is_propagated_to_every_effect(payload, registry):
+    effects = FakeEffects()
+    result, effects = execute(payload, registry, effects, timeout_minutes=1)
+    assert result["execution_status"] == "draft-pr-created"
+    assert set(effects.timeouts) == {"discover", "codex", "validate", "publish"}
+    assert all(0 < timeout <= 60 for timeout in effects.timeouts.values())
 
 
 def test_github_codex_effect_applies_timeout_and_cleans_instruction_file(monkeypatch, tmp_path):
