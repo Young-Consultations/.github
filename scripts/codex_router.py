@@ -19,6 +19,13 @@ TASK_SCHEMA = ROOT / "contracts/task-contract.schema.json"
 INPUT_SCHEMA = ROOT / "contracts/execution-input.schema.json"
 REPO_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
 SAFE_RE = re.compile(r"[^a-z0-9._-]+")
+# workflow_dispatch accepts only a branch or tag for --ref. Adapter release tags
+# use this governed, non-moving namespace so dispatchability and immutability
+# are enforced together.
+IMMUTABLE_ADAPTER_TAG_RE = re.compile(
+    r"codex-adapter-v(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)"
+    r"(?:-[0-9A-Za-z]+(?:[.-][0-9A-Za-z]+)*)?"
+)
 FAILURE_CATEGORIES = {
     "contract-validation", "authorization", "dependency",
     "repository-routing", "publication", "unknown",
@@ -115,8 +122,12 @@ def validate_registry() -> dict[str, Any]:
         if not isinstance(entry["allowed_task_types"], list) or not entry["allowed_task_types"] or not set(entry["allowed_task_types"]) <= supported_types:
             reject("repository-routing", f"Registry entry {name} has invalid allowed_task_types.")
         _, workflow_revision = parse_workflow_ref(name, entry["workflow_ref"])
-        if entry["enabled"] and not re.fullmatch(r"[0-9a-f]{40}", workflow_revision):
-            reject("repository-routing", f"Enabled registry entry {name} must use an immutable workflow revision.")
+        if entry["enabled"] and not IMMUTABLE_ADAPTER_TAG_RE.fullmatch(workflow_revision):
+            reject(
+                "repository-routing",
+                f"Enabled registry entry {name} must use a governed immutable "
+                "codex-adapter-v* release tag.",
+            )
         if not isinstance(entry["codex_environment"], str) or not entry["codex_environment"]:
             reject("repository-routing", f"Registry entry {name} has an invalid codex_environment.")
         idempotency = entry.get("idempotency")

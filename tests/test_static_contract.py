@@ -36,7 +36,7 @@ def test_registry_json_syntax_and_required_fields():
         assert entry["workflow_ref"] == f"{name}/.github/workflows/codex-execute.yml@main", name
         assert entry["contract_version"] == "ai-sdlc-contract/v2", name
         if entry["enabled"]:
-            assert re.search(r"@[0-9a-f]{40}$", entry["workflow_ref"]), name
+            assert re.search(r"@codex-adapter-v[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?$", entry["workflow_ref"]), name
 
 
 def test_github_target_is_bounded_and_idempotent():

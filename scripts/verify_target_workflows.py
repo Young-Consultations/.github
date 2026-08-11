@@ -38,6 +38,10 @@ WORKFLOW_REF_RE = re.compile(
     r"^(?P<repository>[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)/"
     r"(?P<path>\.github/workflows/[^@]+\.ya?ml)@(?P<ref>[^@\s]+)$"
 )
+IMMUTABLE_ADAPTER_TAG_RE = re.compile(
+    r"codex-adapter-v(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)"
+    r"(?:-[0-9A-Za-z]+(?:[.-][0-9A-Za-z]+)*)?"
+)
 
 
 class CompatibilityError(ValueError):
@@ -103,8 +107,11 @@ def load_registry(path: Path = REGISTRY) -> dict[str, dict[str, Any]]:
         if not isinstance(entry.get("max_parallel_tasks"), int) or entry["max_parallel_tasks"] < 1:
             raise CompatibilityError(f"{repository}: deterministic concurrency policy required")
         workflow_repository, workflow_path, workflow_revision = parse_workflow_ref(entry.get("workflow_ref"))
-        if entry["enabled"] and not re.fullmatch(r"[0-9a-f]{40}", workflow_revision):
-            raise CompatibilityError(f"{repository}: enabled workflow_ref must use an immutable revision")
+        if entry["enabled"] and not IMMUTABLE_ADAPTER_TAG_RE.fullmatch(workflow_revision):
+            raise CompatibilityError(
+                f"{repository}: enabled workflow_ref must use a governed immutable "
+                "codex-adapter-v* release tag"
+            )
         if workflow_repository != repository:
             raise CompatibilityError(f"{repository}: workflow_ref repository mismatch")
         if workflow_path in {".github/workflows/codex-router.yml", ".github/workflows/router-smoke-test.yml", ".github/workflows/issue-to-codex.yml"}:

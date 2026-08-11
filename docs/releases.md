@@ -38,8 +38,9 @@ validated keys; changing their meaning is breaking.
    the complete test suite, registry validation, YAML validation, actionlint,
    and `git diff --check`.
 2. Run `python scripts/verify_target_workflows.py` with the router token. Every
-   enabled registry entry must pass; movable target refs must be resolved before
-   approval. Run the Router smoke test in `verify` mode, confirming it invokes
+   enabled registry entry must pass; movable target refs must be replaced with
+   reviewed, non-moving `codex-adapter-vMAJOR.MINOR.PATCH` tags before approval.
+   Run the Router smoke test in `verify` mode, confirming it invokes
    no Codex runtime and creates no branch or pull request.
 3. Obtain protected-branch checks and maintainer approval. Never bypass existing
    approval controls. Merge the reviewed change before tagging.

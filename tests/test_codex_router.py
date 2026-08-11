@@ -9,7 +9,7 @@ from jsonschema import Draft202012Validator
 from scripts import codex_router
 
 
-TEST_ADAPTER_SHA = "0123456789abcdef0123456789abcdef01234567"
+TEST_ADAPTER_TAG = "codex-adapter-v2.0.0"
 
 
 BASE_TASK = {
@@ -31,7 +31,10 @@ BASE_TASK = {
 }
 
 
-def run_router(*, github_output=None, execution_mode=None, enable_target=True, **changes):
+def run_router(
+    *, github_output=None, execution_mode=None, enable_target=True,
+    workflow_revision=TEST_ADAPTER_TAG, **changes,
+):
     task = {**BASE_TASK, **changes}
     env = {key: value for key, value in os.environ.items() if key != "GITHUB_OUTPUT"}
     env["TASK_PAYLOAD"] = json.dumps(task)
@@ -39,7 +42,7 @@ def run_router(*, github_output=None, execution_mode=None, enable_target=True, *
     if enable_target and task["target_repository"] in registry["repositories"]:
         entry = registry["repositories"][task["target_repository"]]
         entry["enabled"] = True
-        entry["workflow_ref"] = entry["workflow_ref"].rsplit("@", 1)[0] + "@" + TEST_ADAPTER_SHA
+        entry["workflow_ref"] = entry["workflow_ref"].rsplit("@", 1)[0] + "@" + workflow_revision
     if execution_mode is not None:
         env["EXECUTION_MODE"] = execution_mode
     else:
@@ -254,6 +257,23 @@ def test_registry_validation_command_passes():
         text=True, capture_output=True,
     )
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+@pytest.mark.parametrize("workflow_revision", [
+    "main",
+    "0123456789abcdef0123456789abcdef01234567",
+    "codex-adapter-v2",
+])
+def test_enabled_registry_rejects_non_release_tag_refs(workflow_revision):
+    result = run_router(workflow_revision=workflow_revision)
+    assert result.returncode == 1
+    assert output(result, "failure_category") == "repository-routing"
+
+
+def test_enabled_registry_accepts_dispatchable_immutable_adapter_tag():
+    result = run_router(workflow_revision="codex-adapter-v2.1.3-rc.1")
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert output(result, "workflow_ref").endswith("@codex-adapter-v2.1.3-rc.1")
 
 
 def test_repository_specific_configuration_is_registry_only():

@@ -42,7 +42,7 @@ def registry(tmp_path: Path, entries: dict) -> Path:
 def entry(repo: str = "org/repo", **changes):
     value = {
         "enabled": True,
-        "workflow_ref": f"{repo}/.github/workflows/codex-execute.yml@0123456789abcdef0123456789abcdef01234567",
+        "workflow_ref": f"{repo}/.github/workflows/codex-execute.yml@codex-adapter-v2.0.0",
         "contract_version": checker.CANONICAL_VERSION,
         "draft_pr_only": True,
         "max_parallel_tasks": 1,
@@ -111,6 +111,18 @@ def test_contract_version_mismatch(tmp_path):
         checker.load_registry(path)
 
 
+@pytest.mark.parametrize("revision", [
+    "main",
+    "0123456789abcdef0123456789abcdef01234567",
+    "codex-adapter-v2.0",
+])
+def test_enabled_registry_requires_governed_adapter_release_tag(tmp_path, revision):
+    workflow_ref = f"org/repo/.github/workflows/codex-execute.yml@{revision}"
+    path = registry(tmp_path, {"org/repo": entry(workflow_ref=workflow_ref)})
+    with pytest.raises(checker.CompatibilityError, match="codex-adapter-v"):
+        checker.load_registry(path)
+
+
 def test_missing_workflow_is_reported_without_network(tmp_path):
     entries = checker.load_registry(registry(tmp_path, {"org/repo": entry()}))
     with patch.object(checker, "fetch_workflow", side_effect=checker.CompatibilityError("workflow is unavailable at registered ref")):
@@ -122,7 +134,7 @@ def test_network_fetch_is_mocked_for_success(tmp_path):
     entries = checker.load_registry(registry(tmp_path, {"org/repo": entry()}))
     with patch.object(checker, "fetch_workflow", return_value=CANONICAL) as fetch:
         report = checker.verify_registry(entries, "fake-token")
-    fetch.assert_called_once_with("org/repo", ".github/workflows/codex-execute.yml", "0123456789abcdef0123456789abcdef01234567", "fake-token")
+    fetch.assert_called_once_with("org/repo", ".github/workflows/codex-execute.yml", "codex-adapter-v2.0.0", "fake-token")
     assert report[0]["result"] == "pass"
 
 
@@ -185,7 +197,7 @@ def test_incompatible_required_input_is_rejected():
 
 
 def test_issue_to_codex_cannot_be_registered(tmp_path):
-    path = registry(tmp_path, {"org/repo": entry(workflow_ref="org/repo/.github/workflows/issue-to-codex.yml@0123456789abcdef0123456789abcdef01234567")})
+    path = registry(tmp_path, {"org/repo": entry(workflow_ref="org/repo/.github/workflows/issue-to-codex.yml@codex-adapter-v2.0.0")})
     with pytest.raises(checker.CompatibilityError, match="obsolete workflow_ref"):
         checker.load_registry(path)
 
