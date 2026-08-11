@@ -11,31 +11,42 @@ ROOT = Path(__file__).parents[1]
 
 
 class FakeEffects:
-    def __init__(self, *, found=None, codex_failure=False, validation=(True, "passed"), publish_failure=None, race=None):
+    def __init__(self, *, found=None, codex_failure=False, validation=(True, "passed"), publish_failure=None, race=None,
+                 exception_phase=None, exception=None):
         self.found = found or []
         self.codex_failure = codex_failure
         self.validation = validation
         self.publish_failure = publish_failure
         self.race = race
+        self.exception_phase = exception_phase
+        self.exception = exception or OSError("sensitive operational detail")
         self.calls = {"discover": 0, "codex": 0, "validate": 0, "publish": 0}
 
     def discover(self, branch, delivery_id):
         self.calls["discover"] += 1
+        if self.exception_phase == "discover":
+            raise self.exception
         if self.calls["discover"] > 1 and self.race is not None:
             return self.race
         return self.found
 
-    def codex(self, instructions):
+    def codex(self, instructions, timeout_seconds):
         self.calls["codex"] += 1
+        if self.exception_phase == "codex":
+            raise self.exception
         if self.codex_failure:
             raise AdapterError("codex-runtime", "Codex execution failed", "failed")
 
     def validate_candidate(self):
         self.calls["validate"] += 1
+        if self.exception_phase == "validation":
+            raise self.exception
         return self.validation
 
     def publish(self, branch, delivery_id, digest):
         self.calls["publish"] += 1
+        if self.exception_phase == "publish":
+            raise self.exception
         if self.publish_failure:
             raise AdapterError("publication", self.publish_failure, "failed")
         return "https://github.com/Young-Consultations/.github/pull/7"
@@ -116,6 +127,23 @@ def test_malformed_input_and_unauthorized_caller(payload, registry):
     assert effects.calls["codex"] == 0
 
 
+@pytest.mark.parametrize("field,value,fallback", [
+    ("correlation_id", "bad identity!", "rejected-correlation"),
+    ("delivery_id", "x" * 129, "rejected-delivery"),
+    ("target_repository", "not-a-repository", TARGET),
+])
+def test_malformed_identity_produces_schema_valid_canonical_rejection(payload, registry, field, value, fallback):
+    payload[field] = value
+    effects = FakeEffects()
+    outcome = run_adapter(json.dumps(payload), payload["concurrency_group"], "router-app", {"router-app"}, registry, effects)
+    result = outcome.result
+    assert result["execution_status"] == "rejected"
+    assert result[field] == fallback
+    assert value not in json.dumps(result)
+    assert outcome.source_issue == payload["source_issue"]  # report routing remains available
+    assert effects.calls == {"discover": 0, "codex": 0, "validate": 0, "publish": 0}
+
+
 def test_invalid_transport_concurrency_group(payload, registry):
     effects = FakeEffects()
     result = run_adapter(json.dumps(payload), "different/group", "router-app", {"router-app"}, registry, effects).result
@@ -186,6 +214,56 @@ def test_terminal_implement_failures(payload, registry, effects, category):
     assert result["execution_status"] == "failed"
     assert result["failure_category"] == category
     assert result["pull_request_url"] is None
+
+
+@pytest.mark.parametrize("phase,exception,category", [
+    ("discover", subprocess.CalledProcessError(1, ["gh", "secret"]), "dependency"),
+    ("discover", KeyError("TARGET_PUBLICATION_TOKEN"), "authentication"),
+    ("codex", OSError("secret path"), "codex-runtime"),
+    ("validation", OSError("secret path"), "validation"),
+    ("publish", OSError("secret path"), "publication"),
+    ("publish", FileNotFoundError("gh"), "dependency"),
+])
+def test_effect_exceptions_become_redacted_canonical_failures(payload, registry, phase, exception, category):
+    result, _ = execute(payload, registry, FakeEffects(exception_phase=phase, exception=exception))
+    assert result["execution_status"] == "failed"
+    assert result["failure_category"] == category
+    assert "secret" not in result["failure_message"]
+    if phase == "validation":
+        assert result["validation_result"] == "failed"
+
+
+def test_timeout_is_canonical_and_prevents_publication(payload, registry):
+    effects = FakeEffects(exception_phase="codex", exception=subprocess.TimeoutExpired(["codex"], 60))
+    result, effects = execute(payload, registry, effects, timeout_minutes=1)
+    assert result["execution_status"] == "failed"
+    assert result["failure_category"] == "timeout"
+    assert effects.calls == {"discover": 1, "codex": 1, "validate": 0, "publish": 0}
+
+
+def test_github_codex_effect_applies_timeout_and_cleans_instruction_file(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    observed = {}
+
+    def expire(*args, **kwargs):
+        observed.update(kwargs)
+        raise subprocess.TimeoutExpired(args[0], kwargs["timeout"])
+
+    monkeypatch.setattr("scripts.codex_target_adapter.subprocess.run", expire)
+    with pytest.raises(subprocess.TimeoutExpired):
+        GitHubEffects().codex("do not disclose", 12.5)
+    assert observed["timeout"] == 12.5
+    assert not (tmp_path / ".codex-instructions.txt").exists()
+
+
+@pytest.mark.parametrize("phase,validation,test", [
+    ("validation", "failed", "not-run"),
+    ("tests", "passed", "failed"),
+])
+def test_failed_candidate_phase_status_is_preserved(payload, registry, phase, validation, test):
+    result, _ = execute(payload, registry, FakeEffects(validation=(False, phase)))
+    assert result["validation_result"] == validation
+    assert result["test_result"] == test
 
 
 def test_identity_is_delivery_not_transport_or_observability(payload, registry):

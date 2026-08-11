@@ -13,6 +13,7 @@ import json
 import os
 import re
 import subprocess
+import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -35,7 +36,7 @@ class AdapterError(Exception):
 
 class Effects(Protocol):
     def discover(self, branch: str, delivery_id: str) -> list[dict[str, Any]]: ...
-    def codex(self, instructions: str) -> None: ...
+    def codex(self, instructions: str, timeout_seconds: float) -> None: ...
     def validate_candidate(self) -> tuple[bool, str]: ...
     def publish(self, branch: str, delivery_id: str, digest: str) -> str: ...
 
@@ -54,15 +55,28 @@ def _now() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
+_IDENTITY = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
+_REPOSITORY = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})/[A-Za-z0-9._-]{1,100}$")
+
+
+def _safe_identity(value: Any, fallback: str) -> str:
+    """Project an untrusted identity into the result contract without echoing it."""
+    return value if isinstance(value, str) and _IDENTITY.fullmatch(value) else fallback
+
+
+def _safe_repository(value: Any) -> str:
+    return value if isinstance(value, str) and _REPOSITORY.fullmatch(value) else TARGET
+
+
 def _result(payload: dict[str, Any], started: str, status: str, category: str,
             message: str | None, *, branch: str | None = None, pr: str | None = None,
             validation: str = "not-run", tests: str = "not-run") -> dict[str, Any]:
     result = {
         "contract_version": "ai-sdlc-contract/v2",
-        "correlation_id": payload.get("correlation_id", "untrusted"),
-        "delivery_id": payload.get("delivery_id", "untrusted"),
+        "correlation_id": _safe_identity(payload.get("correlation_id"), "rejected-correlation"),
+        "delivery_id": _safe_identity(payload.get("delivery_id"), "rejected-delivery"),
         "execution_status": status,
-        "target_repository": payload.get("target_repository", TARGET),
+        "target_repository": _safe_repository(payload.get("target_repository")),
         "branch_name": branch,
         "pull_request_url": pr,
         "workflow_url": os.getenv("GITHUB_SERVER_URL", "https://github.com") + "/" +
@@ -116,7 +130,8 @@ def admit(raw: str, transport_group: str, caller: str, trusted_callers: set[str]
 
 def run_adapter(raw: str, transport_group: str, caller: str, trusted_callers: set[str],
                 registry: dict[str, Any], effects: Effects) -> Outcome:
-    started, parsed = _now(), {}
+    started, parsed, phase = _now(), {}, "admission"
+    validation_status, test_status = "not-run", "not-run"
     try:
         try:
             candidate = json.loads(raw)
@@ -125,8 +140,10 @@ def run_adapter(raw: str, transport_group: str, caller: str, trusted_callers: se
         except Exception:
             pass
         payload = admit(raw, transport_group, caller, trusted_callers, registry)
+        deadline = time.monotonic() + payload["timeout_minutes"] * 60
         digest = canonical_digest(payload)
         branch = f"codex/{payload['delivery_id'].lower()}"
+        phase = "discovery"
         owned = effects.discover(branch, payload["delivery_id"])
         if any(x.get("digest") != digest for x in owned):
             raise AdapterError("authorization", "Delivery ID is already bound to a different payload", "ambiguous-rejected")
@@ -139,11 +156,20 @@ def run_adapter(raw: str, transport_group: str, caller: str, trusted_callers: se
         if payload["execution_mode"] == "verify":
             return Outcome(_result(payload, started, "verified", "none", None,
                                    validation="passed", tests="passed"), payload["source_issue"])
-        effects.codex(payload["instructions"])
+        phase = "codex"
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise AdapterError("timeout", "Admitted execution timeout expired", "failed")
+        effects.codex(payload["instructions"], remaining)
+        phase = "validation"
         valid, phase = effects.validate_candidate()
         if not valid:
             category = "tests" if phase == "tests" else "validation"
+            validation_status = "passed" if phase == "tests" else "failed"
+            test_status = "failed" if phase == "tests" else "not-run"
             raise AdapterError(category, "Candidate did not pass repository policy", "failed")
+        validation_status = test_status = "passed"
+        phase = "publication"
         try:
             pr = effects.publish(branch, payload["delivery_id"], digest)
         except AdapterError as exc:
@@ -156,7 +182,32 @@ def run_adapter(raw: str, transport_group: str, caller: str, trusted_callers: se
         return Outcome(_result(payload, started, "draft-pr-created", "none", None,
                                branch=branch, pr=pr, validation="passed", tests="passed"), payload["source_issue"])
     except AdapterError as exc:
-        return Outcome(_result(parsed, started, exc.status, exc.category, exc.safe_message), parsed.get("source_issue"))
+        return Outcome(_result(parsed, started, exc.status, exc.category, exc.safe_message,
+                               validation=validation_status, tests=test_status), parsed.get("source_issue"))
+    except subprocess.TimeoutExpired:
+        return Outcome(_result(parsed, started, "failed", "timeout", "Admitted execution timeout expired",
+                               validation=validation_status, tests=test_status), parsed.get("source_issue"))
+    except Exception as exc:
+        # Effect failures are deliberately classified without reflecting command,
+        # API, path, token, or exception text into the externally transported result.
+        if isinstance(exc, KeyError):
+            category, message = "authentication", "Required execution credentials are unavailable"
+        elif isinstance(exc, FileNotFoundError):
+            category, message = "dependency", "Required execution dependency is unavailable"
+        elif phase == "codex":
+            category, message = "codex-runtime", "Codex execution failed"
+        elif phase == "validation" or phase == "tests":
+            category, message = phase, "Candidate validation could not complete"
+            if phase == "validation":
+                validation_status = "failed"
+            else:
+                validation_status, test_status = "passed", "failed"
+        elif phase == "publication":
+            category, message = "publication", "Draft pull request publication failed"
+        else:
+            category, message = "dependency", "Target execution dependency failed"
+        return Outcome(_result(parsed, started, "failed", category, message,
+                               validation=validation_status, tests=test_status), parsed.get("source_issue"))
 
 
 class GitHubEffects:
@@ -178,20 +229,23 @@ class GitHubEffects:
                 found.append({"url": pr["url"], "state": pr["state"], "draft": pr["isDraft"], "digest": "conflict"})
         return found
 
-    def codex(self, instructions: str) -> None:
+    def codex(self, instructions: str, timeout_seconds: float) -> None:
         Path(".codex-instructions.txt").write_text(instructions)
         env = {k: v for k, v in os.environ.items() if k in SAFE_ENV or k.startswith("CODEX_") or k == "OPENAI_API_KEY"}
-        proc = subprocess.run(["codex", "exec", "--sandbox", "workspace-write", "-C", str(ROOT), "-"],
-                              input=instructions, text=True, env=env)
-        Path(".codex-instructions.txt").unlink(missing_ok=True)
+        try:
+            proc = subprocess.run(["codex", "exec", "--sandbox", "workspace-write", "-C", str(ROOT), "-"],
+                                  input=instructions, text=True, env=env, timeout=timeout_seconds)
+        finally:
+            Path(".codex-instructions.txt").unlink(missing_ok=True)
         if proc.returncode:
             raise AdapterError("codex-runtime", "Codex execution failed", "failed")
 
     def validate_candidate(self) -> tuple[bool, str]:
         env = {k: v for k, v in os.environ.items() if k in SAFE_ENV}
         commands = [
-            ["python", "-m", "pytest"], ["python", "scripts/validate_release.py"],
+            ["python", "scripts/validate_release.py"],
             ["python", "scripts/verify_target_workflows.py", "--fixtures-only"], ["git", "diff", "--check"],
+            ["python", "-m", "pytest"],
         ]
         for command in commands:
             if subprocess.run(command, cwd=ROOT, env=env).returncode:
