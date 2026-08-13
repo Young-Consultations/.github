@@ -39,6 +39,20 @@ source tasks.
 
 ## Verification sequence
 
+The deterministic organization conformance oracle is pinned in
+`config/mvp-conformance-pin.json` to
+`Young-Consultations/.github@c6090e5bbadcc2102a1cb91875466e9decdada1e`.
+It verifies the exact schema, fixture, oracle, and `.github` adapter blob
+identities before running every `TC-MVP-CI-001` scenario. It uses only in-memory
+fake adapters, traps Codex, branch, commit, push, pull-request, merge, release,
+deployment, production, and secret-output effects, and writes a versioned JSON
+report. The report is compatibility evidence only: it does not claim production
+readiness, request activation, or change mutable activation state.
+
+```console
+python scripts/run_tc_mvp_ci_001.py --report reports/tc-mvp-ci-001.json
+```
+
 [`AI-SDLC Contract Tests`](.github/workflows/ai-sdlc-contract-tests.yml) is the
 canonical, read-only verification gate for shared schemas and examples, the
 Python validation library, organization router behavior, registry contracts,

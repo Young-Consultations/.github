@@ -53,12 +53,16 @@ jobs:
           echo "value=$version" >> "$GITHUB_OUTPUT"
       - name: Run canonical schema tests
         run: python -m pytest tests/test_contract_schemas.py --junitxml=reports/schema.xml
+      - name: Run pinned TC-MVP-CI-001 conformance oracle
+        run: python scripts/run_tc_mvp_ci_001.py --report reports/tc-mvp-ci-001.json
       - name: Upload schema report
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: ai-sdlc-contract-test-results-schemas
-          path: reports/schema.xml
+          path: |
+            reports/schema.xml
+            reports/tc-mvp-ci-001.json
           if-no-files-found: error
 
   python-validation-library:
