@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -111,10 +112,33 @@ def validate_pin(pin: dict[str, object]) -> list[str]:
         errors.append("compatibility pin has the wrong organization repository")
     if pin.get("compatibility_sha") != "c6090e5bbadcc2102a1cb91875466e9decdada1e":
         errors.append("compatibility pin is not the approved immutable revision")
+    compatibility_sha = str(pin.get("compatibility_sha", ""))
     files = pin.get("files")
     if not isinstance(files, dict):
         return errors + ["compatibility pin has no file identities"]
+    try:
+        tree = subprocess.run(
+            ["git", "ls-tree", "-r", compatibility_sha, "--", *map(str, files)],
+            # PIN_PATH remains anchored to this checkout when tests replace
+            # ROOT to exercise local-file mismatch handling.
+            cwd=PIN_PATH.parent.parent,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout
+        compatibility_files = {
+            line.split(maxsplit=3)[3]: line.split(maxsplit=3)[2]
+            for line in tree.splitlines()
+        }
+    except (OSError, subprocess.CalledProcessError):
+        return errors + ["approved compatibility revision is unavailable"]
     for relative, expected in files.items():
+        relative = str(relative)
+        compatibility_identity = compatibility_files.get(relative)
+        if compatibility_identity is None:
+            errors.append(f"pinned file is absent from compatibility revision: {relative}")
+        elif expected != compatibility_identity:
+            errors.append(f"pinned identity differs from compatibility revision: {relative}")
         path = ROOT / str(relative)
         if not path.is_file():
             errors.append(f"pinned file is missing: {relative}")
@@ -161,7 +185,11 @@ def run(report_path: Path | None = None) -> list[str]:
         "fixture_version": manifest["fixture_version"],
         "production_readiness_claim": False,
         "activation_requested": False,
-        "activation_evidence_sufficient": not errors,
+        # This oracle exercises the shared in-memory chain, not this
+        # repository's target adapter. Adapter tests are run separately in CI,
+        # so this artifact must not represent itself as activation evidence.
+        "activation_evidence_sufficient": False,
+        "activation_evidence_reason": "shared fixtures were not executed through the repository adapter",
         "effect_traps": {name: 0 for name in TRAPPED_EFFECTS},
         "scenario_results": results,
         "failures": errors,

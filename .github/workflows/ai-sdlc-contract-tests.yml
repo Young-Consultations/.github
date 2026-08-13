@@ -13,6 +13,8 @@ on:
       - 'release/**'
       - 'scripts/validate_release.py'
       - 'scripts/codex_router.py'
+      - 'scripts/codex_target_adapter.py'
+      - 'scripts/run_tc_mvp_ci_001.py'
       - 'src/ai_sdlc_contracts/**'
       - 'tests/**'
       - 'README.md'
@@ -53,6 +55,8 @@ jobs:
           echo "value=$version" >> "$GITHUB_OUTPUT"
       - name: Run canonical schema tests
         run: python -m pytest tests/test_contract_schemas.py --junitxml=reports/schema.xml
+      - name: Run repository target-adapter tests
+        run: python -m pytest tests/test_codex_target_adapter.py --junitxml=reports/target-adapter.xml
       - name: Run pinned TC-MVP-CI-001 conformance oracle
         run: python scripts/run_tc_mvp_ci_001.py --report reports/tc-mvp-ci-001.json
       - name: Upload schema report
@@ -62,6 +66,7 @@ jobs:
           name: ai-sdlc-contract-test-results-schemas
           path: |
             reports/schema.xml
+            reports/target-adapter.xml
             reports/tc-mvp-ci-001.json
           if-no-files-found: error
 
