@@ -3,13 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       execution_input_json:
-        required: false
-        type: string
-      execution_input_artifact:
-        required: false
-        type: string
-      execution_input_run_id:
-        required: false
+        required: true
         type: string
       concurrency_group:
         required: true
@@ -31,3 +25,10 @@ jobs:
           # create-race: after branch or PR conflict, re-query and reuse exactly one valid draft PR.
           # canonical result includes delivery_id and duplicate-reused when reusing existing publication.
           echo verified
+  report:
+    uses: Young-Consultations/.github/.github/workflows/codex-result-receiver.yml@0123456789abcdef0123456789abcdef01234567
+    with:
+      execution_result: '{}'
+      source_issue: Young-Consultations/portfolio-tasks#1
+    secrets:
+      CODEX_RESULT_TOKEN: ${{ secrets.CODEX_RESULT_TOKEN }}

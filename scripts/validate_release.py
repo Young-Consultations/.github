@@ -2,6 +2,7 @@
 """Validate that one release manifest describes the complete control plane."""
 from __future__ import annotations
 
+import argparse
 import json
 import re
 import sys
@@ -13,13 +14,50 @@ SEMVER = re.compile(r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z.-]
 MUTABLE_REUSABLE = re.compile(
     r"Young-Consultations/\.github/\.github/workflows/[^\s@]+@(main|master)\b"
 )
+IMMUTABLE_ADAPTER_TAG = re.compile(
+    r"codex-adapter-v(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)"
+    r"(?:-[0-9A-Za-z]+(?:[.-][0-9A-Za-z]+)*)?"
+)
+SHA = re.compile(r"^[0-9a-f]{40}$")
+DIGEST = re.compile(r"^[0-9a-f]{64}$")
+AUTHOR = re.compile(r"^[A-Za-z0-9][A-Za-z0-9-]*(?:\[bot\])?$")
+REPORT_PATH = re.compile(r"^(?!/)(?!.*(?:^|/)\.\.(?:/|$))[A-Za-z0-9._/-]+\.json$")
+CONFORMANCE_FIELDS = {
+    "fixture_set", "fixture_version", "compatibility_sha", "adapter_ref",
+    "adapter_commit_sha", "report_path", "report_sha256", "status",
+    "activation_evidence_sufficient",
+}
 
 
 def load_json(path: Path):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def validate(root: Path = ROOT) -> list[str]:
+def conformance_errors(repository: str, entry: dict, fixture_version: object) -> list[str]:
+    evidence = entry.get("conformance")
+    if not isinstance(evidence, dict) or set(evidence) != CONFORMANCE_FIELDS:
+        return [f"{repository}: reviewed conformance evidence is missing or malformed"]
+    workflow_ref = str(entry.get("workflow_ref", ""))
+    adapter_ref = workflow_ref.rsplit("@", 1)[-1] if "@" in workflow_ref else ""
+    valid = (
+        evidence.get("fixture_set") == "TC-MVP-CI-001"
+        and evidence.get("fixture_version") == fixture_version
+        and evidence.get("adapter_ref") == adapter_ref
+        and isinstance(evidence.get("compatibility_sha"), str)
+        and SHA.fullmatch(evidence["compatibility_sha"]) is not None
+        and isinstance(evidence.get("adapter_commit_sha"), str)
+        and SHA.fullmatch(evidence["adapter_commit_sha"]) is not None
+        and isinstance(evidence.get("report_path"), str)
+        and REPORT_PATH.fullmatch(evidence["report_path"]) is not None
+        and isinstance(evidence.get("report_sha256"), str)
+        and DIGEST.fullmatch(evidence["report_sha256"]) is not None
+        and evidence.get("status") == "pass"
+        and evidence.get("activation_evidence_sufficient") is True
+    )
+    return [] if valid else [f"{repository}: reviewed conformance evidence is invalid"]
+
+
+def validate(root: Path = ROOT, *, require_publishable: bool = False) -> list[str]:
     errors: list[str] = []
     manifest = load_json(root / MANIFEST.relative_to(ROOT))
     version = manifest.get("release_version", "")
@@ -29,6 +67,8 @@ def validate(root: Path = ROOT) -> list[str]:
         errors.append("tag must map exactly to release_version")
     if not isinstance(manifest.get("tag_published"), bool):
         errors.append("tag_published must explicitly record publication state")
+    if require_publishable and manifest.get("tag_published") is not True:
+        errors.append("publishable release must declare tag_published true")
     pyproject = (root / "pyproject.toml").read_text(encoding="utf-8")
     package_match = re.search(r'^version = "([^"]+)"$', pyproject, re.MULTILINE)
     if not package_match or package_match.group(1) != manifest.get("contract_package_version"):
@@ -51,6 +91,14 @@ def validate(root: Path = ROOT) -> list[str]:
             errors.append(f"{repository}: contract version drift")
         if entry.get("draft_pr_only") is not True:
             errors.append(f"{repository}: draft-only execution is required")
+        if "conformance" not in entry:
+            errors.append(f"{repository}: conformance evidence field is missing")
+        if entry.get("conformance") is not None or require_publishable:
+            errors.extend(conformance_errors(repository, entry, manifest.get("fixture_version")))
+        if require_publishable:
+            ref = str(entry.get("workflow_ref", "")).rsplit("@", 1)[-1]
+            if IMMUTABLE_ADAPTER_TAG.fullmatch(ref) is None:
+                errors.append(f"{repository}: publishable release requires an immutable codex-adapter-v* tag")
     activation = load_json(root / "config/codex-activation.json")
     targets = activation.get("targets")
     if activation.get("activation_format_version") != 1 or not isinstance(targets, dict):
@@ -72,6 +120,41 @@ def validate(root: Path = ROOT) -> list[str]:
     receiver = manifest.get("result_receiver_workflow")
     if not isinstance(receiver, str) or not (root / receiver).is_file():
         errors.append("release result receiver workflow must exist")
+    else:
+        receiver_source = (root / receiver).read_text(encoding="utf-8")
+        expected_action = (
+            "Young-Consultations/.github/actions/codex-result-receiver@"
+            + str(manifest.get("tag", ""))
+        )
+        if receiver_source.count(expected_action) != 1:
+            errors.append("release result receiver must self-pin its action bundle to the release tag")
+        if "actions/checkout@" in receiver_source:
+            errors.append("release result receiver must not checkout caller-controlled policy content")
+    receiver_action = manifest.get("result_receiver_action")
+    if not isinstance(receiver_action, str) or not (root / receiver_action).is_file():
+        errors.append("release result receiver action must exist")
+    trust_policy_path = manifest.get("result_trust_policy")
+    if not isinstance(trust_policy_path, str) or not (root / trust_policy_path).is_file():
+        errors.append("release result trust policy must exist")
+    else:
+        try:
+            trust_policy = load_json(root / trust_policy_path)
+        except (OSError, json.JSONDecodeError):
+            errors.append("release result trust policy must be valid JSON")
+        else:
+            authors = trust_policy.get("trusted_journal_authors") if isinstance(trust_policy, dict) else None
+            valid_authors = (
+                isinstance(trust_policy, dict)
+                and set(trust_policy) == {"policy_format_version", "trusted_journal_authors"}
+                and trust_policy.get("policy_format_version") == 1
+                and isinstance(authors, list)
+                and all(isinstance(author, str) and AUTHOR.fullmatch(author) for author in authors)
+                and len({author.casefold() for author in authors}) == len(authors)
+            )
+            if not valid_authors:
+                errors.append("release result trust policy is invalid")
+            elif require_publishable and not authors:
+                errors.append("publishable release must name at least one trusted journal author")
 
     paths = [*root.glob(".github/workflows/*.yml"), *root.glob("docs/*.md"), root / "README.md"]
     for path in paths:
@@ -80,8 +163,14 @@ def validate(root: Path = ROOT) -> list[str]:
     return errors
 
 
-def main() -> int:
-    errors = validate()
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--require-publishable", action="store_true",
+        help="require immutable adapter tags, reviewed conformance, deployment trust authors, and a publishable tag state",
+    )
+    args = parser.parse_args(argv)
+    errors = validate(require_publishable=args.require_publishable)
     if errors:
         print("release validation failed:\n- " + "\n- ".join(errors), file=sys.stderr)
         return 1

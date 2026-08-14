@@ -13,7 +13,7 @@ All production interfaces shall use immutable version references, canonical payl
 | RI-03 `consulting-playbook` | Consulting knowledge source and optional execution target. Bidirectional if producing work. | Canonical proposed/approved work through portfolio path; compatibility evidence and results | Execution input, shared contracts, governance guidance | Approved work only; never local side-channel authorization | Playbook owner owns methods/content; portfolio owns approval; control plane owns interchange. |
 | RI-04 future task producer | Adds governed sources without alternate execution. Inbound through approved portfolio identity. | Canonical approved task and provenance | Admission decision and diagnostics | Registered producer event; task contract | New producer owner plus control-plane approval; MINOR/MAJOR according to compatibility impact. |
 | RI-05 future target | Adds independently operated execution domain. Outbound/inbound. | Registration request, owner, supported versions/modes, compatibility and result evidence | Authorized inputs, verification report, isolation state | Enablement only after review and read-only compatibility | Target owner executes; control plane owns registration and routing. |
-| RI-MVP-01 result receiver | Canonical target-to-source return boundary. Inbound from targets; outbound to source owner. | Authenticated `execution-result/v2`, caller identity, delivery/correlation identity | Validated receipt, duplicate receipt, or classified rejection; idempotent source projection request | Target invokes organization-owned reusable workflow; ADR-010 | Target owns result creation/retry; `.github` owns validation/evidence/forwarding; `portfolio-tasks` owns issue projection. Immutable release pin. |
+| RI-MVP-01 result receiver | Canonical target-to-source return boundary. Inbound from targets; outbound to source owner. | Authenticated `execution-result/v2`, caller identity, delivery/correlation identity, and only the scoped result-delivery credential | Validated receipt, duplicate receipt, or classified rejection; idempotent source projection request | Target invokes organization-owned reusable workflow at an immutable revision; journal-author trust is control-plane configuration; ADR-010/013 | Target owns result creation/retry; `.github` owns validation/evidence/forwarding/trust policy; `portfolio-tasks` owns issue projection. Immutable release pin. |
 | RI-MVP-02 `.github` target adapter | Bounded execution target, isolated from the control plane. | Router-admitted canonical execution input only | Canonical result through RI-MVP-01 and, in implement mode only, one managed draft PR in `.github` | Planned `.github/workflows/codex-execute.yml`; requires an immutable reviewed revision before enablement | Target-only identity cannot approve, route, modify another repository, merge, release, deploy, or use control-plane credentials. |
 
 ## Per-interface operational contract
@@ -43,6 +43,13 @@ authorization, implement explicit mode semantics, discover/reuse a managed
 draft by delivery ID, emit `execution-result/v2`, and pass the organization
 fixture matrix before enablement. These are organization-defined conformance
 obligations, not claims that sibling repositories currently comply.
+
+The target entry point for `CC-MVP-TARGET` is only `workflow_dispatch` with
+exactly the two required string inputs `execution_input_json` and
+`concurrency_group`. Evidence is sufficient only when the exact immutable
+adapter tag and commit contain a digest-bound report showing every shared
+scenario passed through the repository adapter and every prohibited real-effect
+counter remained zero. Disabled or skipped adapters are not conformant.
 
 The canonical fixture release and expected-result manifest are owned here.
 Consumers pin it immutably and run it against a repository-local adapter; they

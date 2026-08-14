@@ -13,7 +13,7 @@
 | `DeliveryCoordinator` | Serialize a delivery, invoke transport, classify acknowledgement | Dispatch port, telemetry |
 | `ResultInterpreter` | Validate and correlate progress/terminal outcomes | Validator, evidence port |
 | `RecoveryPlanner` | Recommend retry, reconcile, isolate, or escalate | Failure taxonomy, attempt history |
-| `CompatibilityEvaluator` | Evaluate target interface and behavior in read-only mode | Workflow inspection/test ports |
+| `CompatibilityEvaluator` | Evaluate exact target dispatch/receiver interfaces, immutable tag/commit and digest-bound shared-oracle report in read-only mode | Workflow inspection/test ports |
 | `ReleaseValidator` | Assert atomic manifest coherence and immutability | Catalog, registry, artifact digest port |
 
 ## Public use-case interfaces
@@ -49,10 +49,15 @@ Each operation returns a typed decision rather than throwing transport-specific 
 - Immutable fields cannot change under an existing delivery identity.
 - `correlation_id` supports observation and is not an idempotency key.
 - A route has exactly one enabled target or is rejected.
+- An enabled route has a governed adapter tag plus complete reviewed
+  `TC-MVP-CI-001` evidence; disabled or unevaluated state is never compatibility
+  success.
 - Mode is explicit. Verify has no implementation/publication side effects; implement permits draft publication only.
 - Dispatch input is canonical and schema-valid; target-specific prose is opaque bounded task content.
 - Unknown outcome, lost acknowledgement, and absent result are never success.
 - A release is usable only if its mutually dependent artifacts are coherent and immutable.
+- Result journal trust comes only from the receiver's immutable control-plane
+  policy; target input or secrets cannot change it.
 
 ## Extension points
 

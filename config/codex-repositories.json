@@ -13,6 +13,7 @@
       "max_parallel_tasks": 1,
       "draft_pr_only": true,
       "contract_version": "ai-sdlc-contract/v2",
+      "conformance": null,
       "idempotency": {
         "branch_identity": "delivery_id",
         "ownership_marker": "ai-sdlc-delivery-id",
@@ -35,6 +36,7 @@
       "max_parallel_tasks": 2,
       "draft_pr_only": true,
       "contract_version": "ai-sdlc-contract/v2",
+      "conformance": null,
       "idempotency": {
         "branch_identity": "delivery_id",
         "ownership_marker": "ai-sdlc-delivery-id",
@@ -56,6 +58,7 @@
       "max_parallel_tasks": 1,
       "draft_pr_only": true,
       "contract_version": "ai-sdlc-contract/v2",
+      "conformance": null,
       "idempotency": {
         "branch_identity": "delivery_id",
         "ownership_marker": "ai-sdlc-delivery-id",
@@ -78,6 +81,7 @@
       "max_parallel_tasks": 1,
       "draft_pr_only": true,
       "contract_version": "ai-sdlc-contract/v2",
+      "conformance": null,
       "idempotency": {
         "branch_identity": "delivery_id",
         "ownership_marker": "ai-sdlc-delivery-id",

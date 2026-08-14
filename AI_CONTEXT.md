@@ -222,6 +222,12 @@ python scripts/verify_target_workflows.py
 git diff --check
 ```
 
+`python scripts/validate_release.py` verifies structural candidate coherence.
+Before an actual compatibility tag, the separately reviewed final release
+change must also pass `python scripts/validate_release.py --require-publishable`;
+the 2.3.1 recovery candidate is expected to fail that
+gate until every adapter and receiver-trust prerequisite is recorded.
+
 `python scripts/verify_target_workflows.py` is applicable only when its
 documented target-workflow credentials and external access are available; pass
 `--fixtures-only` to run the script in offline mode without live credentials.
@@ -268,8 +274,12 @@ decided and justified during the relevant implementation task.
 ## Known gaps or conflicts
 
 - The organization-owned receiver and complete deterministic `TC-MVP-CI-001`
-  fixture oracle are implemented in the 2.3.0 candidate. Its declared tag is
-  not published; source-consumer deployment and credential/retention approval
+  fixture oracle are retained in the 2.3.1 compatibility-recovery candidate.
+  Reviewed 2.3.0 commit
+  `c6090e5bbadcc2102a1cb91875466e9decdada1e` is historical evidence, not an
+  activation-safe baseline. The corrected tag is not published; all adapter
+  refs/evidence and the receiver's journal-author allowlist remain pending and
+  fail closed. Source-consumer deployment and credential/retention approval
   remain external release evidence, not permission to create another path.
 - `CC-MVP-SOURCE` and `CC-MVP-TARGET` conformance, sibling-repository-specific
   requirement IDs, immutable adapter revisions, target enablement, credentials,
@@ -285,16 +295,7 @@ decided and justified during the relevant implementation task.
   been replaced by the authority hierarchy and single-active-contract policy
   above: implementation is evidence, and backward compatibility is not
   currently required.
-- The approved [architecture index](docs/architecture/README.md) identifies the
-  next-MVP architecture as approved and normative, while
-  [Software Architecture](docs/architecture/SoftwareArchitecture.md) and
-  [Architecture Traceability](docs/architecture/ArchitectureTraceability.md)
-  expressly retain pre-approval language. This status conflict requires owner
-  reconciliation. When implementation depends on either named document, fail
-  closed and report the conflicting status; do not treat its content as
-  approved or dismiss its stated status as stale.
-
-No other material contradiction among the locally approved vision,
+No material contradiction among the locally approved vision,
 requirements, applicable approved architecture, and v2 interface direction was
 identified during this task. The gaps above must remain visible and fail closed
 where applicable.

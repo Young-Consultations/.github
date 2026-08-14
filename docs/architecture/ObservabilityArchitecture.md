@@ -9,7 +9,7 @@ Operators must determine what was requested, why it was admitted/rejected, where
 | Signal | Required concepts |
 | --- | --- |
 | Structured logs | Timestamp, component/use case, release/registry/contract version, task/delivery/correlation/attempt IDs when valid, decision code, target, mode, retryability, owner; no secrets/raw payload by default. |
-| Metrics | Admission/routing counts and latency; rejection/failure by stable category; dispatch acknowledgement/uncertainty; pending age; retry/reuse/ambiguity; target compatibility; release adoption; queue/concurrency; redaction/security alerts. |
+| Metrics | Admission/routing counts and latency; rejection/failure by stable category; dispatch acknowledgement/uncertainty; pending age; retry/reuse/ambiguity; target compatibility state (`pass`, `fail`, `not-evaluated`) and evidence identity; release adoption; queue/concurrency; redaction/security alerts. |
 | Traces | Planning invocation → validation → policy decision → dispatch attempt → target/result reconciliation, linked across asynchronous boundaries by delivery/correlation identity. |
 | Health | Contract/resource integrity, registry/release coherence, GitHub dependency/rate state, dispatch capability, result-channel lag, per-target compatibility/isolation, telemetry pipeline health. |
 | Audit evidence | Actor, source/approval reference, immutable policy/release, decision, permission context, attempts, canonical outcome/evidence, draft PR and human review. |

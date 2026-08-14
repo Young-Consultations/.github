@@ -45,7 +45,7 @@ def enabled_in_process_routing(monkeypatch):
 
 def run_router(
     *, github_output=None, execution_mode=None, enable_target=True,
-    workflow_revision=TEST_ADAPTER_TAG, **changes,
+    workflow_revision=TEST_ADAPTER_TAG, with_conformance=True, **changes,
 ):
     task = {**BASE_TASK, **changes}
     env = {key: value for key, value in os.environ.items() if key != "GITHUB_OUTPUT"}
@@ -56,6 +56,17 @@ def run_router(
         entry = registry["repositories"][task["target_repository"]]
         activation["targets"][task["target_repository"]] = True
         entry["workflow_ref"] = entry["workflow_ref"].rsplit("@", 1)[0] + "@" + workflow_revision
+        entry["conformance"] = {
+            "fixture_set": "TC-MVP-CI-001",
+            "fixture_version": "2.3.0",
+            "compatibility_sha": "1" * 40,
+            "adapter_ref": workflow_revision,
+            "adapter_commit_sha": "2" * 40,
+            "report_path": ".ai-sdlc/conformance/tc-mvp-ci-001.json",
+            "report_sha256": "3" * 64,
+            "status": "pass",
+            "activation_evidence_sufficient": True,
+        } if with_conformance else None
     if execution_mode is not None:
         env["EXECUTION_MODE"] = execution_mode
     else:
@@ -291,6 +302,13 @@ def test_enabled_activation_accepts_dispatchable_immutable_adapter_tag():
     result = run_router(workflow_revision="codex-adapter-v2.1.3-rc.1")
     assert result.returncode == 0, result.stdout + result.stderr
     assert output(result, "workflow_ref").endswith("@codex-adapter-v2.1.3-rc.1")
+
+
+def test_enabled_activation_rejects_missing_shared_oracle_evidence():
+    result = run_router(with_conformance=False)
+    assert result.returncode == 1
+    assert output(result, "failure_category") == "repository-routing"
+    assert "TC-MVP-CI-001" in output(result, "diagnostic_summary")
 
 
 def test_repository_specific_configuration_is_registry_only():

@@ -38,6 +38,7 @@ def test_registry_json_syntax_and_required_fields():
         assert entry["draft_pr_only"] is True, name
         assert entry["workflow_ref"] == f"{name}/.github/workflows/codex-execute.yml@main", name
         assert entry["contract_version"] == "ai-sdlc-contract/v2", name
+        assert entry["conformance"] is None, name
 
 
 def test_activation_change_does_not_change_compatibility_contents(tmp_path):
@@ -76,13 +77,33 @@ def test_organization_target_executor_is_canonical_v2_path():
     assert "execution_input_json:" in workflow
     assert "concurrency_group:" in workflow
     assert "scripts/codex_target_adapter.py" in workflow
-    assert "@d646f0eea83530b269aec3d621cda7730a8c1364" in workflow
+    assert re.search(
+        r"Young-Consultations/\.github/\.github/workflows/"
+        r"codex-result-receiver\.yml@[0-9a-f]{40}",
+        workflow,
+    )
     assert {
         "ai-sdlc-contract-tests.yml",
         "codex-execute.yml",
         "codex-router.yml",
         "router-smoke-test.yml",
     }.issubset({path.name for path in WORKFLOWS.glob("*.yml")})
+
+
+def test_result_receiver_owns_journal_author_policy():
+    receiver = (WORKFLOWS / "codex-result-receiver.yml").read_text(encoding="utf-8")
+    action = Path("actions/codex-result-receiver/action.yml").read_text(encoding="utf-8")
+    script = Path("scripts/codex_result_receiver.py").read_text(encoding="utf-8")
+    policy = json.loads(Path("config/codex-result-trust.json").read_text(encoding="utf-8"))
+
+    assert "CODEX_TRUSTED_JOURNAL_AUTHORS" not in receiver
+    assert "actions/checkout@" not in receiver
+    assert receiver.count(
+        "Young-Consultations/.github/actions/codex-result-receiver@ai-sdlc-v2.3.1"
+    ) == 1
+    assert '$GITHUB_ACTION_PATH/../../scripts/codex_result_receiver.py' in action
+    assert "config/codex-result-trust.json" in script
+    assert policy == {"policy_format_version": 1, "trusted_journal_authors": []}
 
 
 def test_router_is_the_only_organization_dispatch_boundary():

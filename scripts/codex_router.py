@@ -20,8 +20,12 @@ ACTIVATION = Path(
 )
 TASK_SCHEMA = ROOT / "contracts/task-contract.schema.json"
 INPUT_SCHEMA = ROOT / "contracts/execution-input.schema.json"
+RELEASE_MANIFEST = ROOT / "release/release-manifest.json"
 REPO_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
 SAFE_RE = re.compile(r"[^a-z0-9._-]+")
+SHA_RE = re.compile(r"^[0-9a-f]{40}$")
+DIGEST_RE = re.compile(r"^[0-9a-f]{64}$")
+REPORT_PATH_RE = re.compile(r"^(?!/)(?!.*(?:^|/)\.\.(?:/|$))[A-Za-z0-9._/-]+\.json$")
 # workflow_dispatch accepts only a branch or tag for --ref. Adapter release tags
 # use this governed, non-moving namespace so dispatchability and immutability
 # are enforced together.
@@ -35,7 +39,13 @@ FAILURE_CATEGORIES = {
 }
 REGISTRY_FIELDS = {
     "workflow_ref", "allowed_task_types", "codex_environment",
-    "max_parallel_tasks", "draft_pr_only", "contract_version", "idempotency",
+    "max_parallel_tasks", "draft_pr_only", "contract_version", "conformance",
+    "idempotency",
+}
+CONFORMANCE_FIELDS = {
+    "fixture_set", "fixture_version", "compatibility_sha", "adapter_ref",
+    "adapter_commit_sha", "report_path", "report_sha256", "status",
+    "activation_evidence_sufficient",
 }
 
 
@@ -99,6 +109,42 @@ def read_json(path: Path) -> dict[str, Any]:
         return json.load(fh)
 
 
+def validate_conformance(
+    repository: str, entry: dict[str, Any], *, required: bool,
+) -> bool:
+    """Validate reviewed shared-oracle evidence recorded in the capability snapshot."""
+    evidence = entry.get("conformance")
+    if evidence is None:
+        if required:
+            reject(
+                "repository-routing",
+                f"Enabled target {repository} has no reviewed TC-MVP-CI-001 evidence.",
+            )
+        return False
+    if not isinstance(evidence, dict) or set(evidence) != CONFORMANCE_FIELDS:
+        reject("repository-routing", f"Registry entry {repository} has invalid conformance evidence.")
+    _, adapter_ref = parse_workflow_ref(repository, entry.get("workflow_ref"))
+    fixture_version = read_json(RELEASE_MANIFEST).get("fixture_version")
+    valid = (
+        evidence.get("fixture_set") == "TC-MVP-CI-001"
+        and evidence.get("fixture_version") == fixture_version
+        and evidence.get("adapter_ref") == adapter_ref
+        and isinstance(evidence.get("compatibility_sha"), str)
+        and SHA_RE.fullmatch(evidence["compatibility_sha"]) is not None
+        and isinstance(evidence.get("adapter_commit_sha"), str)
+        and SHA_RE.fullmatch(evidence["adapter_commit_sha"]) is not None
+        and isinstance(evidence.get("report_path"), str)
+        and REPORT_PATH_RE.fullmatch(evidence["report_path"]) is not None
+        and isinstance(evidence.get("report_sha256"), str)
+        and DIGEST_RE.fullmatch(evidence["report_sha256"]) is not None
+        and evidence.get("status") == "pass"
+        and evidence.get("activation_evidence_sufficient") is True
+    )
+    if not valid:
+        reject("repository-routing", f"Registry entry {repository} has invalid conformance evidence.")
+    return True
+
+
 def validate_registry() -> dict[str, Any]:
     try:
         data = read_json(REGISTRY)
@@ -132,6 +178,7 @@ def validate_registry() -> dict[str, Any]:
             reject("repository-routing", f"Registry entry {name} lacks required target idempotency policy.")
         if entry["contract_version"] != read_json(INPUT_SCHEMA)["properties"]["contract_version"]["const"]:
             reject("repository-routing", f"Registry entry {name} has an unsupported contract_version.")
+        validate_conformance(name, entry, required=False)
     return repositories
 
 
@@ -159,6 +206,8 @@ def routing_configuration() -> tuple[dict[str, Any], dict[str, bool]]:
                 "repository-routing",
                 f"Enabled target {name} must use a governed immutable codex-adapter-v* release tag.",
             )
+        if enabled:
+            validate_conformance(name, repositories[name], required=True)
     return repositories, activation
 
 

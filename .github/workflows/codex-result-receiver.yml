@@ -15,9 +15,6 @@ on:
       CODEX_RESULT_TOKEN:
         description: Result-only repository-scoped identity; no target write, merge, release, or deploy authority.
         required: true
-      CODEX_TRUSTED_JOURNAL_AUTHORS:
-        description: Comma-separated GitHub App or bot logins authorized to write admission and receiver markers.
-        required: true
     outputs:
       accepted:
         description: Receipt acceptance only; never execution success.
@@ -50,17 +47,10 @@ jobs:
       failure_category: ${{ steps.receive.outputs.failure_category }}
       diagnostic_summary: ${{ steps.receive.outputs.diagnostic_summary }}
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          repository: Young-Consultations/.github
-          ref: ${{ github.workflow_sha }}
-          persist-credentials: false
-      - run: python -m pip install --disable-pip-version-check 'jsonschema[format]>=4.18,<5'
       - id: receive
-        env:
-          GH_TOKEN: ${{ secrets.CODEX_RESULT_TOKEN }}
-          EXECUTION_RESULT: ${{ inputs.execution_result }}
-          SOURCE_ISSUE: ${{ inputs.source_issue }}
-          CALLER_REPOSITORY: ${{ github.repository }}
-          CODEX_TRUSTED_JOURNAL_AUTHORS: ${{ secrets.CODEX_TRUSTED_JOURNAL_AUTHORS }}
-        run: python3 scripts/codex_result_receiver.py
+        uses: Young-Consultations/.github/actions/codex-result-receiver@ai-sdlc-v2.3.1
+        with:
+          result-token: ${{ secrets.CODEX_RESULT_TOKEN }}
+          execution-result: ${{ inputs.execution_result }}
+          source-issue: ${{ inputs.source_issue }}
+          caller-repository: ${{ github.repository }}

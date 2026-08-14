@@ -13,7 +13,7 @@
 | `consulting-playbook` | Known responsibility boundary | May produce governed portfolio work and owns consulting knowledge. No internal knowledge model is assumed. |
 | AI provider/executor | Known conceptual dependency, target-owned | Used only during implement mode; receives minimized non-secret content; can propose but not approve/merge/deploy. Provider API is unknown. |
 | Identity/secret/signing/scanning services | Assumed organization capabilities | Must provide least-privilege identity, protected secrets, integrity and security evidence where policy requires. Products and topology are unknown. |
-| Result callback/event channel | Unknown | Must deliver IF-05 with authentication, integrity, correlation and at-least-once-safe behavior; transport awaits decision. |
+| Result receiver | Known boundary selected by ADR-010/013 | A target invokes the reusable receiver at an immutable control-plane revision with canonical IF-05 and only its scoped result-delivery credential. The receiver delegates to a self-pinned action at the same commit, loads journal-author trust from that action bundle, and provides authenticated, correlated, at-least-once-safe handling. |
 
 ## Synchronization and messaging
 
@@ -22,8 +22,11 @@ Registry and release policy are immutable snapshots for the duration of a decisi
 ## Workflow boundaries
 
 1. Planning authorizes and invokes the router; it cannot select an unregistered endpoint.
-2. The router validates, authorizes, selects and dispatches; it cannot inspect or alter target source.
-3. The target verifies again, owns executor invocation and draft publication; it cannot reinterpret approval or change requested scope.
+2. The router validates, authorizes, selects and dispatches exactly two required
+   `workflow_dispatch` inputs; it cannot inspect or alter target source.
+3. The target verifies again, owns executor invocation and draft publication,
+   and returns the result through the immutable receiver; it cannot reinterpret
+   approval, change requested scope, or supply the receiver trust policy.
 4. Human review is the only transition from proposal toward merge.
 
 ## Onboarding/offboarding
