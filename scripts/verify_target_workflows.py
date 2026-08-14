@@ -321,13 +321,13 @@ def verify_receiver_compatibility(source: str) -> str:
         "execution_result", "source_issue",
     }:
         raise CompatibilityError("result receiver call must supply exactly execution_result and source_issue")
+    if "CODEX_TRUSTED_JOURNAL_AUTHORS" in source:
+        raise CompatibilityError("target must not supply control-plane journal-author policy")
     receiver_secrets = receiver_job.get("secrets")
     if not isinstance(receiver_secrets, dict) or set(receiver_secrets) != {"CODEX_RESULT_TOKEN"}:
         raise CompatibilityError("result receiver call must supply only CODEX_RESULT_TOKEN")
     if not isinstance(receiver_secrets["CODEX_RESULT_TOKEN"], str) or not receiver_secrets["CODEX_RESULT_TOKEN"].strip():
         raise CompatibilityError("result-only delivery credential is missing")
-    if "CODEX_TRUSTED_JOURNAL_AUTHORS" in source:
-        raise CompatibilityError("target must not supply control-plane journal-author policy")
     return receiver_ref
 
 
