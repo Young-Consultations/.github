@@ -227,7 +227,7 @@ def test_github_preflight_observes_branch_and_pull_request(monkeypatch, payload)
 
     def gh(*args, **kwargs):
         if args[0] == "api":
-            return branch + "\n"
+            return f"refs/heads/{branch}\n"
         assert args[:2] == ("pr", "list")
         body = (
             f"<!-- ai-sdlc-delivery-id: {payload['delivery_id']}; "

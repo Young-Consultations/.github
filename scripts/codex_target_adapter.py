@@ -145,12 +145,20 @@ def reconcile_ownership(snapshot: Ownership, digest: str) -> dict[str, Any] | No
             "Delivery branch and managed pull-request state are inconsistent",
             "ambiguous-rejected",
         )
-    if any(item.get("digest") != digest for item in owned):
-        raise AdapterError(
-            "authorization",
-            "Delivery ID is already bound to a different payload",
-            "ambiguous-rejected",
-        )
+    for item in owned:
+        item_digest = item.get("digest")
+        if item_digest == "conflict":
+            raise AdapterError(
+                "authorization",
+                "Pull request is missing or has an invalid ownership marker",
+                "ambiguous-rejected",
+            )
+        if item_digest != digest:
+            raise AdapterError(
+                "authorization",
+                "Delivery ID is already bound to a different payload",
+                "ambiguous-rejected",
+            )
     if len(owned) > 1 or any(
         not item.get("draft") or item.get("state") != "OPEN" for item in owned
     ):
@@ -263,15 +271,14 @@ class GitHubEffects:
                                        timeout=timeout_seconds)
 
     def discover(self, branch: str, delivery_id: str, timeout_seconds: float) -> Ownership:
-        branch_names = self._gh(
+        ref_output = self._gh(
             "api",
-            "--paginate",
-            f"repos/{TARGET}/branches?per_page=100",
+            f"repos/{TARGET}/git/matching-refs/heads/{branch}",
             "--jq",
-            ".[].name",
+            ".[].ref",
             timeout_seconds=timeout_seconds,
         )
-        branch_exists = branch in branch_names.splitlines()
+        branch_exists = f"refs/heads/{branch}" in ref_output.splitlines()
         raw = self._gh("pr", "list", "--repo", TARGET, "--state", "all", "--head", branch,
                        "--json", "url,state,isDraft,body", timeout_seconds=timeout_seconds)
         found = []
