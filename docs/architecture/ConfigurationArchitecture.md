@@ -21,7 +21,8 @@ Normative contract and security invariants cannot be overridden. For configurabl
 Validate syntax, schema, uniqueness, referential integrity, version coherence,
 target/workflow identity, owner, exact dispatch inputs, receiver compatibility,
 modes/types, positive limits, publication/idempotency/security policy,
-digest-bound shared-oracle evidence, and secret-reference form before
+digest-bound shared-oracle evidence, a non-recursive exact-file conformance pin,
+separate immutable tag-to-commit/report-digest bindings, and secret-reference form before
 activation. Unknown keys fail closed. A decision reads one version-identified
 immutable snapshot; mid-run changes apply only to later decisions. Sensitive
 values are supplied through protected secret references, never committed

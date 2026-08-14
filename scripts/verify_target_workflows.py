@@ -51,6 +51,23 @@ IMMUTABLE_RECEIVER_REF_RE = re.compile(
 SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 DIGEST_RE = re.compile(r"^[0-9a-f]{64}$")
 REPORT_PATH_RE = re.compile(r"^(?!/)(?!.*(?:^|/)\.\.(?:/|$))[A-Za-z0-9._/-]+\.json$")
+FILE_PATH_RE = re.compile(r"^(?!/)(?!.*(?:^|/)\.\.(?:/|$))[A-Za-z0-9._/-]+$")
+PIN_REVISION_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
+GIT_BLOB_RE = re.compile(r"^[0-9a-f]{40}$")
+CONFORMANCE_PIN_PATH = "config/mvp-conformance-pin.json"
+CONFORMANCE_PIN_FIELDS = {
+    "pin_format_version", "organization_repository", "compatibility_sha",
+    "fixture_set", "fixture_version", "adapter_revision",
+    "compatibility_files", "target_files",
+}
+PINNED_COMPATIBILITY_FILES = {
+    "contracts/task-contract.schema.json",
+    "contracts/execution-input.schema.json",
+    "contracts/execution-result.schema.json",
+    "tests/fixtures/mvp-v2/manifest.json",
+    "tests/fixtures/mvp-v2/scenarios.json",
+    "tests/fixtures/mvp-v2/expected-results.json",
+}
 CONFORMANCE_FIELDS = {
     "fixture_set", "fixture_version", "compatibility_sha", "adapter_ref",
     "adapter_commit_sha", "report_path", "report_sha256", "status",
@@ -117,6 +134,19 @@ def release_fixture_version() -> str:
     if not isinstance(version, str) or not version:
         raise CompatibilityError("release fixture_version is missing")
     return version
+
+
+def git_blob_sha1(data: bytes) -> str:
+    """Return the Git blob identity for exact bytes without needing a checkout."""
+    return hashlib.sha1(f"blob {len(data)}\0".encode() + data).hexdigest()
+
+
+def conformance_pin_revision(pin: dict[str, Any]) -> str:
+    """Bind a pin without recursively hashing its own revision field."""
+    material = dict(pin)
+    material["adapter_revision"] = None
+    canonical = json.dumps(material, sort_keys=True, separators=(",", ":")).encode()
+    return "sha256:" + hashlib.sha256(canonical).hexdigest()
 
 
 def validate_conformance_record(
@@ -569,8 +599,81 @@ def verify_receiver_at_ref(receiver_ref: str, token: str | None) -> None:
     )
 
 
+def verify_conformance_pin(
+    repository: str,
+    ref: str,
+    workflow_path: str,
+    evidence: dict[str, Any],
+    token: str | None,
+) -> str:
+    """Verify non-recursive evidence bindings at an immutable adapter ref."""
+    raw = fetch_content(repository, CONFORMANCE_PIN_PATH, ref, token)
+    try:
+        pin = json.loads(raw, object_pairs_hook=_reject_duplicate_keys)
+    except (UnicodeDecodeError, json.JSONDecodeError, CompatibilityError) as exc:
+        raise CompatibilityError("conformance pin is not valid JSON") from exc
+    if not isinstance(pin, dict) or set(pin) != CONFORMANCE_PIN_FIELDS:
+        raise CompatibilityError("conformance pin has an invalid shape")
+    compatibility_files = pin.get("compatibility_files")
+    target_files = pin.get("target_files")
+    def valid_identity(value: Any) -> bool:
+        return isinstance(value, str) and GIT_BLOB_RE.fullmatch(value) is not None
+
+    def valid_path(value: Any) -> bool:
+        return isinstance(value, str) and FILE_PATH_RE.fullmatch(value) is not None
+    valid = (
+        pin.get("pin_format_version") == 2
+        and pin.get("organization_repository") == "Young-Consultations/.github"
+        and pin.get("compatibility_sha") == evidence["compatibility_sha"]
+        and pin.get("fixture_set") == "TC-MVP-CI-001"
+        and pin.get("fixture_version") == evidence["fixture_version"]
+        and isinstance(compatibility_files, dict)
+        and set(compatibility_files) == PINNED_COMPATIBILITY_FILES
+        and all(valid_path(path) and valid_identity(identity) for path, identity in compatibility_files.items())
+        and isinstance(target_files, dict)
+        and workflow_path in target_files
+        and "scripts/codex_target_adapter.py" in target_files
+        and "scripts/run_tc_mvp_ci_001.py" in target_files
+        and all(valid_path(path) and valid_identity(identity) for path, identity in target_files.items())
+        and CONFORMANCE_PIN_PATH not in target_files
+        and evidence["report_path"] not in target_files
+    )
+    if not valid:
+        raise CompatibilityError("conformance pin does not bind the required compatibility and target files")
+    expected_revision = conformance_pin_revision(pin)
+    supplied_revision = pin.get("adapter_revision")
+    if (
+        not isinstance(supplied_revision, str)
+        or PIN_REVISION_RE.fullmatch(supplied_revision) is None
+        or supplied_revision != expected_revision
+    ):
+        raise CompatibilityError("conformance pin revision does not match its canonical file binding")
+
+    for path, expected in compatibility_files.items():
+        control_plane = fetch_content(
+            "Young-Consultations/.github", path, evidence["compatibility_sha"], token,
+        )
+        target_copy = fetch_content(repository, path, ref, token)
+        local_path = ROOT / path
+        if (
+            git_blob_sha1(control_plane) != expected
+            or git_blob_sha1(target_copy) != expected
+            or not local_path.is_file()
+            or git_blob_sha1(local_path.read_bytes()) != expected
+        ):
+            raise CompatibilityError(f"conformance compatibility file identity differs: {path}")
+    for path, expected in target_files.items():
+        if git_blob_sha1(fetch_content(repository, path, ref, token)) != expected:
+            raise CompatibilityError(f"conformance target file identity differs: {path}")
+    return expected_revision
+
+
 def verify_conformance_report(
-    repository: str, ref: str, evidence: dict[str, Any], token: str | None,
+    repository: str,
+    ref: str,
+    workflow_path: str,
+    evidence: dict[str, Any],
+    token: str | None,
 ) -> None:
     raw = fetch_content(repository, evidence["report_path"], ref, token)
     if hashlib.sha256(raw).hexdigest() != evidence["report_sha256"]:
@@ -580,6 +683,7 @@ def verify_conformance_report(
         fixture = json.loads(FIXTURE_MANIFEST.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError) as exc:
         raise CompatibilityError(f"conformance report cannot be loaded: {exc}") from exc
+    adapter_revision = verify_conformance_pin(repository, ref, workflow_path, evidence, token)
     expected_scenarios = fixture.get("scenarios") if isinstance(fixture, dict) else None
     scenario_results = report.get("scenario_results") if isinstance(report, dict) else None
     observed_scenarios = [item.get("id") for item in scenario_results] if isinstance(scenario_results, list) and all(isinstance(item, dict) for item in scenario_results) else None
@@ -592,7 +696,7 @@ def verify_conformance_report(
     valid = (
         report.get("report_version") == "1.0"
         and report.get("repository") == repository
-        and report.get("adapter_revision") == evidence["adapter_commit_sha"]
+        and report.get("adapter_revision") == adapter_revision
         and report.get("compatibility_sha") == evidence["compatibility_sha"]
         and report.get("fixture_set") == "TC-MVP-CI-001"
         and report.get("fixture_version") == evidence["fixture_version"]
@@ -641,7 +745,7 @@ def verify_registry(
             source = fetch_workflow(workflow_repository, path, ref, token)
             row["transport_interface"] = verify_interface(source)
             verify_receiver_at_ref(verify_receiver_compatibility(source), token)
-            verify_conformance_report(repository, ref, evidence, token)
+            verify_conformance_report(repository, ref, path, evidence, token)
             row["result"] = "pass"
         except CompatibilityError as exc:
             row["result"] = f"fail: {exc}"

@@ -46,8 +46,9 @@ Router/domain operations are stateless over immutable snapshots and may scale ho
 
 Deploy the atomic compatibility unit by immutable identity only after
 contract/security gates, every adapter's digest-bound complete conformance
-report, and the non-empty reviewed receiver trust policy pass the publication
-gate. Disabled or unevaluated targets are blockers, not compatibility success.
+report, non-recursive exact-file pin, separately resolved immutable tag/commit,
+and the non-empty reviewed receiver trust policy pass the publication gate.
+Disabled or unevaluated targets are blockers, not compatibility success.
 Consumers adopt deliberately. Rollback pins the manifest's known-good release
 and may disable a target without reverting unrelated targets. Recovery
 reconstructs state from authoritative task, route/attempt audit, target evidence

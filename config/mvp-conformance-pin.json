@@ -1,17 +1,21 @@
 {
-  "pin_format_version": 1,
+  "pin_format_version": 2,
   "organization_repository": "Young-Consultations/.github",
-  "compatibility_sha": "c6090e5bbadcc2102a1cb91875466e9decdada1e",
+  "compatibility_sha": "e27b8a541afbd27b4be5606a19ffa43637ad312a",
   "fixture_set": "TC-MVP-CI-001",
   "fixture_version": "2.3.0",
-  "adapter_revision": "git-blob:d255c91dedb2c3da27a6861f7496aac07da53911",
-  "files": {
+  "adapter_revision": "sha256:c0949862a3cca03a2775a9a2e9e80c2eb07ac668b184c35e72286b4feb77d96d",
+  "compatibility_files": {
     "contracts/task-contract.schema.json": "d95673363eb7f825eb64b73ddb0468c787078ce4",
     "contracts/execution-input.schema.json": "b2b16cfda619c82d73a5e78ae34566feb6b83224",
     "contracts/execution-result.schema.json": "02ba5fd11b6903f50eccc283679c0b5ac85c4714",
     "tests/fixtures/mvp-v2/manifest.json": "1656140614973245cf288380e6bcc89f83d8e51f",
     "tests/fixtures/mvp-v2/scenarios.json": "d0b20b7272bcb38871cb07e51f6a1141eb1f4f04",
-    "tests/fixtures/mvp-v2/expected-results.json": "b45c6921f029220b2f3138d5cd2d9443499a3171",
-    "scripts/codex_target_adapter.py": "d255c91dedb2c3da27a6861f7496aac07da53911"
+    "tests/fixtures/mvp-v2/expected-results.json": "b45c6921f029220b2f3138d5cd2d9443499a3171"
+  },
+  "target_files": {
+    ".github/workflows/codex-execute.yml": "54f0fcc01e21efdf9efc8b429356b92b1a094c63",
+    "scripts/codex_target_adapter.py": "712e997d1f09a66f81399a7c0f2da5cfcbc722d7",
+    "scripts/run_tc_mvp_ci_001.py": "48853194cb35c141bcc411fea74686078b6e213b"
   }
 }

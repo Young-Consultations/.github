@@ -1,0 +1,203 @@
+{
+  "report_version": "1.0",
+  "repository": "Young-Consultations/.github",
+  "adapter_revision": "sha256:c0949862a3cca03a2775a9a2e9e80c2eb07ac668b184c35e72286b4feb77d96d",
+  "compatibility_sha": "e27b8a541afbd27b4be5606a19ffa43637ad312a",
+  "fixture_set": "TC-MVP-CI-001",
+  "fixture_version": "2.3.0",
+  "production_readiness_claim": false,
+  "activation_requested": false,
+  "activation_evidence_sufficient": true,
+  "activation_evidence_reason": "complete shared oracle executed through the repository adapter with deterministic effect traps",
+  "adapter_tag_published": false,
+  "receiver_live_verification": "pending-ai-sdlc-v2.3.1-tag",
+  "effect_traps": {
+    "codex_calls": 0,
+    "real_branches_created": 0,
+    "real_commits_created": 0,
+    "real_pushes": 0,
+    "real_pull_requests_created": 0,
+    "merge_actions": 0,
+    "release_actions": 0,
+    "deployment_actions": 0,
+    "production_actions": 0,
+    "secret_outputs": 0
+  },
+  "scenario_results": [
+    {
+      "id": "valid-verify",
+      "result": "pass",
+      "decision": "accepted",
+      "adapter_invoked": true
+    },
+    {
+      "id": "valid-implement-fake-executor",
+      "result": "pass",
+      "decision": "accepted",
+      "adapter_invoked": true
+    },
+    {
+      "id": "valid-result",
+      "result": "pass",
+      "decision": "accepted",
+      "adapter_invoked": true
+    },
+    {
+      "id": "unsupported-version",
+      "result": "pass",
+      "decision": "rejected",
+      "adapter_invoked": true
+    },
+    {
+      "id": "malformed-payload",
+      "result": "pass",
+      "decision": "rejected",
+      "adapter_invoked": true
+    },
+    {
+      "id": "unauthorized-approval",
+      "result": "pass",
+      "decision": "rejected",
+      "adapter_invoked": false
+    },
+    {
+      "id": "stale-approval",
+      "result": "pass",
+      "decision": "rejected",
+      "adapter_invoked": false
+    },
+    {
+      "id": "withdrawn-approval",
+      "result": "pass",
+      "decision": "rejected",
+      "adapter_invoked": false
+    },
+    {
+      "id": "queued-task-at-admission",
+      "result": "pass",
+      "decision": "rejected",
+      "adapter_invoked": false
+    },
+    {
+      "id": "material-change-old-task-id",
+      "result": "pass",
+      "decision": "rejected",
+      "adapter_invoked": false
+    },
+    {
+      "id": "unknown-target",
+      "result": "pass",
+      "decision": "rejected",
+      "adapter_invoked": true
+    },
+    {
+      "id": "disabled-target",
+      "result": "pass",
+      "decision": "rejected",
+      "adapter_invoked": false
+    },
+    {
+      "id": "duplicate-delivery",
+      "result": "pass",
+      "decision": "accepted",
+      "adapter_invoked": true
+    },
+    {
+      "id": "existing-managed-draft-pr",
+      "result": "pass",
+      "decision": "accepted",
+      "adapter_invoked": true
+    },
+    {
+      "id": "identical-duplicate-result",
+      "result": "pass",
+      "decision": "accepted",
+      "adapter_invoked": true
+    },
+    {
+      "id": "conflicting-duplicate-result",
+      "result": "pass",
+      "decision": "ambiguous-rejected",
+      "adapter_invoked": true
+    },
+    {
+      "id": "target-rejection",
+      "result": "pass",
+      "decision": "accepted",
+      "adapter_invoked": true
+    },
+    {
+      "id": "execution-failure",
+      "result": "pass",
+      "decision": "accepted",
+      "adapter_invoked": true
+    },
+    {
+      "id": "validation-failure",
+      "result": "pass",
+      "decision": "accepted",
+      "adapter_invoked": true
+    },
+    {
+      "id": "test-failure",
+      "result": "pass",
+      "decision": "accepted",
+      "adapter_invoked": true
+    },
+    {
+      "id": "publication-failure",
+      "result": "pass",
+      "decision": "accepted",
+      "adapter_invoked": true
+    },
+    {
+      "id": "missing-result",
+      "result": "pass",
+      "decision": "pending-timeout",
+      "adapter_invoked": false
+    },
+    {
+      "id": "delayed-result",
+      "result": "pass",
+      "decision": "accepted",
+      "adapter_invoked": true
+    },
+    {
+      "id": "ambiguous-result",
+      "result": "pass",
+      "decision": "ambiguous-rejected",
+      "adapter_invoked": true
+    },
+    {
+      "id": "receiver-rejection",
+      "result": "pass",
+      "decision": "rejected",
+      "adapter_invoked": true
+    },
+    {
+      "id": "ownership-conflict",
+      "result": "pass",
+      "decision": "ambiguous-rejected",
+      "adapter_invoked": true
+    },
+    {
+      "id": "create-race-reused",
+      "result": "pass",
+      "decision": "accepted",
+      "adapter_invoked": true
+    },
+    {
+      "id": "create-race-ambiguous",
+      "result": "pass",
+      "decision": "ambiguous-rejected",
+      "adapter_invoked": true
+    },
+    {
+      "id": "no-real-effects",
+      "result": "pass",
+      "decision": "accepted",
+      "adapter_invoked": true
+    }
+  ],
+  "failures": []
+}

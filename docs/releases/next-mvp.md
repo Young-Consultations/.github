@@ -161,13 +161,17 @@ acknowledgement is not execution success.
 The organization fixture release and expected-result manifest are the sole
 shared oracle. Each repository maintains only its adapter and repository-local
 assertions, pins an immutable fixture release, tests both modes and every shared
-case applicable to its role, and commits a digest-bound report recording the
-exact adapter tag/commit, compatibility SHA, complete scenario results, and zero
-Codex/publication/merge/release/deployment/secret-output effects. Normal CI uses
-fake Codex and publication adapters and is denied write permissions. Disabled,
-skipped, mutable, or locally substituted evidence is not PASS. Interface changes
-cannot merge until producer, router, receiver, source consumer, and all four
-target profiles pass.
+case applicable to its role, and commits a digest-bound report recording a
+canonical conformance-pin revision, compatibility SHA, complete scenario
+results, and zero Codex/publication/merge/release/deployment/secret-output
+effects. The pin binds exact shared-file and target adapter/harness blob
+identities without including itself or the report. The registry separately binds
+the immutable adapter tag to its reviewed commit and report digest, avoiding an
+impossible requirement for a report to predict its containing commit SHA. Normal
+CI uses fake Codex and publication adapters and is denied write permissions.
+Disabled, skipped, mutable, or locally substituted evidence is not PASS.
+Interface changes cannot merge until producer, router, receiver, source
+consumer, and all four target profiles pass.
 
 ## Success criteria
 

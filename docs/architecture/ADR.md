@@ -152,3 +152,28 @@ evidence before release, while history, rollback, and audit identity stay honest
 **Consequences:** mutable activation remains separate; no target is enabled and no
 tag is published by the recovery candidate alone. **Trace:** GH-FR-013–015;
 GH-NFR-002/009/015/017; GH-OR-005; GH-SR-002/005; TC-MVP-CI-001.
+
+## ADR-015 — Bind conformance evidence without a containing-commit self-reference
+
+**Status:** Accepted for the 2.3.1 recovery. **Context:** The first target
+readiness pass after the control-plane recovery required a conformance report's
+`adapter_revision` to equal the SHA of the adapter commit that contains that
+report. Git computes a commit SHA from its tree, so changing the report to name
+the SHA changes the SHA again. No finite release procedure can satisfy that
+self-reference. **Decision:** A v2 conformance pin binds the compatibility SHA,
+the exact organization schema/fixture blob identities, and the exact target
+workflow/adapter/harness blob identities. Its `adapter_revision` is the SHA-256
+of canonical pin contents with that field treated as null; the pin and report
+must not include themselves in the bound target-file set. The report records
+that pin revision. Independently, the registry records the immutable adapter tag,
+the commit to which the tag resolves, and the report SHA-256. Live verification
+recomputes every binding at the tag before accepting evidence.
+**Alternatives:** report predicts its containing commit; accept an unbound local
+report; record only a mutable branch; trust a human-entered commit without
+resolving the tag. **Tradeoffs:** consumers maintain one explicit pin manifest
+and the verifier performs additional read-only file checks, but evidence is both
+constructible and content-addressed. **Consequences:** target evidence can be
+generated before its final commit identity exists without weakening the later
+tag-to-commit or report-digest checks; self-including pins/reports and substituted
+files fail closed. **Trace:** GH-FR-013–015; GH-NFR-002/009/015/017; GH-OR-005;
+TC-MVP-CI-001.

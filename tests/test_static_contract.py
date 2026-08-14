@@ -77,11 +77,11 @@ def test_organization_target_executor_is_canonical_v2_path():
     assert "execution_input_json:" in workflow
     assert "concurrency_group:" in workflow
     assert "scripts/codex_target_adapter.py" in workflow
-    assert re.search(
-        r"Young-Consultations/\.github/\.github/workflows/"
-        r"codex-result-receiver\.yml@[0-9a-f]{40}",
-        workflow,
-    )
+    assert (
+        "Young-Consultations/.github/.github/workflows/"
+        "codex-result-receiver.yml@ai-sdlc-v2.3.1"
+    ) in workflow
+    assert "CODEX_TRUSTED_JOURNAL_AUTHORS" not in workflow
     assert {
         "ai-sdlc-contract-tests.yml",
         "codex-execute.yml",

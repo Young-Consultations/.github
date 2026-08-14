@@ -47,9 +47,14 @@ obligations, not claims that sibling repositories currently comply.
 The target entry point for `CC-MVP-TARGET` is only `workflow_dispatch` with
 exactly the two required string inputs `execution_input_json` and
 `concurrency_group`. Evidence is sufficient only when the exact immutable
-adapter tag and commit contain a digest-bound report showing every shared
-scenario passed through the repository adapter and every prohibited real-effect
-counter remained zero. Disabled or skipped adapters are not conformant.
+adapter tag resolves to the registry-recorded commit, that commit contains a
+digest-bound report showing every shared scenario passed through the repository
+adapter and every prohibited real-effect counter remained zero, and the report's
+non-recursive conformance-pin revision matches the exact shared and target file
+identities at that tag. A report never embeds the SHA of the commit that contains
+it; that impossible self-reference is replaced by the separate tag-to-commit,
+report-digest, and file-identity bindings. Disabled or skipped adapters are not
+conformant.
 
 The canonical fixture release and expected-result manifest are owned here.
 Consumers pin it immutably and run it against a repository-local adapter; they

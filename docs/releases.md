@@ -40,9 +40,11 @@ validated keys; changing their meaning is breaking.
    coherence does not assert publication readiness.
 2. Correct each target independently. Publish no adapter tag until its real
    repository adapter passes every shared-oracle scenario with all prohibited
-   effects at zero. Then create the immutable
-   `codex-adapter-vMAJOR.MINOR.PATCH` tag and record its exact commit plus the
-   committed report digest in the capability registry.
+   effects at zero. Bind that report to a canonical v2 conformance pin containing
+   exact shared-file and target adapter/harness blob identities. The report must
+   not try to embed the SHA of its own containing commit. Then create the
+   immutable `codex-adapter-vMAJOR.MINOR.PATCH` tag and record its independently
+   resolved commit plus the committed report digest in the capability registry.
 3. Explicitly verify every registered target with
    `python scripts/verify_target_workflows.py --repository OWNER/REPOSITORY`.
    The unselected default report treats disabled targets as `not-evaluated` and
@@ -65,7 +67,9 @@ validated keys; changing their meaning is breaking.
 The candidate contents never name their own future merge SHA. Finalize and
 merge first, obtain the immutable commit identity second, and record the pin in
 each consumer's own configuration or documentation. This avoids a recursive
-release update.
+release update. Target conformance follows the same rule: the report records the
+non-recursive conformance-pin revision, while the later registry entry records
+the tag's resolved commit and report digest.
 
 Reviewed 2.3.0 commit
 `c6090e5bbadcc2102a1cb91875466e9decdada1e` remains immutable historical
