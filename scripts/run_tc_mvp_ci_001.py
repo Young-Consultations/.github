@@ -164,7 +164,9 @@ def validate_pin(pin: dict[str, Any]) -> list[str]:
         errors.append("compatibility pin has the wrong shared file set")
         compatibility_files = {}
     if not isinstance(target_files, dict) or {
-        ".github/workflows/codex-execute.yml", "scripts/run_tc_mvp_ci_001.py",
+        ".github/workflows/codex-execute.yml",
+        "scripts/codex_target_adapter.py",
+        "scripts/run_tc_mvp_ci_001.py",
     } - set(target_files):
         errors.append("compatibility pin has the wrong target file set")
         target_files = {}

@@ -1,7 +1,7 @@
 {
   "report_version": "1.0",
   "repository": "Young-Consultations/.github",
-  "adapter_revision": "sha256:b9ac3ebba315c7cf9ffe068c2a6d9b5225f56c3d0b80f5beec5be394b5dbe784",
+  "adapter_revision": "sha256:c0949862a3cca03a2775a9a2e9e80c2eb07ac668b184c35e72286b4feb77d96d",
   "compatibility_sha": "e27b8a541afbd27b4be5606a19ffa43637ad312a",
   "fixture_set": "TC-MVP-CI-001",
   "fixture_version": "2.3.0",

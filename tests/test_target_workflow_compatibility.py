@@ -334,6 +334,7 @@ def test_conformance_pin_revision_is_non_recursive_and_file_bound():
     }
     target_content = {
         ".github/workflows/codex-execute.yml": b"workflow\n",
+        "scripts/codex_target_adapter.py": b"adapter\n",
         "scripts/run_tc_mvp_ci_001.py": b"harness\n",
     }
     pin = {
@@ -382,6 +383,7 @@ def test_conformance_pin_rejects_commit_sha_as_report_revision():
         "compatibility_files": {path: "3" * 40 for path in checker.PINNED_COMPATIBILITY_FILES},
         "target_files": {
             ".github/workflows/codex-execute.yml": "3" * 40,
+            "scripts/codex_target_adapter.py": "3" * 40,
             "scripts/run_tc_mvp_ci_001.py": "3" * 40,
         },
     }
@@ -394,6 +396,36 @@ def test_conformance_pin_rejects_commit_sha_as_report_revision():
             "codex-adapter-v2.0.0",
             ".github/workflows/codex-execute.yml",
             entry()["conformance"],
+            None,
+        )
+
+
+def test_conformance_pin_requires_executed_adapter():
+    evidence = entry()["conformance"]
+    pin = {
+        "pin_format_version": 2,
+        "organization_repository": "Young-Consultations/.github",
+        "compatibility_sha": evidence["compatibility_sha"],
+        "fixture_set": "TC-MVP-CI-001",
+        "fixture_version": evidence["fixture_version"],
+        "adapter_revision": "sha256:" + "2" * 64,
+        "compatibility_files": {
+            path: "3" * 40 for path in checker.PINNED_COMPATIBILITY_FILES
+        },
+        "target_files": {
+            ".github/workflows/codex-execute.yml": "3" * 40,
+            "scripts/run_tc_mvp_ci_001.py": "3" * 40,
+        },
+    }
+    with (
+        patch.object(checker, "fetch_content", return_value=json.dumps(pin).encode()),
+        pytest.raises(checker.CompatibilityError, match="required compatibility and target files"),
+    ):
+        checker.verify_conformance_pin(
+            "org/repo",
+            "codex-adapter-v2.0.0",
+            ".github/workflows/codex-execute.yml",
+            evidence,
             None,
         )
 

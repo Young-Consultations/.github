@@ -53,6 +53,14 @@ def test_pin_revision_is_non_recursive():
     assert harness.pin_revision(pin) == expected
 
 
+def test_pin_requires_executed_adapter():
+    pin = json.loads(harness.PIN_PATH.read_text(encoding="utf-8"))
+    del pin["target_files"]["scripts/codex_target_adapter.py"]
+    pin["adapter_revision"] = harness.pin_revision(pin)
+
+    assert harness.validate_pin(pin) == ["compatibility pin has the wrong target file set"]
+
+
 def test_pin_rejects_changed_target_file(tmp_path, monkeypatch):
     repository_root = harness.ROOT
     pin = json.loads(harness.PIN_PATH.read_text(encoding="utf-8"))

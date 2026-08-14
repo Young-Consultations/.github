@@ -632,6 +632,7 @@ def verify_conformance_pin(
         and all(valid_path(path) and valid_identity(identity) for path, identity in compatibility_files.items())
         and isinstance(target_files, dict)
         and workflow_path in target_files
+        and "scripts/codex_target_adapter.py" in target_files
         and "scripts/run_tc_mvp_ci_001.py" in target_files
         and all(valid_path(path) and valid_identity(identity) for path, identity in target_files.items())
         and CONFORMANCE_PIN_PATH not in target_files
