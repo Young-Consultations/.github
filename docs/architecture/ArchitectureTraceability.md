@@ -23,7 +23,7 @@ requirement baseline's vision themes.
 | V-GUARD/V-RESP; BG-03/BG-05 | GH-FR-013, GH-QR-001/007 | ARC-VERIFY: read-only compatibility before enablement/release | Compatibility Verifier | IF-08 | Producer/router/target invalid-case, verify-mode and idempotency reports |
 | V-FLOW/V-GUARD; BG-01/BG-02/BG-04 | GH-FR-005/017 | ARC-MVP-APPROVAL: v2 approval admission precedes queue projection and material edits require a new task ID | Source Approval, Admission | RI-01, IF-01 | `TC-FR-017`, `TC-MVP-CI-001`; stale, withdrawn, edited and label-projection cases |
 | V-RESP/V-GUARD; BG-03/BG-04/BG-05 | GH-FR-008/011/012/018 | ARC-MVP-RESULT: reusable authenticated receiver validates, deduplicates and projects results using only immutable control-plane journal-author trust | Target Result, Result Receiver, Source Projection, Reconciliation | RI-MVP-01, IF-05/06 | ADR-010/013; `TC-FR-018`, `TC-MVP-CI-001`, `TC-MVP-E2E-001`; target-supplied-policy, duplicate/missing/ambiguous cases |
-| V-RESP/V-EVOL; BG-01/BG-03/BG-04/BG-06 | GH-FR-013–015, GH-QR-008 | ARC-MVP-CONFORMANCE: exact two-input dispatch plus one authoritative fixture oracle validates all four immutable target adapters without production effects; disabled is not PASS | Fixture Authority, Compatibility Verifier, Conformance Reporter | IF-06/08/09, RI-01–RI-03, RI-MVP-01 | ADR-012/014; digest-bound `TC-MVP-CI-001` reports; incompatible/mutable/disabled canaries; separately gated `TC-MVP-E2E-001` |
+| V-RESP/V-EVOL; BG-01/BG-03/BG-04/BG-06 | GH-FR-013–015, GH-QR-008 | ARC-MVP-CONFORMANCE: exact two-input dispatch plus one authoritative fixture oracle validates all four immutable target adapters without production effects; evidence uses a non-recursive file pin plus separate tag/commit/report bindings; disabled is not PASS | Fixture Authority, Compatibility Verifier, Conformance Reporter | IF-06/08/09, RI-01–RI-03, RI-MVP-01 | ADR-012/014/015; digest-bound `TC-MVP-CI-001` reports; incompatible/mutable/disabled/self-referential canaries; separately gated `TC-MVP-E2E-001` |
 
 ## Requirement coverage index
 
@@ -32,7 +32,7 @@ requirement baseline's vision themes.
 | GH-FR-001–003 | Software Architecture, Low-Level Design, Interface Architecture, ADR-002 |
 | GH-FR-004–007 | High-Level Design, Repository Boundaries, Configuration, ADR-003/006/012/014 |
 | GH-FR-008–012, GH-FR-017–018 | Domain Model, Data Flow, State Models, Error Handling, ADR-004/005/008–010/013 |
-| GH-FR-013–016 | Integration, Deployment, Extension, ADR-007/014 |
+| GH-FR-013–016 | Integration, Deployment, Extension, ADR-007/014/015 |
 | GH-NFR-* | Software Architecture quality attributes, Deployment, Observability, Security |
 | GH-SR-* | Security Architecture, Configuration, Interface Architecture |
 | GH-QR-* | Component/Low-Level Design, Observability, Release/compatibility decisions, next-MVP conformance architecture |

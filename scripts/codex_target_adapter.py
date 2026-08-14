@@ -186,6 +186,11 @@ def run_adapter(raw: str, transport_group: str, caller: str, trusted_callers: se
                 if len(owned) == 1 and owned[0].get("digest") == digest and owned[0].get("draft") and owned[0].get("state") == "OPEN":
                     return Outcome(_result(payload, started, "duplicate-reused", "none", None,
                                            branch=branch, pr=owned[0]["url"], validation="passed", tests="passed"), payload["source_issue"])
+                raise AdapterError(
+                    "publication",
+                    "Delivery ownership is ambiguous after publication create race",
+                    "ambiguous-rejected",
+                ) from exc
             raise
         return Outcome(_result(payload, started, "draft-pr-created", "none", None,
                                branch=branch, pr=pr, validation="passed", tests="passed"), payload["source_issue"])

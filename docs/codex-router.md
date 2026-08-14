@@ -132,7 +132,9 @@ Enabled targets must pass read-only target-workflow compatibility verification
 before the control-plane owner enables them in `config/codex-activation.json`.
 The verifier requires the exact two-input dispatch interface, receiver
 compatibility, immutable adapter tag/commit, and a digest-bound complete
-`TC-MVP-CI-001` report with zero prohibited effects. Disabled targets are
+`TC-MVP-CI-001` report with zero prohibited effects. The report binds a
+non-recursive conformance pin of exact shared and target files; the registry
+separately binds the adapter tag to the commit and report digest. Disabled targets are
 `not-evaluated`, not PASS, unless an operator explicitly selects one for
 pre-activation verification. Disabling one
 target is the fail-closed rollback lever for that target and must not affect

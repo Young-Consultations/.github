@@ -269,7 +269,13 @@ def test_network_fetch_is_mocked_for_success(tmp_path):
         report = checker.verify_registry(entries, "fake-token")
     fetch.assert_called_once_with("org/repo", ".github/workflows/codex-execute.yml", "codex-adapter-v2.0.0", "fake-token")
     receiver_check.assert_called_once_with("0123456789abcdef0123456789abcdef01234567", "fake-token")
-    report_check.assert_called_once()
+    report_check.assert_called_once_with(
+        "org/repo",
+        "codex-adapter-v2.0.0",
+        ".github/workflows/codex-execute.yml",
+        entries["org/repo"]["conformance"],
+        "fake-token",
+    )
     assert report[0]["result"] == "pass"
 
 
@@ -278,7 +284,7 @@ def complete_report(repository="org/repo"):
     return {
         "report_version": "1.0",
         "repository": repository,
-        "adapter_revision": "2" * 40,
+        "adapter_revision": "sha256:" + "4" * 64,
         "compatibility_sha": "1" * 40,
         "fixture_set": "TC-MVP-CI-001",
         "fixture_version": checker.release_fixture_version(),
@@ -298,8 +304,13 @@ def test_conformance_report_must_be_digest_bound_complete_and_effect_free():
     evidence = entry()["conformance"]
     evidence["report_sha256"] = hashlib.sha256(raw).hexdigest()
 
-    with patch.object(checker, "fetch_content", return_value=raw):
-        checker.verify_conformance_report("org/repo", "codex-adapter-v2.0.0", evidence, None)
+    with (
+        patch.object(checker, "fetch_content", return_value=raw),
+        patch.object(checker, "verify_conformance_pin", return_value="sha256:" + "4" * 64),
+    ):
+        checker.verify_conformance_report(
+            "org/repo", "codex-adapter-v2.0.0", ".github/workflows/codex-execute.yml", evidence, None,
+        )
 
     incomplete = complete_report()
     incomplete["scenario_results"].pop()
@@ -307,9 +318,84 @@ def test_conformance_report_must_be_digest_bound_complete_and_effect_free():
     evidence["report_sha256"] = hashlib.sha256(invalid_raw).hexdigest()
     with (
         patch.object(checker, "fetch_content", return_value=invalid_raw),
+        patch.object(checker, "verify_conformance_pin", return_value="sha256:" + "4" * 64),
         pytest.raises(checker.CompatibilityError, match="complete shared oracle"),
     ):
-        checker.verify_conformance_report("org/repo", "codex-adapter-v2.0.0", evidence, None)
+        checker.verify_conformance_report(
+            "org/repo", "codex-adapter-v2.0.0", ".github/workflows/codex-execute.yml", evidence, None,
+        )
+
+
+def test_conformance_pin_revision_is_non_recursive_and_file_bound():
+    evidence = entry()["conformance"]
+    compatibility_files = {
+        path: checker.git_blob_sha1((ROOT / path).read_bytes())
+        for path in checker.PINNED_COMPATIBILITY_FILES
+    }
+    target_content = {
+        ".github/workflows/codex-execute.yml": b"workflow\n",
+        "scripts/run_tc_mvp_ci_001.py": b"harness\n",
+    }
+    pin = {
+        "pin_format_version": 2,
+        "organization_repository": "Young-Consultations/.github",
+        "compatibility_sha": evidence["compatibility_sha"],
+        "fixture_set": "TC-MVP-CI-001",
+        "fixture_version": evidence["fixture_version"],
+        "adapter_revision": "",
+        "compatibility_files": compatibility_files,
+        "target_files": {
+            path: checker.git_blob_sha1(content) for path, content in target_content.items()
+        },
+    }
+    pin["adapter_revision"] = checker.conformance_pin_revision(pin)
+    pin_raw = json.dumps(pin).encode()
+
+    def content(repository, path, ref, token):
+        if path == checker.CONFORMANCE_PIN_PATH:
+            return pin_raw
+        if path in target_content and repository == "org/repo":
+            return target_content[path]
+        return (ROOT / path).read_bytes()
+
+    with patch.object(checker, "fetch_content", side_effect=content):
+        revision = checker.verify_conformance_pin(
+            "org/repo",
+            "codex-adapter-v2.0.0",
+            ".github/workflows/codex-execute.yml",
+            evidence,
+            None,
+        )
+    assert revision == pin["adapter_revision"]
+    assert revision.startswith("sha256:")
+    assert revision != evidence["adapter_commit_sha"]
+
+
+def test_conformance_pin_rejects_commit_sha_as_report_revision():
+    pin = {
+        "pin_format_version": 2,
+        "organization_repository": "Young-Consultations/.github",
+        "compatibility_sha": "1" * 40,
+        "fixture_set": "TC-MVP-CI-001",
+        "fixture_version": checker.release_fixture_version(),
+        "adapter_revision": "2" * 40,
+        "compatibility_files": {path: "3" * 40 for path in checker.PINNED_COMPATIBILITY_FILES},
+        "target_files": {
+            ".github/workflows/codex-execute.yml": "3" * 40,
+            "scripts/run_tc_mvp_ci_001.py": "3" * 40,
+        },
+    }
+    with (
+        patch.object(checker, "fetch_content", return_value=json.dumps(pin).encode()),
+        pytest.raises(checker.CompatibilityError, match="revision"),
+    ):
+        checker.verify_conformance_pin(
+            "org/repo",
+            "codex-adapter-v2.0.0",
+            ".github/workflows/codex-execute.yml",
+            entry()["conformance"],
+            None,
+        )
 
 
 def test_fetch_workflow_accepts_line_wrapped_contents_api_payload():

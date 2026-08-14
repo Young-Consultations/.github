@@ -183,6 +183,18 @@ def test_create_race_requeries_and_converges(payload, registry):
     assert effects.calls["discover"] == 2
 
 
+def test_create_race_ambiguity_fails_closed(payload, registry):
+    effects = FakeEffects(
+        publish_failure="create-race",
+        race=[managed(payload), managed(payload)],
+    )
+    result, effects = execute(payload, registry, effects)
+
+    assert result["execution_status"] == "ambiguous-rejected"
+    assert result["failure_category"] == "publication"
+    assert effects.calls["discover"] == 2
+
+
 def test_publish_retries_pr_creation_from_pushed_commit(monkeypatch):
     effects = GitHubEffects()
     gh_calls = []

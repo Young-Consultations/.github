@@ -52,10 +52,11 @@ jobs:
     if: ${{ always() && needs.execute.outputs.execution_result != '' && needs.execute.outputs.source_issue != '' }}
     permissions:
       contents: read
-    uses: Young-Consultations/.github/.github/workflows/codex-result-receiver.yml@d646f0eea83530b269aec3d621cda7730a8c1364
+    # This target remains disabled until the coordinated 2.3.1 release exists.
+    # The immutable release tag is intentional; @main is never accepted here.
+    uses: Young-Consultations/.github/.github/workflows/codex-result-receiver.yml@ai-sdlc-v2.3.1
     with:
       execution_result: ${{ needs.execute.outputs.execution_result }}
       source_issue: ${{ needs.execute.outputs.source_issue }}
     secrets:
       CODEX_RESULT_TOKEN: ${{ secrets.CODEX_RESULT_TOKEN }}
-      CODEX_TRUSTED_JOURNAL_AUTHORS: ${{ secrets.CODEX_TRUSTED_JOURNAL_AUTHORS }}

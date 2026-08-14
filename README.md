@@ -41,19 +41,19 @@ source tasks.
 
 The deterministic organization conformance oracle is pinned in
 `config/mvp-conformance-pin.json` to
-`Young-Consultations/.github@c6090e5bbadcc2102a1cb91875466e9decdada1e`.
-It verifies the exact schema, fixture, oracle, and `.github` adapter blob
-identities before running every `TC-MVP-CI-001` scenario. It uses only in-memory
-fake adapters, traps Codex, branch, commit, push, pull-request, merge, release,
-deployment, production, and secret-output effects, and writes a versioned JSON
-report. The report is compatibility evidence only: it does not claim production
-readiness, request activation, or change mutable activation state.
-That reviewed 2.3.0 commit is preserved as historical evidence but is not an
-activation-safe compatibility baseline: its in-memory report does not establish
-that any real target adapter passed the shared oracle.
+`Young-Consultations/.github@e27b8a541afbd27b4be5606a19ffa43637ad312a`.
+It verifies the exact shared schema/fixture identities and a non-recursive digest
+of the target workflow, adapter, and harness before running every
+`TC-MVP-CI-001` scenario through the real `.github` adapter seam. Deterministic
+effect adapters trap Codex, branch, commit, push, pull-request, merge, release,
+deployment, production, and secret-output effects and write a versioned JSON
+report. The report is target conformance evidence only: it does not contain its
+own commit SHA, claim production readiness, request activation, create a tag, or
+change mutable activation state. The registry separately binds an eventual
+immutable adapter tag to its reviewed commit and the report digest.
 
 ```console
-python scripts/run_tc_mvp_ci_001.py --report reports/tc-mvp-ci-001.json
+python scripts/run_tc_mvp_ci_001.py --report .ai-sdlc/conformance/tc-mvp-ci-001.json
 ```
 
 [`AI-SDLC Contract Tests`](.github/workflows/ai-sdlc-contract-tests.yml) is the
@@ -87,8 +87,9 @@ The contract workflow performs no dispatch, Codex execution, issue mutation,
 branch creation, or pull-request publication. The router smoke test remains a
 separate execution-level test. The organization control plane does not execute
 target changes. Its separately authorized `codex-execute.yml` target adapter is
-planned implementation work and must remain isolated from router and receiver
-credentials.
+implemented and has a deterministic no-real-effects conformance candidate, but
+it remains disabled and untagged pending review. Its target-only credentials
+must remain isolated from router and receiver credentials.
 
 The reusable router defaults to canonical `execution_mode: implement` for
 production calls. The smoke workflow explicitly sends `execution_mode: verify`,

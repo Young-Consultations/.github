@@ -40,7 +40,11 @@ records identity, workflow, version, task-type, draft-only, concurrency,
 environment, idempotency policy, and reviewed conformance evidence. Conformance
 is `null` while pending and, when present, binds fixture/release identity, exact
 adapter tag and commit, report path/digest, PASS status, and sufficiency for
-activation. The mutable activation map in `config/codex-activation.json` records
+activation. The report identifies a canonical v2 conformance pin containing
+exact shared-file and target adapter/harness blob identities. It does not embed
+the SHA of its own containing commit; the registry's independently verified
+tag-to-commit binding and report digest supply that identity without recursion.
+The mutable activation map in `config/codex-activation.json` records
 only whether the control plane may currently route to each target. Before
 controlled MVP execution, the selected workflow ref must be an owner-reviewed,
 non-moving `codex-adapter-vMAJOR.MINOR.PATCH` release tag whose recorded complete
@@ -110,9 +114,11 @@ Every row runs for all four target profiles using the released fixtures and fake
 | No-real-effects proof | Codex, branch, and PR adapter counters are zero and CI token permissions are read-only. |
 
 Consumer evidence records the externally pinned immutable fixture reference,
-capability profile, adapter tag and commit, compatibility SHA, every scenario
-result, and all no-real-effects counters. The report is committed at the tagged
-adapter ref and its SHA-256 digest is recorded in the registry. A disabled,
+capability profile, canonical conformance-pin revision, compatibility SHA, every
+scenario result, and all no-real-effects counters. The report is committed at
+the tagged adapter ref; its SHA-256 digest and the tag's resolved commit are
+recorded separately in the registry. The verifier recomputes the pin and every
+bound file identity at that ref. A disabled,
 skipped, mutable, incomplete, locally substituted, or digest-mismatched adapter
 is `not-evaluated` or failed, never organization-wide PASS. Evidence for all four
 repositories is currently pending; this recovery candidate does not claim their

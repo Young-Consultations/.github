@@ -227,6 +227,10 @@ Before an actual compatibility tag, the separately reviewed final release
 change must also pass `python scripts/validate_release.py --require-publishable`;
 the 2.3.1 recovery candidate is expected to fail that
 gate until every adapter and receiver-trust prerequisite is recorded.
+Conformance reports identify a canonical non-recursive v2 pin of exact shared
+and target files. They never predict the SHA of the commit that contains them;
+the registry later binds the immutable adapter tag to its resolved commit and
+the report digest as separate checks (ADR-015).
 
 `python scripts/verify_target_workflows.py` is applicable only when its
 documented target-workflow credentials and external access are available; pass
@@ -277,15 +281,19 @@ decided and justified during the relevant implementation task.
   fixture oracle are retained in the 2.3.1 compatibility-recovery candidate.
   Reviewed 2.3.0 commit
   `c6090e5bbadcc2102a1cb91875466e9decdada1e` is historical evidence, not an
-  activation-safe baseline. The corrected tag is not published; all adapter
-  refs/evidence and the receiver's journal-author allowlist remain pending and
-  fail closed. Source-consumer deployment and credential/retention approval
+  activation-safe baseline. The `.github` target now has a checked-in
+  29-scenario report through its real adapter seam with all prohibited effect
+  counters at zero, bound to candidate commit `e27b8a5` through a non-recursive
+  exact-file pin. That is reviewable target evidence, not a production-readiness
+  or activation claim. Its immutable adapter tag/registry record, the corrected
+  compatibility tag, and the receiver's journal-author allowlist remain pending
+  and fail closed. Source-consumer deployment and credential/retention approval
   remain external release evidence, not permission to create another path.
-- `CC-MVP-SOURCE` and `CC-MVP-TARGET` conformance, sibling-repository-specific
-  requirement IDs, immutable adapter revisions, target enablement, credentials,
-  retention duration, and reconciliation deadline remain pending their
-  documented owner confirmation or human governance decisions. This repository
-  does not establish their current state.
+- Sibling `CC-MVP-TARGET` conformance, repository-specific requirement IDs,
+  immutable adapter revisions, target enablement, credentials, retention
+  duration, and reconciliation deadline remain pending their documented owner
+  confirmation or human governance decisions. This repository does not
+  establish their current state.
 - ADR-001, ADR-002, ADR-005, ADR-006, and ADR-007 retain explicitly documented
   open questions. They block invention in the affected area but do not relax
   their decisions or authorize implementation artifacts to answer them.
