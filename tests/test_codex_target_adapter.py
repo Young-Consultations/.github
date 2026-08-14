@@ -5,19 +5,28 @@ from pathlib import Path
 
 import pytest
 
-from scripts.codex_target_adapter import AdapterError, GitHubEffects, TARGET, canonical_digest, run_adapter
+from scripts.codex_target_adapter import (
+    AdapterError,
+    GitHubEffects,
+    Ownership,
+    TARGET,
+    canonical_digest,
+    run_adapter,
+)
 
 ROOT = Path(__file__).parents[1]
 
 
 class FakeEffects:
     def __init__(self, *, found=None, codex_failure=False, validation=(True, "passed"), publish_failure=None, race=None,
-                 exception_phase=None, exception=None):
+                 branch_exists=None, race_branch_exists=None, exception_phase=None, exception=None):
         self.found = found or []
         self.codex_failure = codex_failure
         self.validation = validation
         self.publish_failure = publish_failure
         self.race = race
+        self.branch_exists = bool(self.found) if branch_exists is None else branch_exists
+        self.race_branch_exists = bool(race) if race_branch_exists is None else race_branch_exists
         self.exception_phase = exception_phase
         self.exception = exception or OSError("sensitive operational detail")
         self.calls = {"discover": 0, "codex": 0, "validate": 0, "publish": 0}
@@ -29,8 +38,8 @@ class FakeEffects:
         if self.exception_phase == "discover":
             raise self.exception
         if self.calls["discover"] > 1 and self.race is not None:
-            return self.race
-        return self.found
+            return Ownership(self.race_branch_exists, self.race)
+        return Ownership(self.branch_exists, self.found)
 
     def codex(self, instructions, timeout_seconds):
         self.calls["codex"] += 1
@@ -176,6 +185,23 @@ def test_changed_payload_and_ambiguous_ownership_fail_closed(payload, registry):
     assert changed["execution_status"] == ambiguous["execution_status"] == "ambiguous-rejected"
 
 
+def test_orphaned_branch_fails_before_codex(payload, registry):
+    result, effects = execute(payload, registry, FakeEffects(branch_exists=True))
+    assert result["execution_status"] == "ambiguous-rejected"
+    assert result["failure_category"] == "publication"
+    assert effects.calls == {"discover": 1, "codex": 0, "validate": 0, "publish": 0}
+
+
+def test_pull_request_without_branch_fails_before_codex(payload, registry):
+    result, effects = execute(
+        payload,
+        registry,
+        FakeEffects(found=[managed(payload)], branch_exists=False),
+    )
+    assert result["execution_status"] == "ambiguous-rejected"
+    assert effects.calls["codex"] == effects.calls["publish"] == 0
+
+
 def test_create_race_requeries_and_converges(payload, registry):
     effects = FakeEffects(publish_failure="create-race", race=[managed(payload)])
     result, effects = execute(payload, registry, effects)
@@ -193,6 +219,33 @@ def test_create_race_ambiguity_fails_closed(payload, registry):
     assert result["execution_status"] == "ambiguous-rejected"
     assert result["failure_category"] == "publication"
     assert effects.calls["discover"] == 2
+
+
+def test_github_preflight_observes_branch_and_pull_request(monkeypatch, payload):
+    effects = GitHubEffects()
+    branch = f"codex/{payload['delivery_id'].lower()}"
+
+    def gh(*args, **kwargs):
+        if args[0] == "api":
+            return f"refs/heads/{branch}\n"
+        assert args[:2] == ("pr", "list")
+        body = (
+            f"<!-- ai-sdlc-delivery-id: {payload['delivery_id']}; "
+            f"payload-sha256: {canonical_digest(payload)} -->"
+        )
+        return json.dumps([
+            {
+                "url": "https://github.com/Young-Consultations/.github/pull/7",
+                "state": "OPEN",
+                "isDraft": True,
+                "body": body,
+            }
+        ])
+
+    monkeypatch.setattr(effects, "_gh", gh)
+    snapshot = effects.discover(branch, payload["delivery_id"], 60)
+    assert snapshot.branch_exists is True
+    assert snapshot.pull_requests[0]["digest"] == canonical_digest(payload)
 
 
 def test_publish_retries_pr_creation_from_pushed_commit(monkeypatch):

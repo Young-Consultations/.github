@@ -51,6 +51,9 @@ report. The report is target conformance evidence only: it does not contain its
 own commit SHA, claim production readiness, request activation, create a tag, or
 change mutable activation state. The registry separately binds an eventual
 immutable adapter tag to its reviewed commit and the report digest.
+Static wrapper checks prove only the exact dispatch and receiver interfaces;
+idempotency is accepted only from the executable report against the pinned
+adapter. Source comments and keyword presence are not behavioral evidence.
 
 ```console
 python scripts/run_tc_mvp_ci_001.py --report .ai-sdlc/conformance/tc-mvp-ci-001.json

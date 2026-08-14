@@ -231,6 +231,12 @@ Conformance reports identify a canonical non-recursive v2 pin of exact shared
 and target files. They never predict the SHA of the commit that contains them;
 the registry later binds the immutable adapter tag to its resolved commit and
 the report digest as separate checks (ADR-015).
+Static workflow inspection proves only the transport and receiver boundary.
+Idempotency and publication behavior must be executed through the exact adapter
+and harness blobs bound by that pin; comments or keyword presence are never
+behavioral evidence. Preflight must observe both the deterministic branch and
+all pull-request state before Codex, and inconsistent ownership fails
+`ambiguous-rejected` (ADR-016).
 
 `python scripts/verify_target_workflows.py` is applicable only when its
 documented target-workflow credentials and external access are available; pass

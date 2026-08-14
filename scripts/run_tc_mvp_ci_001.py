@@ -17,6 +17,7 @@ if str(ROOT) not in sys.path:
 
 from scripts.codex_target_adapter import (
     AdapterError,
+    Ownership,
     TARGET,
     canonical_digest,
     run_adapter,
@@ -74,6 +75,8 @@ class TrappedTargetEffects:
         validation: tuple[bool, str] = (True, "passed"),
         publish_failure: str | None = None,
         race: list[dict[str, Any]] | None = None,
+        branch_exists: bool | None = None,
+        race_branch_exists: bool | None = None,
     ) -> None:
         self.traps = traps
         self.found = found or []
@@ -81,11 +84,17 @@ class TrappedTargetEffects:
         self.validation = validation
         self.publish_failure = publish_failure
         self.race = race
+        self.branch_exists = bool(self.found) if branch_exists is None else branch_exists
+        self.race_branch_exists = (
+            bool(race) if race_branch_exists is None else race_branch_exists
+        )
         self.calls = {"discover": 0, "codex": 0, "validate": 0, "publish": 0}
 
-    def discover(self, branch: str, delivery_id: str, timeout_seconds: float) -> list[dict[str, Any]]:
+    def discover(self, branch: str, delivery_id: str, timeout_seconds: float) -> Ownership:
         self.calls["discover"] += 1
-        return self.race if self.calls["discover"] > 1 and self.race is not None else self.found
+        if self.calls["discover"] > 1 and self.race is not None:
+            return Ownership(self.race_branch_exists, self.race)
+        return Ownership(self.branch_exists, self.found)
 
     def codex(self, instructions: str, timeout_seconds: float) -> None:
         # This is a deterministic fake executor. The real Codex trap remains zero.
@@ -306,8 +315,18 @@ def run_scenario(
         return _observation(receiver.receive(result), receiver.forward_count, traps), invoked, traps
     if scenario == "ownership-conflict":
         invoked = True
-        result = _adapter(payload, registry, TrappedTargetEffects(traps, found=[_managed(payload, digest="0" * 64)]))
+        conflict_effects = TrappedTargetEffects(traps, branch_exists=True)
+        result = _adapter(
+            payload,
+            registry,
+            conflict_effects,
+        )
         _require(result["execution_status"] == "ambiguous-rejected", "ownership conflict did not fail closed")
+        _require(
+            conflict_effects.calls["codex"] == 0
+            and conflict_effects.calls["publish"] == 0,
+            "orphan branch reached executor or publication",
+        )
         return _observation("ambiguous-rejected", 0, traps), invoked, traps
     if scenario in {"create-race-reused", "create-race-ambiguous"}:
         invoked = True

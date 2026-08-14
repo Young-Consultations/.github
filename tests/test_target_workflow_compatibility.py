@@ -79,7 +79,20 @@ def entry(repo: str = "org/repo", **changes):
 
 def test_canonical_portfolio_tasks_interface():
     assert checker.verify_interface(CANONICAL) == (
-        "exact two-input workflow_dispatch + idempotent receiver-compatible consumer"
+        "exact two-input workflow_dispatch + receiver-compatible consumer"
+    )
+
+
+def test_wrapper_comments_cannot_substitute_for_executable_adapter_evidence():
+    stripped = "\n".join(
+        line for line in CANONICAL.splitlines()
+        if "preflight" not in line
+        and "ownership marker" not in line
+        and "create-race" not in line
+        and "duplicate-reused" not in line
+    )
+    assert checker.verify_interface(stripped) == (
+        "exact two-input workflow_dispatch + receiver-compatible consumer"
     )
 
 
