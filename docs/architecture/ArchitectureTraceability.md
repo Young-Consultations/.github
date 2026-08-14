@@ -2,7 +2,12 @@
 
 ## Method
 
-Architecture identifiers are proposed design obligations that become normative only after baseline and architecture approval. Future implementation work shall add repository path/service, test ID, release and operational evidence columns; a code location alone is not proof. The approved vision remains authoritative; the proposed requirements baseline does not become authoritative until it receives the approvals listed in its governance section. `V-FLOW`, `V-GUARD`, `V-RESP`, `V-EVOL`, `V-PRIN`, and `V-NRESP` are the requirement baseline's vision themes.
+Architecture identifiers are approved design obligations for next-MVP
+implementation. Future implementation work shall add repository path/service,
+test ID, release and operational evidence columns; a code location alone is not
+proof. The approved vision and requirements baseline remain higher authority.
+`V-FLOW`, `V-GUARD`, `V-RESP`, `V-EVOL`, `V-PRIN`, and `V-NRESP` are the
+requirement baseline's vision themes.
 
 ## End-to-end trace
 
@@ -17,17 +22,17 @@ Architecture identifiers are proposed design obligations that become normative o
 | V-PRIN/V-FLOW; BG-07 usable governance | GH-FR-016, GH-NFR-001/003/005/006, GH-UX-003–008 | ARC-OPS-UX: discoverable, observable, accessible, actionable control plane | Telemetry, all interface adapters | IF-07–11 | SLI dashboards, link/content/accessibility/usability and recovery tests |
 | V-GUARD/V-RESP; BG-03/BG-05 | GH-FR-013, GH-QR-001/007 | ARC-VERIFY: read-only compatibility before enablement/release | Compatibility Verifier | IF-08 | Producer/router/target invalid-case, verify-mode and idempotency reports |
 | V-FLOW/V-GUARD; BG-01/BG-02/BG-04 | GH-FR-005/017 | ARC-MVP-APPROVAL: v2 approval admission precedes queue projection and material edits require a new task ID | Source Approval, Admission | RI-01, IF-01 | `TC-FR-017`, `TC-MVP-CI-001`; stale, withdrawn, edited and label-projection cases |
-| V-RESP/V-GUARD; BG-03/BG-04/BG-05 | GH-FR-008/011/012/018 | ARC-MVP-RESULT: reusable authenticated receiver validates, deduplicates and projects results | Target Result, Result Receiver, Source Projection, Reconciliation | RI-MVP-01, IF-06 | `TC-FR-018`, `TC-MVP-CI-001`, `TC-MVP-E2E-001`; duplicate/missing/ambiguous cases |
-| V-RESP/V-EVOL; BG-01/BG-03/BG-04/BG-06 | GH-QR-008 | ARC-MVP-CONFORMANCE: one authoritative fixture oracle validates all four registered target profiles without production effects | Fixture Authority, Mock Adapters, Conformance Reporter | RI-01–RI-03, RI-MVP-01 | `TC-MVP-CI-001`; incompatible-consumer canary; separately gated `TC-MVP-E2E-001` |
+| V-RESP/V-GUARD; BG-03/BG-04/BG-05 | GH-FR-008/011/012/018 | ARC-MVP-RESULT: reusable authenticated receiver validates, deduplicates and projects results using only immutable control-plane journal-author trust | Target Result, Result Receiver, Source Projection, Reconciliation | RI-MVP-01, IF-05/06 | ADR-010/013; `TC-FR-018`, `TC-MVP-CI-001`, `TC-MVP-E2E-001`; target-supplied-policy, duplicate/missing/ambiguous cases |
+| V-RESP/V-EVOL; BG-01/BG-03/BG-04/BG-06 | GH-FR-013–015, GH-QR-008 | ARC-MVP-CONFORMANCE: exact two-input dispatch plus one authoritative fixture oracle validates all four immutable target adapters without production effects; disabled is not PASS | Fixture Authority, Compatibility Verifier, Conformance Reporter | IF-06/08/09, RI-01–RI-03, RI-MVP-01 | ADR-012/014; digest-bound `TC-MVP-CI-001` reports; incompatible/mutable/disabled canaries; separately gated `TC-MVP-E2E-001` |
 
 ## Requirement coverage index
 
 | Requirement family | Primary architecture documents |
 | --- | --- |
 | GH-FR-001–003 | Software Architecture, Low-Level Design, Interface Architecture, ADR-002 |
-| GH-FR-004–007 | High-Level Design, Repository Boundaries, Configuration, ADR-003/006 |
-| GH-FR-008–012, GH-FR-017–018 | Domain Model, Data Flow, State Models, Error Handling, ADR-004/005/008/009/010 |
-| GH-FR-013–016 | Integration, Deployment, Extension, ADR-007 |
+| GH-FR-004–007 | High-Level Design, Repository Boundaries, Configuration, ADR-003/006/012/014 |
+| GH-FR-008–012, GH-FR-017–018 | Domain Model, Data Flow, State Models, Error Handling, ADR-004/005/008–010/013 |
+| GH-FR-013–016 | Integration, Deployment, Extension, ADR-007/014 |
 | GH-NFR-* | Software Architecture quality attributes, Deployment, Observability, Security |
 | GH-SR-* | Security Architecture, Configuration, Interface Architecture |
 | GH-QR-* | Component/Low-Level Design, Observability, Release/compatibility decisions, next-MVP conformance architecture |

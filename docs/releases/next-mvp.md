@@ -28,7 +28,7 @@ preserving the vision's human-authority and repository-ownership boundaries.
 
 | Repository | MVP responsibility | Requirement ownership |
 | --- | --- | --- |
-| `Young-Consultations/.github` | Own canonical contracts/fixtures, registry, admission, routing, result-consumption rules, conformance suite, and this baseline. It is both the control plane and, behind a separate trust boundary and target-only credentials, a bounded execution target for explicitly selected organization documentation, CI, repository-maintenance, and testing work. | Organization requirements (`GH-*`), ADRs, and shared test identities |
+| `Young-Consultations/.github` | Own canonical contracts/fixtures, registry, admission, routing, result-consumption and journal-author trust rules, conformance suite, and this baseline. It is both the control plane and, behind a separate trust boundary and target-only credentials, a bounded execution target for explicitly selected organization documentation, CI, repository-maintenance, and testing work. | Organization requirements (`GH-*`), ADRs, and shared test identities |
 | `Young-Consultations/portfolio-tasks` | Own eligible source issue, revision-bound human approval, exactly-one-target selection, lifecycle projection, and consumption/presentation of the correlated result; implement target duties when selected. | Consumer conformance obligations; repository-specific IDs pending owner confirmation |
 | `Young-Consultations/slugger` | Accept only authorized compatible input and perform target execution, validation, idempotent draft publication, and result return when selected. | Consumer conformance obligations; repository-specific IDs pending owner confirmation |
 | `Young-Consultations/consulting-playbook` | Perform the same target obligations without assuming undocumented package paths or APIs. | Consumer conformance obligations; repository-specific IDs pending owner confirmation |
@@ -44,9 +44,12 @@ implementation or documentation.
 2. An authorized human approves the current executable task. The producer emits
    a canonical v2 task with `status: approved`; a material edit is represented
    by a new `task_id` and requires approval again.
-3. The control plane validates the approved task, target, registry enablement,
-   contract version, and scope, then constructs and routes one canonical
-   execution input using stable task, delivery, and correlation IDs.
+3. The control plane validates the approved task, target, immutable adapter and
+   conformance evidence, registry enablement, contract version, and scope, then
+   constructs and routes one canonical execution input using stable task,
+   delivery, and correlation IDs. Dynamic invocation uses only
+   `workflow_dispatch` with required `execution_input_json` and
+   `concurrency_group` strings.
 4. Only after successful admission may the source project the work as `queued`.
    A queued v2 task is not accepted as fresh router input because v2 carries no
    separate approval record with which to re-establish authorization.
@@ -141,10 +144,13 @@ separate result ID, so receivers deduplicate by delivery ID and reject a second
 non-identical result for that delivery as ambiguous.
 
 The MVP result transport is an organization-owned, reusable result-receiver
-workflow invoked by targets with a canonical result and authenticated caller
-identity. It validates schema, target identity, delivery/correlation binding,
-and delivery-ID uniqueness, stores durable evidence, and idempotently
-dispatches the
+workflow invoked by targets with a canonical result, authenticated caller
+identity, and only a narrowly scoped result-delivery credential. The receiver
+invokes a self-pinned control-plane action that loads trusted journal-author
+identities from the same immutable release commit; the target cannot supply or
+inherit that policy. It
+validates schema, target identity, delivery/correlation binding, and
+delivery-ID uniqueness, stores durable evidence, and idempotently dispatches the
 validated result to the source owner for issue projection. Targets own result
 creation and retry; `.github` owns receiver validation/forwarding and
 reconciliation; `portfolio-tasks` owns issue presentation. Transport
@@ -154,11 +160,14 @@ acknowledgement is not execution success.
 
 The organization fixture release and expected-result manifest are the sole
 shared oracle. Each repository maintains only its adapter and repository-local
-assertions, pins an immutable fixture release, tests both modes and all cases
-applicable to its role, and reports fixture release, adapter revision, and
-pass/fail evidence. Normal CI uses fake Codex and publication adapters and is
-denied write permissions. Interface changes cannot merge until producer,
-router, receiver, source consumer, and all four target profiles pass.
+assertions, pins an immutable fixture release, tests both modes and every shared
+case applicable to its role, and commits a digest-bound report recording the
+exact adapter tag/commit, compatibility SHA, complete scenario results, and zero
+Codex/publication/merge/release/deployment/secret-output effects. Normal CI uses
+fake Codex and publication adapters and is denied write permissions. Disabled,
+skipped, mutable, or locally substituted evidence is not PASS. Interface changes
+cannot merge until producer, router, receiver, source consumer, and all four
+target profiles pass.
 
 ## Success criteria
 
@@ -180,7 +189,8 @@ router, receiver, source consumer, and all four target profiles pass.
 Assumptions requiring consumer confirmation: `portfolio-tasks` can emit the
 approved v2 task before projecting `queued`; every target can validate and emit
 `execution-result/v2`; all targets can discover a managed draft by delivery
-marker; and consumers can call the reusable result receiver. External
+marker; and consumers can call the reusable result receiver without supplying
+its trust policy. External
 observations report that `portfolio-tasks` may replace `status:approved` with
 `status:queued`, Slugger may require `ai-sdlc-approved`, Consulting Playbook may
 recheck `status:approved`, registered targets may be disabled, and Consulting
@@ -192,8 +202,10 @@ delivery acknowledgement, duplicate publication, result loss, permissions
 that exceed the MVP boundary, and a simulation that diverges from the real
 path. The ADRs below resolve approval and result transport for the MVP; no
 organization-level implementation-blocking decision remains open. Owners must
-still approve credentials, retention duration, and each target's enablement as
-deployment/governance decisions before the controlled real test.
+still approve the result journal-author identities, credentials, retention
+duration, and each target's enablement as deployment/governance decisions before
+the controlled real test. Until then the receiver author allowlist is
+empty/deny-all and every target remains disabled.
 
 ## Trace links and requirement allocation
 
@@ -203,7 +215,7 @@ deployment/governance decisions before the controlled real test.
 | Project | [BG-01–BG-07 and MVP success criteria](../requirements/project-requirements.md#success-criteria) |
 | Software | [GH-FR-005, GH-FR-008–012, GH-FR-017–018, GH-QR-008](../requirements/software-requirements.md) |
 | Interfaces | [Repository interface specification](../requirements/repository-interfaces.md), [external interfaces](../requirements/external-interfaces.md) |
-| Decisions | [ADR-003, ADR-004, ADR-008–010](../architecture/ADR.md) |
+| Decisions | [ADR-003, ADR-004, ADR-008–014](../architecture/ADR.md) |
 | Architecture/design | [State models](../architecture/StateModels.md), [sequence diagrams](../architecture/SequenceDiagrams.md), [data flow](../architecture/DataFlow.md), [repository boundaries](../architecture/RepositoryBoundaries.md) |
 | Traceability | [Requirements RTM](../requirements/requirements-traceability.md), [architecture RTM](../architecture/ArchitectureTraceability.md) |
 | Release policy | [Control-plane releases](../releases.md) |

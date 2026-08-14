@@ -13,15 +13,15 @@ sequenceDiagram
   H->>P: Explicitly approve bounded task
   P->>C: Canonical task + implement mode + provenance
   C->>C: Validate contract, approval, registry and release
-  C->>G: Dispatch canonical input (stable delivery ID)
+  C->>G: workflow_dispatch exact JSON + concurrency inputs
   G-->>C: Accepted acknowledgement
   G->>T: At-least-once delivery
   T->>T: Revalidate, authorize, idempotency preflight
   T->>T: Implement and validate bounded change
   T->>G: Publish one managed draft PR
   participant X as Result receiver
-  T->>X: Canonical result + evidence references
-  X->>X: Authenticate, validate, deduplicate, retain
+  T->>X: Canonical result + scoped result credential
+  X->>X: Load immutable author policy; authenticate, validate, deduplicate, retain
   X->>P: Idempotent correlated result projection
   P-->>H: Status + validation + draft-PR link
   R->>G: Review; optionally merge under human policy
@@ -101,8 +101,9 @@ sequenceDiagram
   participant R as Release authority
   M->>V: Candidate contracts/router/registry/package/manifest
   V->>T: Read-only compatibility probe
-  T-->>V: Conformance evidence
+  T-->>V: Tagged commit + digest-bound complete oracle report
   V-->>R: Coherent verification report
+  Note over V,R: Disabled or not evaluated is not PASS
   R->>R: Human approval, integrity/signing checks
   R-->>M: Immutable release identity + known-good rollback
 ```

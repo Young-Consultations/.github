@@ -1,6 +1,6 @@
 # AI-SDLC Control-Plane Architecture
 
-**Status:** Approved for next-MVP implementation against the immutable 2.2.0 baseline.
+**Status:** Approved for next-MVP implementation; the 2.3.1 compatibility-recovery candidate is not publishable or activatable until its recorded evidence gates pass.
 
 This directory is the implementation-independent design for `Young-Consultations/.github`. Read [the vision](../VISION.md) and [requirements baseline](../requirements/README.md) first. The authority order is **Vision → Requirements → Architecture → Implementation** for the next MVP.
 

@@ -2,7 +2,16 @@ import json
 from pathlib import Path
 
 import pytest
-from scripts.codex_result_receiver import ADMISSION, FORWARDED, JournalComment, ReceiverError, marker, receive
+from scripts.codex_result_receiver import (
+    ADMISSION,
+    FORWARDED,
+    GitHubJournal,
+    JournalComment,
+    ReceiverError,
+    load_trusted_authors,
+    marker,
+    receive,
+)
 from scripts.run_tc_mvp_ci_001 import run
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -82,6 +91,30 @@ def test_malformed_result_and_binding_fail_closed():
     journal.entries.clear()
     with pytest.raises(ReceiverError, match='admitted'): receive(json.dumps(RESULT), SOURCE, RESULT['target_repository'], journal)
     assert not journal.projections
+
+
+def write_trust_policy(tmp_path, authors):
+    path = tmp_path / "codex-result-trust.json"
+    path.write_text(json.dumps({
+        "policy_format_version": 1,
+        "trusted_journal_authors": authors,
+    }))
+    return path
+
+
+def test_receiver_loads_trusted_authors_from_control_plane_policy(tmp_path, monkeypatch):
+    policy = write_trust_policy(tmp_path, ["router-app[bot]", "receiver-app[bot]"])
+    monkeypatch.setenv("CODEX_TRUSTED_JOURNAL_AUTHORS", "attacker")
+
+    assert load_trusted_authors(policy) == {"router-app[bot]", "receiver-app[bot]"}
+    assert GitHubJournal(policy).trusted_author("ROUTER-APP[BOT]")
+    assert not GitHubJournal(policy).trusted_author("attacker")
+
+
+@pytest.mark.parametrize("authors", [[], ["bad author"], ["bot", "BOT"]])
+def test_receiver_trust_policy_fails_closed(tmp_path, authors):
+    with pytest.raises(ReceiverError, match="trust policy"):
+        load_trusted_authors(write_trust_policy(tmp_path, authors))
 
 
 def test_tc_mvp_ci_001_complete_no_effect_oracle():

@@ -48,6 +48,9 @@ fake adapters, traps Codex, branch, commit, push, pull-request, merge, release,
 deployment, production, and secret-output effects, and writes a versioned JSON
 report. The report is compatibility evidence only: it does not claim production
 readiness, request activation, or change mutable activation state.
+That reviewed 2.3.0 commit is preserved as historical evidence but is not an
+activation-safe compatibility baseline: its in-memory report does not establish
+that any real target adapter passed the shared oracle.
 
 ```console
 python scripts/run_tc_mvp_ci_001.py --report reports/tc-mvp-ci-001.json
@@ -60,6 +63,18 @@ integration boundaries, and static contract security checks. It replaces the
 workflow formerly displayed as `Router contract tests`; because the display
 name and filename changed, branch protection must be updated after merge to
 require the new `AI-SDLC Contract Tests` job checks.
+
+The 2.3.1 recovery candidate adds a separate publishability gate:
+
+```console
+python scripts/validate_release.py --require-publishable
+```
+
+It intentionally fails until every target is bound to an immutable
+`codex-adapter-v*` tag/commit with a digest-verified complete adapter report and
+the receiver has a reviewed non-empty journal-author policy. The default live
+target verifier reports disabled targets as `not-evaluated` and exits nonzero;
+disabled or skipped work cannot create a false organization-wide PASS.
 
 Production-path verification proceeds in this order:
 
@@ -96,6 +111,8 @@ The four registered target repositories—`.github`, `portfolio-tasks`,
 `consulting-playbook`, and `slugger`—own their `codex-execute.yml` workflows.
 Those workflows consume `execution-input/v2`, perform verification or Codex
 implementation in the target repository, and emit `execution-result/v2`.
+The only target entry point is `workflow_dispatch` with exactly two required
+string inputs, `execution_input_json` and `concurrency_group`.
 
 ## Delivery guarantee
 
@@ -112,6 +129,12 @@ through [`codex-router.yml`](.github/workflows/codex-router.yml), target-owned
 `execution-input/v2` handling, and canonical `execution-result/v2` return through
 [`codex-result-receiver.yml`](.github/workflows/codex-result-receiver.yml). The receiver validates the authenticated caller and canonical result against the
 source-owned admission journal, records a digest-only durable receipt, deduplicates
-by delivery ID, and forwards one validated `repository_dispatch` projection. All
-targets remain disabled pending owner conformance and deployment evidence. See the
+by delivery ID, and forwards one validated `repository_dispatch` projection. It
+loads trusted journal-author identities from
+[`config/codex-result-trust.json`](config/codex-result-trust.json) through a
+self-pinned composite action in the same immutable control-plane release;
+targets supply only the result-delivery credential. It never uses the
+caller-associated reusable-workflow context to select policy content.
+The current empty list is deny-all, not a permissive default. All targets remain
+disabled pending owner conformance and deployment evidence. See the
 [next-MVP path audit](docs/next-mvp-path-audit.md).

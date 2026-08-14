@@ -33,22 +33,32 @@ validated keys; changing their meaning is breaking.
 
 ## Controlled release procedure
 
-1. Create a focused pull request updating implementation, documentation,
-   package version, and manifest together. Run `python scripts/validate_release.py`,
-   the complete test suite, registry validation, YAML validation, actionlint,
-   and `git diff --check`.
-2. Run `python scripts/verify_target_workflows.py` with the router token. Every
-   target enabled by current activation state must pass; movable target refs must be replaced with
-   reviewed, non-moving `codex-adapter-vMAJOR.MINOR.PATCH` tags before approval.
-   Run the Router smoke test in `verify` mode, confirming it invokes
-   no Codex runtime and creates no branch or pull request.
-3. Obtain protected-branch checks and maintainer approval. Never bypass existing
-   approval controls. Merge the reviewed change before tagging.
-4. From the reviewed merge commit, re-run the gates, confirm the manifest tag is
+1. Create a focused recovery candidate pull request updating implementation,
+   documentation, package version, and manifest together. Run
+   `python scripts/validate_release.py`, the complete test suite, registry
+   validation, YAML validation, actionlint, and `git diff --check`. Structural
+   coherence does not assert publication readiness.
+2. Correct each target independently. Publish no adapter tag until its real
+   repository adapter passes every shared-oracle scenario with all prohibited
+   effects at zero. Then create the immutable
+   `codex-adapter-vMAJOR.MINOR.PATCH` tag and record its exact commit plus the
+   committed report digest in the capability registry.
+3. Explicitly verify every registered target with
+   `python scripts/verify_target_workflows.py --repository OWNER/REPOSITORY`.
+   The unselected default report treats disabled targets as `not-evaluated` and
+   exits nonzero; disabled, skipped, movable, missing, or substituted evidence
+   cannot satisfy release approval. Run the Router smoke test in `verify` mode,
+   confirming it invokes no Codex runtime and creates no branch or pull request.
+4. In the final release pull request, record the reviewed journal-author
+   identities, set `tag_published` to `true`, and run
+   `python scripts/validate_release.py --require-publishable`. Obtain
+   protected-branch checks and maintainer/security approval. Never bypass
+   existing approval controls. Merge the reviewed change before tagging.
+5. From the reviewed merge commit, re-run the gates, confirm the manifest tag is
    unused, then create and push one annotated `ai-sdlc-vX.Y.Z` tag. Never move,
    delete, or recreate a published tag. This task prepares the lifecycle only;
    it creates no production tag and publishes no Python distribution.
-5. Consumers pin the router to that exact tag or, before tag approval, the
+6. Consumers pin the router to that exact tag or, before tag approval, the
    reviewed 40-character merge SHA. Package consumers pin exactly the manifest
    package version and schema consumers retrieve the same tag or SHA.
 
@@ -57,14 +67,17 @@ merge first, obtain the immutable commit identity second, and record the pin in
 each consumer's own configuration or documentation. This avoids a recursive
 release update.
 
-The 2.3.0 receiver and fixture baseline does not embed a prospective commit SHA.
-After merge, consumers may pin the resulting 40-character merge SHA; a release
-owner may later publish the declared `ai-sdlc-v2.3.0` tag through the governed
-process. Activation changes are separate operational changes and do not require
-consumers to repin that compatibility SHA. The tag has not been published. A published
-`ai-sdlc-contracts==2.3.0` distribution has also not been verified, so MVP
-consumers must retrieve the canonical schemas directly at the approved SHA
-rather than require that package.
+Reviewed 2.3.0 commit
+`c6090e5bbadcc2102a1cb91875466e9decdada1e` remains immutable historical
+evidence. It is not rewritten, retagged, or treated as activation-safe. The
+2.3.1 recovery candidate does not embed its prospective merge SHA and leaves
+`tag_published: false`, every target disabled with pending conformance, and the
+receiver author allowlist empty/deny-all. Those conditions deliberately make
+`--require-publishable` fail. After the target sequence and final release review,
+consumers may pin the corrected merge SHA or published `ai-sdlc-v2.3.1` tag.
+Activation remains a separate operational change and does not require
+repinning. No `ai-sdlc-contracts==2.3.1` distribution is claimed until actually
+published and verified.
 
 Production mode remains draft-only. Release validation does not dispatch work,
 change settings or secrets, widen permissions, or create an approval bypass.
@@ -90,7 +103,13 @@ must record those three consumer PRs or confirm that no router call exists.
 
 ## Current compatibility update
 
-The `ai-sdlc-v2.3.0` candidate adds the receiver implementation and complete TC-MVP-CI-001 fixture oracle without enabling a target. Consumers must pin the published tag or the resulting reviewed merge commit; `@main` is never a compatibility unit.
+The `ai-sdlc-v2.3.1` recovery candidate corrects the dynamic target interface,
+receiver trust ownership, immutable evidence registry, and fail-closed
+publishability rules without enabling a target. The PATCH designation records a
+security/compatibility repair of the unpublished 2.3.0 candidate; no approved
+production backward-compatibility promise is being bypassed. Consumers must pin
+the eventual reviewed merge commit or published tag; `@main` is never a
+compatibility unit.
 
 ## Rollback
 
@@ -103,7 +122,7 @@ move the failed tag and do not weaken the allowlist. The first managed release
 records the pre-versioning known-good commit as its rollback point. A corrective
 PATCH release updates `previous_known_good` to the last successful release.
 
-### 2.3.0 receiver rollback
+### 2.3.1 recovery rollback
 
 Disable result calls and target dispatch first. Re-pin consumers to the 2.2.0
 known-good commit in the release manifest, revoke the result-only credential,

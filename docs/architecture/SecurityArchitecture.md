@@ -23,6 +23,12 @@ Every arrow requires identity, integrity, version, authorization and semantic va
 - Prefer short-lived workload identity or narrowly scoped app/repository tokens; never pass control-plane credentials to targets or AI providers.
 - Authorize caller, authoritative task/approval, target, workflow, mode, task type, contract/release, and scope independently.
 - Separate read-only validation/compatibility credentials from dispatch credentials; only the dispatch adapter receives the latter.
+- The result receiver loads trusted journal-author identities from
+  `config/codex-result-trust.json` through a self-pinned composite action at the
+  same immutable control-plane commit as the reusable workflow. It never uses
+  caller-associated workflow context to select policy. Targets supply only the
+  result-delivery credential and cannot add, replace, or inherit the author
+  allowlist. Empty or invalid policy denies all results.
 - Govern registry enablement, workflow permissions, security policy and releases with designated independent human review and verified identities where supported.
 - Protected default branches and environments enforce that automation cannot clear draft status, merge, deploy, or change settings.
 
@@ -46,6 +52,7 @@ Pin third-party automation by immutable identity and verify release/schema/packa
 | Supply-chain compromise | Immutable action/dependency pins, scanning, protected updates, release integrity. |
 | Secret leakage | Minimization, redaction, log scanning, access/retention policy. |
 | False success/evidence substitution | Authenticated correlated target evidence; absence/conflict is not success. |
+| Caller-controlled journal trust | Immutable control-plane author allowlist; target-supplied trust fields or secrets are rejected. |
 | Privilege escalation via PR | Draft-only publication, protected branches, human review, no auto-merge. |
 
 Security tests include negative authorization, permissions, secret canaries, dependency/action integrity, malformed contracts, concurrency, evidence substitution and provider-boundary threat scenarios.

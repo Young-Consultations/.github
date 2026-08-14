@@ -63,7 +63,10 @@ contract and identity bindings, deduplicates by the v2 `delivery_id`,
 persists evidence, and idempotently forwards the result to the source owner;
 `portfolio-tasks` owns issue projection. On timeout, sender and receiver
 reconcile receiver evidence and managed-PR markers before unchanged retry.
-Conflicting valid-looking results fail closed as ambiguous. **Alternatives:**
+Conflicting valid-looking results fail closed as ambiguous. Per ADR-013, the
+receiver obtains trusted journal-author policy only from its immutable
+control-plane bundle; the target supplies only the result-delivery credential.
+**Alternatives:**
 direct target issue mutation; source polling every target; workflow artifacts
 as the sole channel; dispatch status as success. **Tradeoffs:** one additional
 hop and receiver availability in exchange for least privilege, uniform
@@ -85,3 +88,67 @@ repository, use control-plane credentials, merge, release, or deploy.
 **Consequences:** both roles may share a repository but not an authority; the
 registry remains disabled-first and conformance is required before enablement.
 **Trace:** GH-FR-002/008–012/017–018; RI-MVP-02; TC-MVP-CI-001.
+
+## ADR-012 — Dynamic targets use one exact dispatch interface
+
+**Status:** Accepted for the 2.3.1 recovery. **Context:** The router chooses a
+target at runtime and invokes it with GitHub workflow dispatch. Three reviewed
+targets exposed only `workflow_call`, while the compatibility verifier expected
+obsolete artifact and run-ID inputs. A green local check therefore did not prove
+that the router could invoke the registered endpoint. **Decision:** Every
+registered target entry point is `workflow_dispatch` and declares exactly two
+required string inputs: `execution_input_json` and `concurrency_group`. The first
+contains the complete closed canonical input; the second must equal its canonical
+concurrency value. No artifact, run-ID, field-by-field, optional fallback, or
+`workflow_call` target interface is active. **Alternatives:** statically select a
+reusable workflow; retain multiple transports; accept optional artifact lookup.
+**Tradeoffs:** target adapters expose a small transport wrapper, while the router
+retains deterministic dynamic selection and one testable interface.
+**Consequences:** compatibility verification rejects missing, extra, optional,
+wrongly typed, untagged, or undispatchable target interfaces. **Trace:**
+GH-FR-002/004/006/007/013; GH-NFR-015; IF-06; TC-MVP-CI-001.
+
+## ADR-013 — Receiver journal-author trust is control-plane configuration
+
+**Status:** Accepted for the 2.3.1 recovery. **Context:** The reusable receiver
+accepted a target-supplied `CODEX_TRUSTED_JOURNAL_AUTHORS` secret, allowing the
+untrusted result side to influence which source-journal markers establish
+admission, receipt, and forwarding state. Several target calls also omitted that
+secret. **Decision:** The immutable control-plane compatibility unit owns
+`config/codex-result-trust.json`. GitHub associates the normal `github` context
+inside a reusable workflow with its caller, so the receiver must not use
+`github.workflow_sha` or a caller checkout to locate policy. Instead, the
+immutable reusable workflow invokes
+`Young-Consultations/.github/actions/codex-result-receiver` at its own release
+tag. That composite action executes the receiver script and policy from one
+self-pinned control-plane commit; live verification requires the workflow and
+action refs to resolve to the same commit. Targets supply only
+`CODEX_RESULT_TOKEN`, the narrowly scoped result-delivery credential. An empty
+or malformed allowlist denies all results.
+**Alternatives:** caller-supplied allowlist; organization secret inherited by
+targets; trust every comment author. **Tradeoffs:** deployment identities require a
+reviewed control-plane change, eliminating target flexibility at this security
+boundary. **Consequences:** release validation blocks publication until at least
+one reviewed journal author is configured, and target verification rejects any
+attempt to supply the policy. **Trace:** GH-FR-018; GH-NFR-009; GH-OR-007;
+GH-SR-001/005; RI-MVP-01; TC-FR-018.
+
+## ADR-014 — Preserve 2.3.0 and publish a fail-closed patch recovery
+
+**Status:** Accepted for the 2.3.1 recovery. **Context:** Commit
+`c6090e5bbadcc2102a1cb91875466e9decdada1e` was reviewed as the 2.3.0
+compatibility baseline, but mutable target refs, incompatible workflow shapes,
+caller-controlled receiver trust, and skipped conformance mean it is not safe to
+activate. **Decision:** Preserve that commit as immutable historical evidence and
+prepare 2.3.1 as a new patch compatibility unit. The candidate may remain
+structurally coherent while blocked; publication additionally requires every
+target's immutable adapter tag/commit, a digest-bound complete
+`TC-MVP-CI-001` report through the real adapter with all prohibited effects at
+zero, and a non-empty reviewed receiver trust policy. Disabled targets are
+reported as not evaluated and cannot produce an organization-wide PASS.
+**Alternatives:** rewrite or retag 2.3.0; enable one mutable target; treat local or
+skipped tests as compatibility. **Tradeoffs:** recovery needs coordinated target
+evidence before release, while history, rollback, and audit identity stay honest.
+**Consequences:** mutable activation remains separate; no target is enabled and no
+tag is published by the recovery candidate alone. **Trace:** GH-FR-013–015;
+GH-NFR-002/009/015/017; GH-OR-005; GH-SR-002/005; TC-MVP-CI-001.

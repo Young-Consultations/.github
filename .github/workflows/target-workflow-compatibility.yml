@@ -19,6 +19,7 @@ permissions:
 
 jobs:
   verify:
+    name: Offline interface contract / live fail-closed gate
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source
@@ -34,7 +35,11 @@ jobs:
         run: python -m pip install -r requirements-dev.txt
       - name: Run offline compatibility tests
         run: python -m pytest tests/test_target_workflow_compatibility.py
-      - name: Verify registered target workflows
+      - name: Verify canonical target fixture on pull requests
+        if: ${{ github.event_name == 'pull_request' }}
+        run: python scripts/verify_target_workflows.py --fixtures-only
+      - name: Verify all registered target workflows
+        if: ${{ github.event_name != 'pull_request' }}
         env:
           GH_TOKEN: ${{ secrets.CODEX_ROUTER_TOKEN }}
         run: python scripts/verify_target_workflows.py

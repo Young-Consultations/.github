@@ -2,7 +2,7 @@
 
 **Normative status:** organization-owned baseline for consumer alignment.  
 **Payload version:** `ai-sdlc-contract/v2` (v3 is out of scope).  
-**Compatibility candidate:** release `2.3.0`, fixture `2.3.0`. The final immutable reference is the resulting merge commit or subsequently published `ai-sdlc-v2.3.0` tag; it is intentionally not embedded in its own contents. Mutable `main` is not a compatibility pin.
+**Compatibility recovery candidate:** release `2.3.1`, fixture `2.3.0`. It preserves reviewed commit `c6090e5bbadcc2102a1cb91875466e9decdada1e` as historical 2.3.0 evidence rather than rewriting or retagging it. The corrected final immutable reference is the resulting reviewed merge commit or subsequently published `ai-sdlc-v2.3.1` tag; it is intentionally not embedded in its own contents. Mutable `main` is not a compatibility pin.
 
 This document is self-contained so a consumer needs no access to another consumer repository. The four and only four MVP targets are `Young-Consultations/.github`, `Young-Consultations/portfolio-tasks`, `Young-Consultations/slugger`, and `Young-Consultations/consulting-playbook`. The new `.github` entry is disabled-first, and registry enablement remains an explicit reviewed gate; sibling conformance is **pending owner confirmation**.
 
@@ -23,8 +23,8 @@ All three schemas use JSON Schema Draft 2020-12, require format checking, and se
 | Interface / owner | Workflow | Required inputs | Required secret | Outputs | Consumer rule |
 | --- | --- | --- | --- | --- | --- |
 | Router / `.github` control plane | `.github/workflows/codex-router.yml` | Required `task_payload`; optional `execution_mode` (defaults to `implement`) | `CODEX_ROUTER_TOKEN` | `execution_result`, `correlation_id`, `delivery_id`, `failure_category`, `diagnostic_summary`, `concurrency_group` | Admit only the task rules above, an exact capability entry, and current activation. Rejections are represented in `execution_result`; there is no separate `accepted` output. |
-| Target adapter / each selected repository | `.github/workflows/codex-execute.yml` in that target, referenced by its registry entry | `execution_input_json` containing the complete canonical input; required `concurrency_group` transport input | Target-owned executor credential; exact local name is owned and documented by that target | No reusable-workflow output is returned to the router; the adapter delivers a canonical result to the receiver separately | Must validate again; target credentials cannot route, approve, write another repository, merge, release, or deploy. |
-| Result receiver / `.github` control plane | `.github/workflows/codex-result-receiver.yml` | `execution_result` (complete result JSON string), `source_issue` (must equal admitted binding) | `CODEX_RESULT_TOKEN` | String outputs `accepted` (`true`/`false`), `delivery_id`, `correlation_id`, `execution_status`, `failure_category`, `diagnostic_summary` | Behavior is defined below. |
+| Target adapter / each selected repository | `.github/workflows/codex-execute.yml` in that target, referenced by its registry entry and triggered only by `workflow_dispatch` | Exactly two required strings: `execution_input_json` containing the complete canonical input and `concurrency_group` equal to its canonical value | Target-owned executor credential; exact local name is owned and documented by that target | No reusable-workflow output is returned to the router; the adapter delivers a canonical result to the receiver separately | No `workflow_call`, artifact, run-ID, field-by-field, optional, extra, or fallback interface is active. Must validate again; target credentials cannot route, approve, write another repository, merge, release, or deploy. |
+| Result receiver / `.github` control plane | `.github/workflows/codex-result-receiver.yml` | `execution_result` (complete result JSON string), `source_issue` (must equal admitted binding) | Only `CODEX_RESULT_TOKEN`; targets never supply trusted-author policy | String outputs `accepted` (`true`/`false`), `delivery_id`, `correlation_id`, `execution_status`, `failure_category`, `diagnostic_summary` | Behavior and immutable trust ownership are defined below. |
 
 Target-side defense in depth remains mandatory after router activation checks.
 Each adapter independently authenticates and authorizes the admitted caller;
@@ -35,11 +35,36 @@ local repository security/execution policy. It must not reject solely because
 an immutable historical compatibility snapshot happened to record the target
 as disabled.
 
-The immutable target-capability registry in `config/codex-repositories.json` records identity, workflow, version, task-type, draft-only, concurrency, environment, and idempotency policy. The mutable activation map in `config/codex-activation.json` records only whether the control plane may currently route to each target. Before controlled MVP execution, the selected workflow ref must be an owner-reviewed, non-moving `codex-adapter-vMAJOR.MINOR.PATCH` release tag. The router validates current activation before both construction and dispatch. Target adapters validate the immutable capability and protocol rules but do not consult activation. Consequently a target may keep one compatibility SHA when activation later changes.
+The immutable target-capability registry in `config/codex-repositories.json`
+records identity, workflow, version, task-type, draft-only, concurrency,
+environment, idempotency policy, and reviewed conformance evidence. Conformance
+is `null` while pending and, when present, binds fixture/release identity, exact
+adapter tag and commit, report path/digest, PASS status, and sufficiency for
+activation. The mutable activation map in `config/codex-activation.json` records
+only whether the control plane may currently route to each target. Before
+controlled MVP execution, the selected workflow ref must be an owner-reviewed,
+non-moving `codex-adapter-vMAJOR.MINOR.PATCH` release tag whose recorded complete
+shared-oracle report validates at that ref. The router validates current
+activation and evidence before both construction and dispatch. Target adapters
+validate the immutable capability and protocol rules but do not consult
+activation. Consequently a target may keep one compatibility SHA when activation
+later changes.
 
 ## Result receiver and source-projection handoff
 
-The reusable receiver is triggered only by `workflow_call`. `execution_result` and `source_issue` are required strings. `CODEX_RESULT_TOKEN` is a required repository-scoped GitHub App or token identity authorized only to validate, store, and forward results; it provides no target code-write, merge, release, or deployment authority.
+The reusable receiver is triggered only by `workflow_call`. `execution_result`
+and `source_issue` are required strings. `CODEX_RESULT_TOKEN` is the only secret
+accepted from a target and is a repository-scoped GitHub App or token identity
+authorized only to validate, store, and forward results; it provides no target
+code-write, merge, release, or deployment authority. The reusable workflow does
+not check out `github.workflow_sha`, because GitHub binds that context to the
+caller. It invokes the control-plane-owned `actions/codex-result-receiver`
+composite action at the same immutable release commit; the action loads
+`config/codex-result-trust.json` from its own downloaded bundle. Live
+verification rejects a workflow/action commit mismatch. The target cannot
+supply, override, or inherit trusted journal-author identities. An
+empty/malformed list denies all results; the 2.3.1 candidate intentionally
+remains deny-all until deployment identities receive review.
 
 The receiver shall: (1) authenticate the caller; (2) validate the exact v2 result schema with format checking; (3) verify target, delivery, correlation, and source bindings against the admitted delivery record; (4) deduplicate by `delivery_id`; (5) accept identical redelivery without a second visible effect; (6) reject a conflict as ambiguous; (7) preserve durable result evidence; (8) forward exactly one validated projection to the source owner; (9) return sanitized diagnostics only; (10) preserve execution failure rather than reinterpret it as transport success; and (11) never merge, release, deploy, or modify target code.
 
@@ -84,8 +109,23 @@ Every row runs for all four target profiles using the released fixtures and fake
 | Ambiguous result | `ambiguous-rejected`; no new effect; human reconciliation required. |
 | No-real-effects proof | Codex, branch, and PR adapter counters are zero and CI token permissions are read-only. |
 
-Consumer evidence records the externally pinned immutable fixture reference, capability profile, adapter revision, scenario results, and no-real-effects counters. `.github` evidence is locally verifiable; evidence for the three sibling repositories remains **pending owner confirmation** and this baseline does not claim their conformance.
+Consumer evidence records the externally pinned immutable fixture reference,
+capability profile, adapter tag and commit, compatibility SHA, every scenario
+result, and all no-real-effects counters. The report is committed at the tagged
+adapter ref and its SHA-256 digest is recorded in the registry. A disabled,
+skipped, mutable, incomplete, locally substituted, or digest-mismatched adapter
+is `not-evaluated` or failed, never organization-wide PASS. Evidence for all four
+repositories is currently pending; this recovery candidate does not claim their
+conformance.
 
 ## Deployment/governance gates (not open interface decisions)
 
-Before a target is enabled, humans must approve its immutable workflow pin, repository-scoped credentials/environment, evidence retention duration, reconciliation deadline, and owner-supplied conformance evidence. These choices do not change consumer fields or v2 semantics. Merge, release, deployment, and production operation remain human-controlled; the MVP ends at one validated draft PR and one correlated canonical result.
+Before a target is enabled, humans must approve its immutable workflow pin,
+repository-scoped credentials/environment, evidence retention duration,
+reconciliation deadline, control-plane journal-author identities, and
+owner-supplied conformance evidence. Before 2.3.1 publication,
+`python scripts/validate_release.py --require-publishable` must also pass for
+every target and the receiver trust policy. These choices do not change consumer
+fields or v2 semantics. Merge, tag/release publication, deployment, and
+production operation remain human-controlled; the MVP ends at one validated
+draft PR and one correlated canonical result.

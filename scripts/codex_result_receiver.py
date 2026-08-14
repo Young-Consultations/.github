@@ -21,7 +21,9 @@ from jsonschema import Draft202012Validator, FormatChecker
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA = ROOT / "contracts/execution-result.schema.json"
+TRUST_POLICY = ROOT / "config/codex-result-trust.json"
 ISSUE = re.compile(r"^([A-Za-z0-9][A-Za-z0-9-]{0,38}/[A-Za-z0-9._-]{1,100})#([1-9][0-9]*)$")
+AUTHOR = re.compile(r"^[A-Za-z0-9][A-Za-z0-9-]*(?:\[bot\])?$")
 ADMISSION = "<!-- ai-sdlc-admission:v2 "
 RECEIPT = "<!-- ai-sdlc-result-receipt:v2 "
 FORWARDED = "<!-- ai-sdlc-result-forwarded:v2 "
@@ -39,6 +41,37 @@ class Journal(Protocol):
     def trusted_author(self, author: str) -> bool: ...
     def append(self, repository: str, issue: int, body: str) -> None: ...
     def forward(self, repository: str, projection: dict[str, Any]) -> None: ...
+
+
+def load_trusted_authors(path: Path = TRUST_POLICY) -> set[str]:
+    """Load the immutable control-plane journal-author policy.
+
+    An empty list is the safe recovery default: the receiver remains deployed
+    but rejects every journal marker until reviewed deployment identities are
+    recorded in the compatibility release.
+    """
+    try:
+        policy = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ReceiverError("authentication", "result journal trust policy is unavailable") from exc
+    if not isinstance(policy, dict) or set(policy) != {
+        "policy_format_version", "trusted_journal_authors",
+    }:
+        raise ReceiverError("authentication", "result journal trust policy has an invalid shape")
+    authors = policy.get("trusted_journal_authors")
+    if policy.get("policy_format_version") != 1 or not isinstance(authors, list):
+        raise ReceiverError("authentication", "result journal trust policy has an unsupported version")
+    normalized: set[str] = set()
+    for author in authors:
+        if not isinstance(author, str) or not AUTHOR.fullmatch(author):
+            raise ReceiverError("authentication", "result journal trust policy contains an invalid author")
+        key = author.casefold()
+        if key in normalized:
+            raise ReceiverError("authentication", "result journal trust policy contains a duplicate author")
+        normalized.add(key)
+    if not normalized:
+        raise ReceiverError("authentication", "result journal trust policy denies all authors")
+    return normalized
 
 
 def canonical_digest(value: dict[str, Any]) -> str:
@@ -135,10 +168,8 @@ def receive(raw: str, source_issue: str, caller: str, journal: Journal) -> Recei
 
 
 class GitHubJournal:
-    def __init__(self) -> None:
-        self._trusted_authors = {name.strip().casefold() for name in os.getenv("CODEX_TRUSTED_JOURNAL_AUTHORS", "").split(",") if name.strip()}
-        if not self._trusted_authors:
-            raise ReceiverError("authentication", "CODEX_TRUSTED_JOURNAL_AUTHORS is required")
+    def __init__(self, trust_policy: Path = TRUST_POLICY) -> None:
+        self._trusted_authors = load_trusted_authors(trust_policy)
 
     def _api(self, *args: str, input_value: dict[str, Any] | None = None) -> Any:
         cmd = ["gh", "api", *args]

@@ -7,6 +7,7 @@
 | Contract/release | Supported majors, artifact identities/digests, release and rollback identity | Contract/release authority |
 | Target capabilities | Target identity/owner, endpoint, versions/modes/types, concurrency, draft policy, security environment, idempotency capabilities | Control-plane registry owner with target/security review |
 | Activation | Current enabled/disabled boolean for every capability entry | Control-plane owner with target/security approval; router is sole enforcer |
+| Result journal trust | Exact GitHub App/bot authors permitted to establish admission, receipt, and forwarding markers | Control-plane security/release owner; immutable compatibility configuration |
 | Runtime request | Canonical task and explicit execution mode | Planning caller; validated by control plane |
 | Operational policy | Timeouts, retry budgets, SLO/alert thresholds, retention/classification | Operations/security governance |
 | Credentials | Dispatch/read-only identities and secret references | Security/platform owner |
@@ -17,11 +18,25 @@ Normative contract and security invariants cannot be overridden. For configurabl
 
 ## Validation and activation
 
-Validate syntax, schema, uniqueness, referential integrity, version coherence, target/workflow identity, owner, modes/types, positive limits, publication/idempotency/security policy, and secret-reference form before activation. Unknown keys fail closed. A decision reads one version-identified immutable snapshot; mid-run changes apply only to later decisions. Sensitive values are supplied through protected secret references, never committed configuration.
+Validate syntax, schema, uniqueness, referential integrity, version coherence,
+target/workflow identity, owner, exact dispatch inputs, receiver compatibility,
+modes/types, positive limits, publication/idempotency/security policy,
+digest-bound shared-oracle evidence, and secret-reference form before
+activation. Unknown keys fail closed. A decision reads one version-identified
+immutable snapshot; mid-run changes apply only to later decisions. Sensitive
+values are supplied through protected secret references, never committed
+configuration. Journal-author login names are policy identities, not secrets;
+their allowlist is reviewed and released here rather than supplied by a target.
 
 ## Defaults
 
-Defaults must be explicit, documented, safe, test-covered and versioned. Security-sensitive absence means disabled/rejected, not permissive behavior. Mode should be explicit at the canonical request even if a convenience interface offers a documented production default; the constructed execution input never relies on inference.
+Defaults must be explicit, documented, safe, test-covered and versioned.
+Security-sensitive absence means disabled/rejected, not permissive behavior.
+An empty journal-author allowlist denies every result, and missing target
+conformance produces not-evaluated/failure rather than PASS. Mode should be
+explicit at the canonical request even if a convenience interface offers a
+documented production default; the constructed execution input never relies on
+inference.
 
 ## Change management
 
@@ -29,4 +44,7 @@ Configuration changes receive requirement/risk/security/compatibility review, de
 
 ## Unknown policy values
 
-Approval freshness, retention periods, retry/time budgets, signing rules, SLO alert windows and credential implementation require organization decisions. Architecture defines their required properties, not invented values.
+Approval freshness, trusted journal-author deployment identities, retention
+periods, retry/time budgets, signing rules, SLO alert windows and credential
+implementation require organization decisions. Architecture defines their
+required properties and a deny-all missing-value state, not invented values.

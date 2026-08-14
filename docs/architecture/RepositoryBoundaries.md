@@ -3,7 +3,8 @@
 ## Owned by this repository
 
 - Canonical task, execution-input, and execution-result semantics, schemas, examples, and shared validation distribution.
-- Admission/routing interface, organization registry and routing policy.
+- Admission/routing interface, organization registry, routing policy, and
+  immutable result-journal author policy.
 - Stable identity, failure classification, correlation, execution-mode and compatibility rules.
 - Read-only shared contract, routing, security-boundary, release, and target compatibility verification.
 - Atomic control-plane release, adoption/deprecation/rollback guidance, and platform architecture.
@@ -22,7 +23,7 @@
 | Collaborator | Owns | Required exchange |
 | --- | --- | --- |
 | Planning authority (`portfolio-tasks`) | Task record, governance, approval provenance, initiation | IF-01 canonical task and IF-02 invocation; consumes status/evidence |
-| `.github` control plane | Contracts, registry, admission, routing, result receiver, fixtures, conformance policy | Control-plane identity; never target code-write authority |
+| `.github` control plane | Contracts, registry, admission, routing, result receiver and journal-author trust, fixtures, conformance policy | Control-plane identity; never target code-write authority; target callers cannot supply trust policy |
 | `.github` target adapter | Bounded changes to `.github` after explicit router selection | Separate target-only identity; cannot approve, route, cross repository boundaries, merge, release, or deploy |
 | Target repository owner | Local permission, execution, idempotency, branch/draft PR, tests/evidence/result | IF-04/IF-06 input; IF-05 result; IF-08 conformance |
 | Human approver/reviewer | Approval and consequential acceptance | Durable approval/review records |
