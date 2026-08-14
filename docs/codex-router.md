@@ -170,6 +170,13 @@ closed/merged PRs, or a matching branch owned by another delivery. Canonical
 results must include `delivery_id` and report whether the target executed,
 returned `duplicate-reused`, rejected ambiguity, or failed.
 
+Compatibility inspection validates the wrapper's exact dispatch and receiver
+interfaces. It does not infer idempotency from source-code keywords. The
+non-recursive conformance pin binds the exact adapter and harness blobs, and the
+complete shared oracle is the behavioral proof. Preflight must independently
+observe branch existence and pull-request state; disagreement fails before the
+executor.
+
 The target returns that result through the immutable organization receiver with
 only `CODEX_RESULT_TOKEN`. Journal-author trust is loaded from
 `config/codex-result-trust.json` by the receiver's self-pinned control-plane

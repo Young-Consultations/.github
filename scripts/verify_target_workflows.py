@@ -308,28 +308,6 @@ def parse_workflow(source: str) -> dict[str, Any]:
     return document
 
 
-def verify_idempotency_capability(source: str) -> None:
-    lowered = source.lower()
-    if "delivery_id" not in lowered:
-        raise CompatibilityError("canonical delivery_id is omitted")
-    forbidden = ("github.run_id", "github.run_attempt", "date +", "uuidgen", "random", "$random")
-    for token in forbidden:
-        if token in lowered:
-            raise CompatibilityError("branch identity must not derive from run id, attempts, timestamps, or random data")
-    required_tokens = {
-        "preflight": "target-side idempotency preflight capability is missing",
-        "ai-sdlc-delivery-id": "machine-readable ownership marker containing delivery_id is missing",
-        "ownership marker": "pull-request ownership validation is missing",
-        "draft": "draft pull-request enforcement is missing",
-        "fail-closed": "ambiguous or unsafe reuse must fail closed",
-        "create-race": "create-race recovery by re-querying after conflict is missing",
-        "duplicate-reused": "canonical reuse execution result is missing",
-    }
-    for token, message in required_tokens.items():
-        if token not in lowered:
-            raise CompatibilityError(message)
-
-
 def verify_receiver_compatibility(source: str) -> str:
     workflow = parse_workflow(source)
     jobs = workflow.get("jobs")
@@ -506,9 +484,11 @@ def verify_interface(source: str) -> str:
         actual_required = definition.get("required", False)
         if not isinstance(actual_required, bool) or actual_required is not required:
             raise CompatibilityError(f"{name}.required must be {str(required).lower()}")
-    verify_idempotency_capability(source)
     verify_receiver_compatibility(source)
-    return "exact two-input workflow_dispatch + idempotent receiver-compatible consumer"
+    # Idempotency is executable behavior in the exact adapter blob bound by the
+    # conformance pin. Keyword searches in this wrapper can be defeated by
+    # comments and cannot prove the pinned adapter's behavior.
+    return "exact two-input workflow_dispatch + receiver-compatible consumer"
 
 
 def fetch_json(url: str, token: str | None = None) -> Any:

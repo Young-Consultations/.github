@@ -35,7 +35,7 @@ class AdapterError(Exception):
 
 
 class Effects(Protocol):
-    def discover(self, branch: str, delivery_id: str, timeout_seconds: float) -> list[dict[str, Any]]: ...
+    def discover(self, branch: str, delivery_id: str, timeout_seconds: float) -> "Ownership": ...
     def codex(self, instructions: str, timeout_seconds: float) -> None: ...
     def validate_candidate(self, timeout_seconds: float) -> tuple[bool, str]: ...
     def publish(self, branch: str, delivery_id: str, digest: str, timeout_seconds: float) -> str: ...
@@ -45,6 +45,14 @@ class Effects(Protocol):
 class Outcome:
     result: dict[str, Any]
     source_issue: str | None
+
+
+@dataclass
+class Ownership:
+    """Remote branch and pull-request state observed in one preflight."""
+
+    branch_exists: bool
+    pull_requests: list[dict[str, Any]]
 
 
 def canonical_digest(payload: dict[str, Any]) -> str:
@@ -128,6 +136,32 @@ def admit(raw: str, transport_group: str, caller: str, trusted_callers: set[str]
     return payload
 
 
+def reconcile_ownership(snapshot: Ownership, digest: str) -> dict[str, Any] | None:
+    """Return one reusable managed draft or reject every ambiguous remote state."""
+    owned = snapshot.pull_requests
+    if snapshot.branch_exists != bool(owned):
+        raise AdapterError(
+            "publication",
+            "Delivery branch and managed pull-request state are inconsistent",
+            "ambiguous-rejected",
+        )
+    if any(item.get("digest") != digest for item in owned):
+        raise AdapterError(
+            "authorization",
+            "Delivery ID is already bound to a different payload",
+            "ambiguous-rejected",
+        )
+    if len(owned) > 1 or any(
+        not item.get("draft") or item.get("state") != "OPEN" for item in owned
+    ):
+        raise AdapterError(
+            "publication",
+            "Delivery ownership is ambiguous",
+            "ambiguous-rejected",
+        )
+    return owned[0] if owned else None
+
+
 def run_adapter(raw: str, transport_group: str, caller: str, trusted_callers: set[str],
                 registry: dict[str, Any], effects: Effects) -> Outcome:
     started, parsed, phase = _now(), {}, "admission"
@@ -150,14 +184,11 @@ def run_adapter(raw: str, transport_group: str, caller: str, trusted_callers: se
         digest = canonical_digest(payload)
         branch = f"codex/{payload['delivery_id'].lower()}"
         phase = "discovery"
-        owned = effects.discover(branch, payload["delivery_id"], remaining())
+        ownership = effects.discover(branch, payload["delivery_id"], remaining())
         remaining()
-        if any(x.get("digest") != digest for x in owned):
-            raise AdapterError("authorization", "Delivery ID is already bound to a different payload", "ambiguous-rejected")
-        if len(owned) > 1 or any(not x.get("draft") or x.get("state") != "OPEN" for x in owned):
-            raise AdapterError("publication", "Delivery ownership is ambiguous", "ambiguous-rejected")
-        if len(owned) == 1:
-            pr = owned[0]["url"]
+        reusable = reconcile_ownership(ownership, digest)
+        if reusable is not None:
+            pr = reusable["url"]
             return Outcome(_result(payload, started, "duplicate-reused", "none", None,
                                    branch=branch, pr=pr, validation="passed", tests="passed"), payload["source_issue"])
         if payload["execution_mode"] == "verify":
@@ -181,11 +212,12 @@ def run_adapter(raw: str, transport_group: str, caller: str, trusted_callers: se
             remaining()
         except AdapterError as exc:
             if exc.safe_message == "create-race":
-                owned = effects.discover(branch, payload["delivery_id"], remaining())
+                ownership = effects.discover(branch, payload["delivery_id"], remaining())
                 remaining()
-                if len(owned) == 1 and owned[0].get("digest") == digest and owned[0].get("draft") and owned[0].get("state") == "OPEN":
+                reusable = reconcile_ownership(ownership, digest)
+                if reusable is not None:
                     return Outcome(_result(payload, started, "duplicate-reused", "none", None,
-                                           branch=branch, pr=owned[0]["url"], validation="passed", tests="passed"), payload["source_issue"])
+                                           branch=branch, pr=reusable["url"], validation="passed", tests="passed"), payload["source_issue"])
                 raise AdapterError(
                     "publication",
                     "Delivery ownership is ambiguous after publication create race",
@@ -230,7 +262,16 @@ class GitHubEffects:
         return subprocess.check_output(["gh", *args], text=True, env=env, stderr=subprocess.DEVNULL,
                                        timeout=timeout_seconds)
 
-    def discover(self, branch: str, delivery_id: str, timeout_seconds: float) -> list[dict[str, Any]]:
+    def discover(self, branch: str, delivery_id: str, timeout_seconds: float) -> Ownership:
+        branch_names = self._gh(
+            "api",
+            "--paginate",
+            f"repos/{TARGET}/branches?per_page=100",
+            "--jq",
+            ".[].name",
+            timeout_seconds=timeout_seconds,
+        )
+        branch_exists = branch in branch_names.splitlines()
         raw = self._gh("pr", "list", "--repo", TARGET, "--state", "all", "--head", branch,
                        "--json", "url,state,isDraft,body", timeout_seconds=timeout_seconds)
         found = []
@@ -241,7 +282,7 @@ class GitHubEffects:
                 found.append({"url": pr["url"], "state": pr["state"], "draft": pr["isDraft"], "digest": match.group(1)})
             else:
                 found.append({"url": pr["url"], "state": pr["state"], "draft": pr["isDraft"], "digest": "conflict"})
-        return found
+        return Ownership(branch_exists=branch_exists, pull_requests=found)
 
     def codex(self, instructions: str, timeout_seconds: float) -> None:
         Path(".codex-instructions.txt").write_text(instructions)

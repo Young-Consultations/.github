@@ -177,3 +177,30 @@ generated before its final commit identity exists without weakening the later
 tag-to-commit or report-digest checks; self-including pins/reports and substituted
 files fail closed. **Trace:** GH-FR-013–015; GH-NFR-002/009/015/017; GH-OR-005;
 TC-MVP-CI-001.
+
+## ADR-016 — Prove adapter behavior executably and observe branch ownership directly
+
+**Status:** Accepted for the 2.3.1 recovery. **Context:** The first consumer
+target pass found that compatibility verification searched the thin workflow
+wrapper for idempotency keywords even though the exact executable behavior is
+implemented in the separately pinned adapter. Comments could satisfy that
+search, while a valid wrapper without those comments would fail. The same pass
+also found that adapter preflight listed pull requests but did not independently
+observe whether the deterministic branch already existed; an orphaned branch
+could therefore reach Codex before publication failed closed. **Decision:**
+Static workflow verification proves only the exact two-input dispatch and
+receiver boundary. Idempotency, ownership, create-race, and failure behavior are
+accepted only through the complete shared oracle executed against the exact
+adapter and harness blobs in the non-recursive conformance pin. Adapter
+preflight observes both branch existence and all pull requests before Codex.
+Branch/PR disagreement, including an orphaned branch or a PR whose branch is
+missing, returns `ambiguous-rejected` without executor or publication effects.
+Create-race reconciliation repeats both observations. **Alternatives:** retain a
+comment-sensitive keyword gate; search arbitrary source text for tokens; infer
+branch state from pull requests; allow Codex to rerun and rely on a later push
+failure. **Tradeoffs:** preflight performs one additional read-only GitHub query,
+and evidence generation must retain executable ownership scenarios, but the
+gate now tests the behavior it claims. **Consequences:** wrapper comments cannot
+manufacture idempotency assurance; the pinned adapter is mandatory evidence;
+orphaned remote state fails before paid execution. **Trace:** GH-FR-009/013–015;
+GH-QR-007; IF-06/IF-08; TC-MVP-CI-001.
