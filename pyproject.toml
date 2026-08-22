@@ -7,7 +7,10 @@ name = "ai-sdlc-contracts"
 version = "2.3.1"
 description = "Validation helpers for the canonical AI-SDLC contracts"
 requires-python = ">=3.9"
-dependencies = ["jsonschema[format]>=4.18,<5"]
+dependencies = [
+    "jsonschema[format]>=4.18,<5",
+    "pyyaml>=6.0.3",
+]
 
 [project.scripts]
 ai-sdlc-contracts = "ai_sdlc_contracts.__main__:main"
@@ -20,6 +23,11 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.2",
+]
 
 [tool.setuptools.package-data]
 ai_sdlc_contracts = [
