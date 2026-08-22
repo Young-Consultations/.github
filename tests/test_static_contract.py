@@ -36,9 +36,11 @@ def test_registry_json_syntax_and_required_fields():
         assert entry["codex_environment"], name
         assert entry["max_parallel_tasks"] >= 1, name
         assert entry["draft_pr_only"] is True, name
-        assert entry["workflow_ref"] == f"{name}/.github/workflows/codex-execute.yml@main", name
+        assert entry["workflow_ref"] == f"{name}/.github/workflows/codex-execute.yml@codex-adapter-v2.3.1", name
         assert entry["contract_version"] == "ai-sdlc-contract/v2", name
-        assert entry["conformance"] is None, name
+        assert entry["conformance"]["adapter_ref"] == "codex-adapter-v2.3.1", name
+        assert entry["conformance"]["status"] == "pass", name
+        assert entry["conformance"]["activation_evidence_sufficient"] is True, name
 
 
 def test_activation_change_does_not_change_compatibility_contents(tmp_path):
