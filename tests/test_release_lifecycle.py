@@ -62,8 +62,8 @@ def test_candidate_does_not_embed_its_own_future_commit_identity():
 
 def test_patch_candidate_preserves_the_broken_baseline_as_history():
     manifest = json.loads((ROOT / "release/release-manifest.json").read_text(encoding="utf-8"))
-    assert manifest["release_version"] == "2.3.1"
+    assert manifest["release_version"] == "2.3.2"
     assert manifest["recovery_of"] == {
-        "release_version": "2.3.0",
-        "commit_sha": "c6090e5bbadcc2102a1cb91875466e9decdada1e",
+        "release_version": "2.3.1",
+        "commit_sha": "fa9f8caa4e1416528167c45cb03a2bad6b3c7867",
     }

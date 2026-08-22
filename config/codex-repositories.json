@@ -34,7 +34,7 @@
       }
     },
     "Young-Consultations/slugger": {
-      "workflow_ref": "Young-Consultations/slugger/.github/workflows/codex-execute.yml@codex-adapter-v2.3.1",
+      "workflow_ref": "Young-Consultations/slugger/.github/workflows/codex-execute.yml@codex-adapter-v2.3.2",
       "allowed_task_types": [
         "automation",
         "bug-fix",
@@ -50,10 +50,10 @@
         "fixture_set": "TC-MVP-CI-001",
         "fixture_version": "2.3.0",
         "compatibility_sha": "e27b8a541afbd27b4be5606a19ffa43637ad312a",
-        "adapter_ref": "codex-adapter-v2.3.1",
-        "adapter_commit_sha": "d9c7f414e2373d1269ebf0e02ebc4dbd1dc7ef11",
+        "adapter_ref": "codex-adapter-v2.3.2",
+        "adapter_commit_sha": "797f239579bf56fbd5d11d98a1a6b5bad36d98a8",
         "report_path": ".ai-sdlc/conformance/tc-mvp-ci-001.json",
-        "report_sha256": "e7c418f93dd3d74a24911e05cbd41a4a75341470de597b96476d1cabd9e46357",
+        "report_sha256": "8283c78bc9dcea9c2424d0ca250ff6031abecd68495692dd809ee03e06060f3c",
         "status": "pass",
         "activation_evidence_sufficient": true
       },
@@ -99,7 +99,7 @@
       }
     },
     "Young-Consultations/portfolio-tasks": {
-      "workflow_ref": "Young-Consultations/portfolio-tasks/.github/workflows/codex-execute.yml@codex-adapter-v2.3.1",
+      "workflow_ref": "Young-Consultations/portfolio-tasks/.github/workflows/codex-execute.yml@codex-adapter-v2.3.2",
       "allowed_task_types": [
         "automation",
         "backlog-governance",
@@ -115,10 +115,10 @@
         "fixture_set": "TC-MVP-CI-001",
         "fixture_version": "2.3.0",
         "compatibility_sha": "e27b8a541afbd27b4be5606a19ffa43637ad312a",
-        "adapter_ref": "codex-adapter-v2.3.1",
-        "adapter_commit_sha": "42f01e40fd148c1d16aa93828921234a9cfa95da",
+        "adapter_ref": "codex-adapter-v2.3.2",
+        "adapter_commit_sha": "a7b632eb6f51b750ed863c0f43353d6d931e8e5b",
         "report_path": ".ai-sdlc/conformance/tc-mvp-ci-001.json",
-        "report_sha256": "f1d99301572caa30c5db14c3e33c594659651d63db08366095676ee7a2fc6ad6",
+        "report_sha256": "9baf2c58d8e0ea055e01eee686610468ed739ae41768140d1e1cf2685092bba1",
         "status": "pass",
         "activation_evidence_sufficient": true
       },
