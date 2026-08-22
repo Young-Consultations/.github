@@ -154,11 +154,11 @@ def test_live_receiver_bundle_requires_nonempty_control_plane_trust():
     with pytest.raises(checker.CompatibilityError, match="reviewed non-empty"):
         checker.verify_receiver_bundle_policy(
             script,
-            b'{"policy_format_version":1,"trusted_journal_authors":[]}',
+            b'{"policy_format_version":2,"trusted_admission_authors":[],"trusted_result_authors":["receiver[bot]"]}',
         )
     checker.verify_receiver_bundle_policy(
         script,
-        b'{"policy_format_version":1,"trusted_journal_authors":["reviewed-bot[bot]"]}',
+        b'{"policy_format_version":2,"trusted_admission_authors":["router[bot]"],"trusted_result_authors":["receiver[bot]"]}',
     )
 
 

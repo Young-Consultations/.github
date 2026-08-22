@@ -38,12 +38,12 @@ class ReceiverError(ValueError):
 class Journal(Protocol):
     def authenticate(self, repository: str) -> None: ...
     def comments(self, repository: str, issue: int) -> list[JournalComment]: ...
-    def trusted_author(self, author: str) -> bool: ...
+    def trusted_author(self, author: str, role: str) -> bool: ...
     def append(self, repository: str, issue: int, body: str) -> None: ...
     def forward(self, repository: str, projection: dict[str, Any]) -> None: ...
 
 
-def load_trusted_authors(path: Path = TRUST_POLICY) -> set[str]:
+def load_trusted_authors(path: Path = TRUST_POLICY) -> dict[str, set[str]]:
     """Load the immutable control-plane journal-author policy.
 
     An empty list is the safe recovery default: the receiver remains deployed
@@ -54,24 +54,32 @@ def load_trusted_authors(path: Path = TRUST_POLICY) -> set[str]:
         policy = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
         raise ReceiverError("authentication", "result journal trust policy is unavailable") from exc
-    if not isinstance(policy, dict) or set(policy) != {
-        "policy_format_version", "trusted_journal_authors",
-    }:
+    expected_keys = {
+        "policy_format_version", "trusted_admission_authors", "trusted_result_authors",
+    }
+    if not isinstance(policy, dict) or set(policy) != expected_keys:
         raise ReceiverError("authentication", "result journal trust policy has an invalid shape")
-    authors = policy.get("trusted_journal_authors")
-    if policy.get("policy_format_version") != 1 or not isinstance(authors, list):
+    if policy.get("policy_format_version") != 2:
         raise ReceiverError("authentication", "result journal trust policy has an unsupported version")
-    normalized: set[str] = set()
-    for author in authors:
-        if not isinstance(author, str) or not AUTHOR.fullmatch(author):
-            raise ReceiverError("authentication", "result journal trust policy contains an invalid author")
-        key = author.casefold()
-        if key in normalized:
-            raise ReceiverError("authentication", "result journal trust policy contains a duplicate author")
-        normalized.add(key)
-    if not normalized:
-        raise ReceiverError("authentication", "result journal trust policy denies all authors")
-    return normalized
+    roles: dict[str, set[str]] = {}
+    for role, field in (("admission", "trusted_admission_authors"), ("result", "trusted_result_authors")):
+        authors = policy.get(field)
+        if not isinstance(authors, list):
+            raise ReceiverError("authentication", "result journal trust policy has an invalid role allowlist")
+        normalized: set[str] = set()
+        for author in authors:
+            if not isinstance(author, str) or not AUTHOR.fullmatch(author):
+                raise ReceiverError("authentication", "result journal trust policy contains an invalid author")
+            key = author.casefold()
+            if key in normalized:
+                raise ReceiverError("authentication", "result journal trust policy contains a duplicate author")
+            normalized.add(key)
+        if not normalized:
+            raise ReceiverError("authentication", f"result journal trust policy denies all {role} authors")
+        roles[role] = normalized
+    if roles["admission"] & roles["result"]:
+        raise ReceiverError("authentication", "result journal trust policy roles must be disjoint")
+    return roles
 
 
 def canonical_digest(value: dict[str, Any]) -> str:
@@ -89,11 +97,11 @@ class JournalComment:
     author: str
 
 
-def parse_markers(comments: list[JournalComment], prefix: str, journal: Journal) -> list[dict[str, Any]]:
+def parse_markers(comments: list[JournalComment], prefix: str, role: str, journal: Journal) -> list[dict[str, Any]]:
     found = []
     pattern = re.compile(re.escape(prefix) + r"(\{[^\n]*\}) -->")
     for comment in comments:
-        if not journal.trusted_author(comment.author):
+        if not journal.trusted_author(comment.author, role):
             continue
         for match in pattern.finditer(comment.body):
             try:
@@ -138,7 +146,7 @@ def receive(raw: str, source_issue: str, caller: str, journal: Journal) -> Recei
         raise ReceiverError("authentication", "caller does not match target identity")
     journal.authenticate(source_repository)
     comments = journal.comments(source_repository, issue_number)
-    bindings = [item for item in parse_markers(comments, ADMISSION, journal) if item.get("delivery_id") == result["delivery_id"]]
+    bindings = [item for item in parse_markers(comments, ADMISSION, "admission", journal) if item.get("delivery_id") == result["delivery_id"]]
     expected = {
         "contract_version": result["contract_version"],
         "delivery_id": result["delivery_id"],
@@ -150,14 +158,14 @@ def receive(raw: str, source_issue: str, caller: str, journal: Journal) -> Recei
     if len(unique_bindings) != 1 or any(bindings[0].get(key) != value for key, value in expected.items()):
         raise ReceiverError("authorization", "result does not match one admitted delivery binding")
     digest = canonical_digest(result)
-    receipts = [item for item in parse_markers(comments, RECEIPT, journal) if item.get("delivery_id") == result["delivery_id"]]
+    receipts = [item for item in parse_markers(comments, RECEIPT, "result", journal) if item.get("delivery_id") == result["delivery_id"]]
     if receipts:
         if len(receipts) != 1 or receipts[0].get("result_sha256") != digest:
             raise ReceiverError("unknown", "conflicting result exists for delivery", ambiguous=True)
     else:
         evidence = {**expected, "result_sha256": digest, "receiver_run_id": os.getenv("GITHUB_RUN_ID", "offline")}
         journal.append(source_repository, issue_number, marker(RECEIPT, evidence))
-    forwarded = [item for item in parse_markers(comments, FORWARDED, journal) if item.get("delivery_id") == result["delivery_id"]]
+    forwarded = [item for item in parse_markers(comments, FORWARDED, "result", journal) if item.get("delivery_id") == result["delivery_id"]]
     if forwarded:
         if len(forwarded) == 1 and forwarded[0].get("result_sha256") == digest:
             return Receipt(True, result["delivery_id"], result["correlation_id"], result["execution_status"], result["failure_category"], "Identical result already forwarded; no projection repeated.", True)
@@ -169,7 +177,7 @@ def receive(raw: str, source_issue: str, caller: str, journal: Journal) -> Recei
 
 class GitHubJournal:
     def __init__(self, trust_policy: Path = TRUST_POLICY) -> None:
-        self._trusted_authors = load_trusted_authors(trust_policy)
+        self._trusted_authors_by_role = load_trusted_authors(trust_policy)
 
     def _api(self, *args: str, input_value: dict[str, Any] | None = None) -> Any:
         cmd = ["gh", "api", *args]
@@ -185,8 +193,8 @@ class GitHubJournal:
         data = self._api(f"repos/{repository}/issues/{issue}/comments?per_page=100")
         return [JournalComment(str(item.get("body", "")), str(item.get("user", {}).get("login", ""))) for item in data if isinstance(item, dict)]
 
-    def trusted_author(self, author: str) -> bool:
-        return author.casefold() in self._trusted_authors
+    def trusted_author(self, author: str, role: str) -> bool:
+        return author.casefold() in self._trusted_authors_by_role.get(role, set())
 
     def append(self, repository: str, issue: int, body: str) -> None:
         self._api(f"repos/{repository}/issues/{issue}/comments", "--method", "POST", "-f", f"body={body}")
