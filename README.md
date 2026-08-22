@@ -67,15 +67,15 @@ workflow formerly displayed as `Router contract tests`; because the display
 name and filename changed, branch protection must be updated after merge to
 require the new `AI-SDLC Contract Tests` job checks.
 
-The 2.3.1 recovery candidate adds a separate publishability gate:
+The 2.3.2 recovery release retains the separate publishability gate:
 
 ```console
 python scripts/validate_release.py --require-publishable
 ```
 
-It intentionally fails until every target is bound to an immutable
-`codex-adapter-v*` tag/commit with a digest-verified complete adapter report and
-the receiver has a reviewed non-empty journal-author policy. The default live
+It fails unless every target is bound to an immutable `codex-adapter-v*`
+tag/commit with a digest-verified complete adapter report and the receiver has
+a reviewed non-empty journal-author policy. The default live
 target verifier reports disabled targets as `not-evaluated` and exits nonzero;
 disabled or skipped work cannot create a false organization-wide PASS.
 
