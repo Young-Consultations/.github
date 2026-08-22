@@ -2,7 +2,7 @@
   "registry_format_version": 1,
   "repositories": {
     "Young-Consultations/.github": {
-      "workflow_ref": "Young-Consultations/.github/.github/workflows/codex-execute.yml@main",
+      "workflow_ref": "Young-Consultations/.github/.github/workflows/codex-execute.yml@codex-adapter-v2.3.1",
       "allowed_task_types": [
         "ci-cd",
         "documentation",
@@ -13,7 +13,17 @@
       "max_parallel_tasks": 1,
       "draft_pr_only": true,
       "contract_version": "ai-sdlc-contract/v2",
-      "conformance": null,
+      "conformance": {
+        "fixture_set": "TC-MVP-CI-001",
+        "fixture_version": "2.3.0",
+        "compatibility_sha": "e27b8a541afbd27b4be5606a19ffa43637ad312a",
+        "adapter_ref": "codex-adapter-v2.3.1",
+        "adapter_commit_sha": "4b0ff4f86429412261ee2887d11a1c124c397a8b",
+        "report_path": ".ai-sdlc/conformance/tc-mvp-ci-001.json",
+        "report_sha256": "48eaf52e768a7113755caf0da99a1657541a6b782473daeaf9fa02e22bb2a872",
+        "status": "pass",
+        "activation_evidence_sufficient": true
+      },
       "idempotency": {
         "branch_identity": "delivery_id",
         "ownership_marker": "ai-sdlc-delivery-id",
@@ -24,7 +34,7 @@
       }
     },
     "Young-Consultations/slugger": {
-      "workflow_ref": "Young-Consultations/slugger/.github/workflows/codex-execute.yml@main",
+      "workflow_ref": "Young-Consultations/slugger/.github/workflows/codex-execute.yml@codex-adapter-v2.3.1",
       "allowed_task_types": [
         "automation",
         "bug-fix",
@@ -36,7 +46,17 @@
       "max_parallel_tasks": 2,
       "draft_pr_only": true,
       "contract_version": "ai-sdlc-contract/v2",
-      "conformance": null,
+      "conformance": {
+        "fixture_set": "TC-MVP-CI-001",
+        "fixture_version": "2.3.0",
+        "compatibility_sha": "e27b8a541afbd27b4be5606a19ffa43637ad312a",
+        "adapter_ref": "codex-adapter-v2.3.1",
+        "adapter_commit_sha": "d9c7f414e2373d1269ebf0e02ebc4dbd1dc7ef11",
+        "report_path": ".ai-sdlc/conformance/tc-mvp-ci-001.json",
+        "report_sha256": "e7c418f93dd3d74a24911e05cbd41a4a75341470de597b96476d1cabd9e46357",
+        "status": "pass",
+        "activation_evidence_sufficient": true
+      },
       "idempotency": {
         "branch_identity": "delivery_id",
         "ownership_marker": "ai-sdlc-delivery-id",
@@ -47,7 +67,7 @@
       }
     },
     "Young-Consultations/consulting-playbook": {
-      "workflow_ref": "Young-Consultations/consulting-playbook/.github/workflows/codex-execute.yml@main",
+      "workflow_ref": "Young-Consultations/consulting-playbook/.github/workflows/codex-execute.yml@codex-adapter-v2.3.1",
       "allowed_task_types": [
         "automation",
         "documentation",
@@ -58,7 +78,17 @@
       "max_parallel_tasks": 1,
       "draft_pr_only": true,
       "contract_version": "ai-sdlc-contract/v2",
-      "conformance": null,
+      "conformance": {
+        "fixture_set": "TC-MVP-CI-001",
+        "fixture_version": "2.3.0",
+        "compatibility_sha": "e27b8a541afbd27b4be5606a19ffa43637ad312a",
+        "adapter_ref": "codex-adapter-v2.3.1",
+        "adapter_commit_sha": "666323d3828a695f3614e6a61bae93aca0531e15",
+        "report_path": ".ai-sdlc/conformance/tc-mvp-ci-001.json",
+        "report_sha256": "fc6108fb86c51f5de2f97ed155f06ea82999a84f102521d0186e9106cf16379a",
+        "status": "pass",
+        "activation_evidence_sufficient": true
+      },
       "idempotency": {
         "branch_identity": "delivery_id",
         "ownership_marker": "ai-sdlc-delivery-id",
@@ -69,7 +99,7 @@
       }
     },
     "Young-Consultations/portfolio-tasks": {
-      "workflow_ref": "Young-Consultations/portfolio-tasks/.github/workflows/codex-execute.yml@main",
+      "workflow_ref": "Young-Consultations/portfolio-tasks/.github/workflows/codex-execute.yml@codex-adapter-v2.3.1",
       "allowed_task_types": [
         "automation",
         "backlog-governance",
@@ -81,7 +111,17 @@
       "max_parallel_tasks": 1,
       "draft_pr_only": true,
       "contract_version": "ai-sdlc-contract/v2",
-      "conformance": null,
+      "conformance": {
+        "fixture_set": "TC-MVP-CI-001",
+        "fixture_version": "2.3.0",
+        "compatibility_sha": "e27b8a541afbd27b4be5606a19ffa43637ad312a",
+        "adapter_ref": "codex-adapter-v2.3.1",
+        "adapter_commit_sha": "42f01e40fd148c1d16aa93828921234a9cfa95da",
+        "report_path": ".ai-sdlc/conformance/tc-mvp-ci-001.json",
+        "report_sha256": "f1d99301572caa30c5db14c3e33c594659651d63db08366095676ee7a2fc6ad6",
+        "status": "pass",
+        "activation_evidence_sufficient": true
+      },
       "idempotency": {
         "branch_identity": "delivery_id",
         "ownership_marker": "ai-sdlc-delivery-id",

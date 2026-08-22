@@ -563,6 +563,13 @@ def test_migrated_target_entries_use_v2_and_expected_paths():
     entries = checker.load_registry(ROOT / "config/codex-repositories.json")
     assert entries["Young-Consultations/slugger"]["contract_version"] == checker.CANONICAL_VERSION
     assert entries["Young-Consultations/consulting-playbook"]["contract_version"] == checker.CANONICAL_VERSION
-    assert entries["Young-Consultations/slugger"]["workflow_ref"] == "Young-Consultations/slugger/.github/workflows/codex-execute.yml@main"
-    assert entries["Young-Consultations/consulting-playbook"]["workflow_ref"] == "Young-Consultations/consulting-playbook/.github/workflows/codex-execute.yml@main"
-    assert all(item["conformance"] is None for item in entries.values())
+    assert all(
+        item["workflow_ref"].endswith("@codex-adapter-v2.3.1")
+        for item in entries.values()
+    )
+    assert all(
+        item["conformance"]["adapter_ref"] == "codex-adapter-v2.3.1"
+        and item["conformance"]["status"] == "pass"
+        and item["conformance"]["activation_evidence_sufficient"] is True
+        for item in entries.values()
+    )

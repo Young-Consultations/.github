@@ -11,18 +11,12 @@ def test_current_release_is_coherent_and_immutable():
     assert validate_release.validate() == []
 
 
-def test_recovery_candidate_is_explicitly_not_publishable_yet():
+def test_registry_bound_candidate_still_requires_final_release_approval():
     errors = validate_release.validate(require_publishable=True)
     assert "publishable release must declare tag_published true" in errors
     assert "publishable release must name at least one trusted journal author" in errors
-    for repository in (
-        "Young-Consultations/.github",
-        "Young-Consultations/consulting-playbook",
-        "Young-Consultations/portfolio-tasks",
-        "Young-Consultations/slugger",
-    ):
-        assert any(error.startswith(f"{repository}: reviewed conformance evidence") for error in errors)
-        assert any(error.startswith(f"{repository}: publishable release requires") for error in errors)
+    assert not any("reviewed conformance evidence" in error for error in errors)
+    assert not any("immutable codex-adapter" in error for error in errors)
 
 
 def test_mvp_fixture_uses_current_release_identity_and_targets():

@@ -371,7 +371,7 @@ def test_portfolio_tasks_dispatch_command_matches_workflow_interface(monkeypatch
     monkeypatch.setenv("EXECUTION_INPUT", json.dumps(execution))
     monkeypatch.setenv(
         "WORKFLOW_REF",
-        f"{repository}/.github/workflows/codex-execute.yml@main",
+        f"{repository}/.github/workflows/codex-execute.yml@codex-adapter-v2.3.1",
     )
     monkeypatch.delenv("GITHUB_OUTPUT", raising=False)
     commands = []
@@ -382,7 +382,7 @@ def test_portfolio_tasks_dispatch_command_matches_workflow_interface(monkeypatch
     assert commands[0][1:3] == ["api", f"repos/{repository}/issues/8/comments"]
     assert commands[-1][:8] == [
         "gh", "workflow", "run", "codex-execute.yml", "--repo", repository,
-        "--ref", "main",
+        "--ref", "codex-adapter-v2.3.1",
     ]
     assert commands[-1][8::2] == ["-f", "-f"]
 
@@ -393,7 +393,7 @@ def test_dispatch_rejects_invalid_execution_without_running_gh(monkeypatch):
     monkeypatch.setenv("EXECUTION_INPUT", json.dumps(execution))
     monkeypatch.setenv(
         "WORKFLOW_REF",
-        "Young-Consultations/portfolio-tasks/.github/workflows/codex-execute.yml@main",
+        "Young-Consultations/portfolio-tasks/.github/workflows/codex-execute.yml@codex-adapter-v2.3.1",
     )
     monkeypatch.delenv("GITHUB_OUTPUT", raising=False)
     monkeypatch.setattr(
@@ -411,7 +411,7 @@ def test_github_422_dispatch_failure_is_publication(monkeypatch, capsys):
     monkeypatch.setenv("EXECUTION_INPUT", json.dumps(execution))
     monkeypatch.setenv(
         "WORKFLOW_REF",
-        "Young-Consultations/portfolio-tasks/.github/workflows/codex-execute.yml@main",
+        "Young-Consultations/portfolio-tasks/.github/workflows/codex-execute.yml@codex-adapter-v2.3.1",
     )
     monkeypatch.delenv("GITHUB_OUTPUT", raising=False)
     failure = subprocess.CalledProcessError(1, ["gh"], stderr="HTTP 422: Unexpected inputs provided")
