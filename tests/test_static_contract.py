@@ -253,6 +253,22 @@ def test_activation_changes_trigger_target_compatibility():
     assert "- 'config/codex-activation.json'" in text
 
 
+def test_manual_target_compatibility_can_verify_disabled_targets():
+    text = Path(".github/workflows/target-workflow-compatibility.yml").read_text(encoding="utf-8")
+    assert "repository:" in text
+    assert "default: all" in text
+    assert "SELECTED_REPOSITORY: ${{ inputs.repository || 'all' }}" in text
+    for repository in (
+        "Young-Consultations/.github",
+        "Young-Consultations/portfolio-tasks",
+        "Young-Consultations/consulting-playbook",
+        "Young-Consultations/slugger",
+    ):
+        assert f'verify_repository "{repository}"' in text
+    assert '--repository "$repository"' in text
+    assert "path: reports/*.json" in text
+
+
 def test_router_installs_validator_dependencies_and_enforces_concurrency():
     text = Path(".github/workflows/codex-router.yml").read_text(encoding="utf-8")
     assert "--no-deps" not in text

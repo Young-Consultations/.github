@@ -2,6 +2,18 @@ name: AI-SDLC Target Compatibility
 
 on:
   workflow_dispatch:
+    inputs:
+      repository:
+        description: Disabled target to verify, or all registered targets
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - Young-Consultations/.github
+          - Young-Consultations/portfolio-tasks
+          - Young-Consultations/consulting-playbook
+          - Young-Consultations/slugger
   schedule:
     - cron: '17 6 * * *'
   pull_request:
@@ -38,15 +50,35 @@ jobs:
       - name: Verify canonical target fixture on pull requests
         if: ${{ github.event_name == 'pull_request' }}
         run: python scripts/verify_target_workflows.py --fixtures-only
-      - name: Verify all registered target workflows
+      - name: Verify selected registered target workflows
         if: ${{ github.event_name != 'pull_request' }}
         env:
           GH_TOKEN: ${{ secrets.CODEX_ROUTER_TOKEN }}
-        run: python scripts/verify_target_workflows.py
+          SELECTED_REPOSITORY: ${{ inputs.repository || 'all' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          verify_repository() {
+            local repository="$1"
+            local report_name
+            report_name="$(printf '%s' "$repository" | tr '/.' '--')"
+            python scripts/verify_target_workflows.py \
+              --repository "$repository" \
+              --report "reports/${report_name}.json"
+          }
+
+          if [[ "$SELECTED_REPOSITORY" == "all" ]]; then
+            verify_repository "Young-Consultations/.github"
+            verify_repository "Young-Consultations/portfolio-tasks"
+            verify_repository "Young-Consultations/consulting-playbook"
+            verify_repository "Young-Consultations/slugger"
+          else
+            verify_repository "$SELECTED_REPOSITORY"
+          fi
       - name: Upload compatibility report
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: target-workflow-compatibility
-          path: reports/target-workflow-compatibility.json
+          path: reports/*.json
           if-no-files-found: error
