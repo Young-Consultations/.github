@@ -11,18 +11,14 @@ def test_current_release_is_coherent_and_immutable():
     assert validate_release.validate() == []
 
 
-def test_registry_bound_candidate_still_requires_final_release_approval():
-    errors = validate_release.validate(require_publishable=True)
-    assert "publishable release must declare tag_published true" in errors
-    assert "publishable release must name at least one trusted journal author" in errors
-    assert not any("reviewed conformance evidence" in error for error in errors)
-    assert not any("immutable codex-adapter" in error for error in errors)
+def test_final_release_candidate_satisfies_publication_gate():
+    assert validate_release.validate(require_publishable=True) == []
 
 
 def test_mvp_fixture_uses_current_release_identity_and_targets():
     manifest = json.loads((ROOT / "release/release-manifest.json").read_text(encoding="utf-8"))
     fixture = json.loads((ROOT / "tests/fixtures/mvp-v2/manifest.json").read_text(encoding="utf-8"))
-    assert manifest["tag_published"] is False
+    assert manifest["tag_published"] is True
     assert "immutable_reference" not in fixture
     assert "immutable_reference" not in manifest
     assert sorted(fixture["targets"]) == manifest["supported_targets"]

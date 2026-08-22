@@ -105,7 +105,10 @@ def test_result_receiver_owns_journal_author_policy():
     ) == 1
     assert '$GITHUB_ACTION_PATH/../../scripts/codex_result_receiver.py' in action
     assert "config/codex-result-trust.json" in script
-    assert policy == {"policy_format_version": 1, "trusted_journal_authors": []}
+    assert policy == {
+        "policy_format_version": 1,
+        "trusted_journal_authors": ["mightyjoe909"],
+    }
 
 
 def test_router_is_the_only_organization_dispatch_boundary():
