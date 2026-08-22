@@ -58,13 +58,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          verification_status=0
           verify_repository() {
             local repository="$1"
             local report_name
             report_name="$(printf '%s' "$repository" | tr '/.' '--')"
-            python scripts/verify_target_workflows.py \
-              --repository "$repository" \
-              --report "reports/${report_name}.json"
+            if ! python scripts/verify_target_workflows.py \
+                --repository "$repository" \
+                --report "reports/${report_name}.json"; then
+              verification_status=1
+            fi
           }
 
           if [[ "$SELECTED_REPOSITORY" == "all" ]]; then
@@ -75,6 +78,8 @@ jobs:
           else
             verify_repository "$SELECTED_REPOSITORY"
           fi
+
+          exit "$verification_status"
       - name: Upload compatibility report
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

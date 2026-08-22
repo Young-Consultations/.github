@@ -267,6 +267,9 @@ def test_manual_target_compatibility_can_verify_disabled_targets():
         assert f'verify_repository "{repository}"' in text
     assert '--repository "$repository"' in text
     assert "path: reports/*.json" in text
+    assert "verification_status=0" in text
+    assert "verification_status=1" in text
+    assert 'exit "$verification_status"' in text
 
 
 def test_router_installs_validator_dependencies_and_enforces_concurrency():
