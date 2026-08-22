@@ -443,15 +443,17 @@ def verify_receiver_bundle_policy(script: str, policy_raw: bytes) -> None:
         policy = json.loads(policy_raw)
     except (UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise CompatibilityError("result receiver trust policy is not valid JSON") from exc
-    authors = policy.get("trusted_journal_authors") if isinstance(policy, dict) else None
+    admission_authors = policy.get("trusted_admission_authors") if isinstance(policy, dict) else None
+    result_authors = policy.get("trusted_result_authors") if isinstance(policy, dict) else None
+    author_lists = (admission_authors, result_authors)
     valid = (
         isinstance(policy, dict)
-        and set(policy) == {"policy_format_version", "trusted_journal_authors"}
-        and policy.get("policy_format_version") == 1
-        and isinstance(authors, list)
-        and bool(authors)
-        and all(isinstance(author, str) and AUTHOR_RE.fullmatch(author) for author in authors)
-        and len({author.casefold() for author in authors}) == len(authors)
+        and set(policy) == {"policy_format_version", "trusted_admission_authors", "trusted_result_authors"}
+        and policy.get("policy_format_version") == 2
+        and all(isinstance(authors, list) and bool(authors) for authors in author_lists)
+        and all(isinstance(author, str) and AUTHOR_RE.fullmatch(author) for authors in author_lists for author in authors)
+        and all(len({author.casefold() for author in authors}) == len(authors) for authors in author_lists)
+        and not ({author.casefold() for author in admission_authors} & {author.casefold() for author in result_authors})
     )
     if not valid:
         raise CompatibilityError("result receiver trust policy is not a reviewed non-empty allowlist")

@@ -26,14 +26,15 @@ class FakeJournal:
             'contract_version': RESULT['contract_version'], 'delivery_id': RESULT['delivery_id'],
             'correlation_id': RESULT['correlation_id'], 'source_issue': SOURCE,
             'target_repository': RESULT['target_repository'],
-        }.items()}), 'trusted-bot')]
+        }.items()}), 'router-bot')]
         self.projections = []
         self.fail_forward = False
     def authenticate(self, repository):
         if not self.authorized: raise ReceiverError('authentication', 'denied')
     def comments(self, repository, issue): return list(self.entries)
-    def trusted_author(self, author): return author == 'trusted-bot'
-    def append(self, repository, issue, body): self.entries.append(JournalComment(body, 'trusted-bot'))
+    def trusted_author(self, author, role):
+        return author == ('router-bot' if role == 'admission' else 'receiver-bot')
+    def append(self, repository, issue, body): self.entries.append(JournalComment(body, 'receiver-bot'))
     def forward(self, repository, projection):
         if self.fail_forward: raise OSError('transient dispatch failure')
         self.projections.append(projection)
@@ -85,6 +86,13 @@ def test_untrusted_markers_cannot_bind_or_conflict_with_delivery():
         receive(json.dumps(RESULT), SOURCE, RESULT['target_repository'], journal)
 
 
+def test_result_writer_cannot_forge_an_admission_marker():
+    journal = FakeJournal()
+    journal.entries[0] = JournalComment(journal.entries[0].body, "receiver-bot")
+    with pytest.raises(ReceiverError, match="admitted"):
+        receive(json.dumps(RESULT), SOURCE, RESULT["target_repository"], journal)
+
+
 def test_malformed_result_and_binding_fail_closed():
     journal = FakeJournal()
     with pytest.raises(ReceiverError): receive('{}', SOURCE, RESULT['target_repository'], journal)
@@ -93,28 +101,32 @@ def test_malformed_result_and_binding_fail_closed():
     assert not journal.projections
 
 
-def write_trust_policy(tmp_path, authors):
+def write_trust_policy(tmp_path, admission_authors, result_authors=None):
     path = tmp_path / "codex-result-trust.json"
     path.write_text(json.dumps({
-        "policy_format_version": 1,
-        "trusted_journal_authors": authors,
+        "policy_format_version": 2,
+        "trusted_admission_authors": admission_authors,
+        "trusted_result_authors": result_authors if result_authors is not None else ["receiver-app[bot]"],
     }))
     return path
 
 
 def test_receiver_loads_trusted_authors_from_control_plane_policy(tmp_path, monkeypatch):
-    policy = write_trust_policy(tmp_path, ["router-app[bot]", "receiver-app[bot]"])
+    policy = write_trust_policy(tmp_path, ["router-app[bot]"], ["receiver-app[bot]"])
     monkeypatch.setenv("CODEX_TRUSTED_JOURNAL_AUTHORS", "attacker")
 
-    assert load_trusted_authors(policy) == {"router-app[bot]", "receiver-app[bot]"}
-    assert GitHubJournal(policy).trusted_author("ROUTER-APP[BOT]")
-    assert not GitHubJournal(policy).trusted_author("attacker")
+    assert load_trusted_authors(policy) == {"admission": {"router-app[bot]"}, "result": {"receiver-app[bot]"}}
+    assert GitHubJournal(policy).trusted_author("ROUTER-APP[BOT]", "admission")
+    assert not GitHubJournal(policy).trusted_author("attacker", "admission")
 
 
-@pytest.mark.parametrize("authors", [[], ["bad author"], ["bot", "BOT"]])
-def test_receiver_trust_policy_fails_closed(tmp_path, authors):
+@pytest.mark.parametrize(("admission_authors", "result_authors"), [
+    ([], ["receiver"]), (["bad author"], ["receiver"]),
+    (["bot", "BOT"], ["receiver"]), (["same"], ["SAME"]),
+])
+def test_receiver_trust_policy_fails_closed(tmp_path, admission_authors, result_authors):
     with pytest.raises(ReceiverError, match="trust policy"):
-        load_trusted_authors(write_trust_policy(tmp_path, authors))
+        load_trusted_authors(write_trust_policy(tmp_path, admission_authors, result_authors))
 
 
 def test_tc_mvp_ci_001_complete_no_effect_oracle():

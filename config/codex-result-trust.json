@@ -1,6 +1,9 @@
 {
-  "policy_format_version": 1,
-  "trusted_journal_authors": [
+  "policy_format_version": 2,
+  "trusted_admission_authors": [
     "mightyjoe909"
+  ],
+  "trusted_result_authors": [
+    "github-actions[bot]"
   ]
 }

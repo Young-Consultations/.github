@@ -142,19 +142,22 @@ def validate(root: Path = ROOT, *, require_publishable: bool = False) -> list[st
         except (OSError, json.JSONDecodeError):
             errors.append("release result trust policy must be valid JSON")
         else:
-            authors = trust_policy.get("trusted_journal_authors") if isinstance(trust_policy, dict) else None
+            admission_authors = trust_policy.get("trusted_admission_authors") if isinstance(trust_policy, dict) else None
+            result_authors = trust_policy.get("trusted_result_authors") if isinstance(trust_policy, dict) else None
+            author_lists = (admission_authors, result_authors)
             valid_authors = (
                 isinstance(trust_policy, dict)
-                and set(trust_policy) == {"policy_format_version", "trusted_journal_authors"}
-                and trust_policy.get("policy_format_version") == 1
-                and isinstance(authors, list)
-                and all(isinstance(author, str) and AUTHOR.fullmatch(author) for author in authors)
-                and len({author.casefold() for author in authors}) == len(authors)
+                and set(trust_policy) == {"policy_format_version", "trusted_admission_authors", "trusted_result_authors"}
+                and trust_policy.get("policy_format_version") == 2
+                and all(isinstance(authors, list) for authors in author_lists)
+                and all(isinstance(author, str) and AUTHOR.fullmatch(author) for authors in author_lists for author in authors)
+                and all(len({author.casefold() for author in authors}) == len(authors) for authors in author_lists)
+                and not ({author.casefold() for author in admission_authors} & {author.casefold() for author in result_authors})
             )
             if not valid_authors:
                 errors.append("release result trust policy is invalid")
-            elif require_publishable and not authors:
-                errors.append("publishable release must name at least one trusted journal author")
+            elif require_publishable and not all(author_lists):
+                errors.append("publishable release must name trusted authors for every journal role")
 
     paths = [*root.glob(".github/workflows/*.yml"), *root.glob("docs/*.md"), root / "README.md"]
     for path in paths:

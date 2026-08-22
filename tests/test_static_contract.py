@@ -106,8 +106,9 @@ def test_result_receiver_owns_journal_author_policy():
     assert '$GITHUB_ACTION_PATH/../../scripts/codex_result_receiver.py' in action
     assert "config/codex-result-trust.json" in script
     assert policy == {
-        "policy_format_version": 1,
-        "trusted_journal_authors": ["mightyjoe909"],
+        "policy_format_version": 2,
+        "trusted_admission_authors": ["mightyjoe909"],
+        "trusted_result_authors": ["github-actions[bot]"],
     }
 
 
