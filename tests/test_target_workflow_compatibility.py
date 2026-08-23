@@ -569,6 +569,7 @@ def test_migrated_target_entries_use_v2_and_expected_paths():
         "Young-Consultations/portfolio-tasks": "codex-adapter-v2.3.2",
         "Young-Consultations/slugger": "codex-adapter-v2.3.2",
     }
+    assert set(entries) == set(expected_refs)
     assert all(
         item["workflow_ref"].endswith(f"@{expected_refs[name]}")
         for name, item in entries.items()
