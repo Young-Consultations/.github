@@ -30,15 +30,22 @@ def test_registry_json_syntax_and_required_fields():
     activation = json.loads(Path("config/codex-activation.json").read_text(encoding="utf-8"))
     assert activation["activation_format_version"] == 1
     assert activation["targets"] == {name: False for name in repos}
+    expected_adapter_refs = {
+        "Young-Consultations/.github": "codex-adapter-v2.3.1",
+        "Young-Consultations/consulting-playbook": "codex-adapter-v2.3.1",
+        "Young-Consultations/portfolio-tasks": "codex-adapter-v2.3.2",
+        "Young-Consultations/slugger": "codex-adapter-v2.3.2",
+    }
     for name, entry in repos.items():
         assert "enabled" not in entry, name
         assert entry["allowed_task_types"], name
         assert entry["codex_environment"], name
         assert entry["max_parallel_tasks"] >= 1, name
         assert entry["draft_pr_only"] is True, name
-        assert entry["workflow_ref"] == f"{name}/.github/workflows/codex-execute.yml@codex-adapter-v2.3.1", name
+        expected_ref = expected_adapter_refs[name]
+        assert entry["workflow_ref"] == f"{name}/.github/workflows/codex-execute.yml@{expected_ref}", name
         assert entry["contract_version"] == "ai-sdlc-contract/v2", name
-        assert entry["conformance"]["adapter_ref"] == "codex-adapter-v2.3.1", name
+        assert entry["conformance"]["adapter_ref"] == expected_ref, name
         assert entry["conformance"]["status"] == "pass", name
         assert entry["conformance"]["activation_evidence_sufficient"] is True, name
 
@@ -101,7 +108,7 @@ def test_result_receiver_owns_journal_author_policy():
     assert "CODEX_TRUSTED_JOURNAL_AUTHORS" not in receiver
     assert "actions/checkout@" not in receiver
     assert receiver.count(
-        "Young-Consultations/.github/actions/codex-result-receiver@ai-sdlc-v2.3.1"
+        "Young-Consultations/.github/actions/codex-result-receiver@ai-sdlc-v2.3.2"
     ) == 1
     assert '$GITHUB_ACTION_PATH/../../scripts/codex_result_receiver.py' in action
     assert "config/codex-result-trust.json" in script

@@ -225,8 +225,7 @@ git diff --check
 `python scripts/validate_release.py` verifies structural candidate coherence.
 Before an actual compatibility tag, the separately reviewed final release
 change must also pass `python scripts/validate_release.py --require-publishable`;
-the 2.3.1 recovery candidate is expected to fail that
-gate until every adapter and receiver-trust prerequisite is recorded.
+the 2.3.2 recovery must retain every adapter and receiver-trust prerequisite.
 Conformance reports identify a canonical non-recursive v2 pin of exact shared
 and target files. They never predict the SHA of the commit that contains them;
 the registry later binds the immutable adapter tag to its resolved commit and
@@ -283,23 +282,20 @@ decided and justified during the relevant implementation task.
 
 ## Known gaps or conflicts
 
-- The organization-owned receiver and complete deterministic `TC-MVP-CI-001`
-  fixture oracle are retained in the 2.3.1 compatibility-recovery candidate.
-  Reviewed 2.3.0 commit
-  `c6090e5bbadcc2102a1cb91875466e9decdada1e` is historical evidence, not an
-  activation-safe baseline. The `.github` target now has a checked-in
-  29-scenario report through its real adapter seam with all prohibited effect
-  counters at zero, bound to candidate commit `e27b8a5` through a non-recursive
-  exact-file pin. That is reviewable target evidence, not a production-readiness
-  or activation claim. Its immutable adapter tag/registry record, the corrected
-  compatibility tag, and the receiver's journal-author allowlist remain pending
-  and fail closed. Source-consumer deployment and credential/retention approval
-  remain external release evidence, not permission to create another path.
-- Sibling `CC-MVP-TARGET` conformance, repository-specific requirement IDs,
-  immutable adapter revisions, target enablement, credentials, retention
-  duration, and reconciliation deadline remain pending their documented owner
-  confirmation or human governance decisions. This repository does not
-  establish their current state.
+- Live verification of the published 2.3.1 registry found that the
+  `portfolio-tasks` and `slugger` conformance pins omitted the exact
+  report-producing harness even though local tests and reports were green. The
+  original tags remain immutable. Their 2.3.2 adapter tags bind the harness and
+  preserve complete 29-scenario, zero-prohibited-effect evidence; the 2.3.2
+  control-plane registry records those new tag/commit/report-digest tuples.
+  This repair is compatibility evidence, not a production-readiness or
+  activation claim. Every target remains disabled. Source-consumer deployment,
+  credential, retention, reconciliation, and target-enablement approval remain
+  external governance evidence, not permission to create another path.
+- Repository-specific requirement IDs, target enablement, credentials,
+  retention duration, and reconciliation deadline remain pending their
+  documented owner confirmation or human governance decisions. This repository
+  does not establish their current state.
 - ADR-001, ADR-002, ADR-005, ADR-006, and ADR-007 retain explicitly documented
   open questions. They block invention in the affected area but do not relax
   their decisions or authorize implementation artifacts to answer them.

@@ -114,7 +114,7 @@ def test_target_receiver_pin_must_be_immutable():
 
 def test_canonical_receiver_accepts_only_result_delivery_credential():
     source = (ROOT / ".github/workflows/codex-result-receiver.yml").read_text()
-    assert checker.verify_receiver_interface(source) == "ai-sdlc-v2.3.1"
+    assert checker.verify_receiver_interface(source) == "ai-sdlc-v2.3.2"
     checker.verify_receiver_action(
         (ROOT / "actions/codex-result-receiver/action.yml").read_text()
     )
@@ -144,7 +144,7 @@ def test_receiver_cannot_checkout_policy_from_caller_context():
 
 def test_receiver_action_bundle_pin_must_be_immutable():
     source = (ROOT / ".github/workflows/codex-result-receiver.yml").read_text()
-    mutable = source.replace("@ai-sdlc-v2.3.1", "@main")
+    mutable = source.replace("@ai-sdlc-v2.3.2", "@main")
     with pytest.raises(checker.CompatibilityError, match="immutable"):
         checker.verify_receiver_interface(mutable)
 
@@ -563,13 +563,20 @@ def test_migrated_target_entries_use_v2_and_expected_paths():
     entries = checker.load_registry(ROOT / "config/codex-repositories.json")
     assert entries["Young-Consultations/slugger"]["contract_version"] == checker.CANONICAL_VERSION
     assert entries["Young-Consultations/consulting-playbook"]["contract_version"] == checker.CANONICAL_VERSION
+    expected_refs = {
+        "Young-Consultations/.github": "codex-adapter-v2.3.1",
+        "Young-Consultations/consulting-playbook": "codex-adapter-v2.3.1",
+        "Young-Consultations/portfolio-tasks": "codex-adapter-v2.3.2",
+        "Young-Consultations/slugger": "codex-adapter-v2.3.2",
+    }
+    assert set(entries) == set(expected_refs)
     assert all(
-        item["workflow_ref"].endswith("@codex-adapter-v2.3.1")
-        for item in entries.values()
+        item["workflow_ref"].endswith(f"@{expected_refs[name]}")
+        for name, item in entries.items()
     )
     assert all(
-        item["conformance"]["adapter_ref"] == "codex-adapter-v2.3.1"
+        item["conformance"]["adapter_ref"] == expected_refs[name]
         and item["conformance"]["status"] == "pass"
         and item["conformance"]["activation_evidence_sufficient"] is True
-        for item in entries.values()
+        for name, item in entries.items()
     )

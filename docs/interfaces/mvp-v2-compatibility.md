@@ -2,7 +2,13 @@
 
 **Normative status:** organization-owned baseline for consumer alignment.  
 **Payload version:** `ai-sdlc-contract/v2` (v3 is out of scope).  
-**Compatibility recovery candidate:** release `2.3.1`, fixture `2.3.0`. It preserves reviewed commit `c6090e5bbadcc2102a1cb91875466e9decdada1e` as historical 2.3.0 evidence rather than rewriting or retagging it. The corrected final immutable reference is the resulting reviewed merge commit or subsequently published `ai-sdlc-v2.3.1` tag; it is intentionally not embedded in its own contents. Mutable `main` is not a compatibility pin.
+**Compatibility recovery release:** `2.3.2`, fixture `2.3.0`. It preserves
+`ai-sdlc-v2.3.1` and every earlier tag as immutable history. Release 2.3.2
+rebinds `portfolio-tasks` and `slugger` to new adapter tags whose conformance
+pins include the exact report-producing harness; the unaffected `.github` and
+`consulting-playbook` adapters remain on their already verified immutable
+2.3.1 tags. The control-plane release never embeds its own future merge SHA,
+and mutable `main` is not a compatibility pin.
 
 This document is self-contained so a consumer needs no access to another consumer repository. The four and only four MVP targets are `Young-Consultations/.github`, `Young-Consultations/portfolio-tasks`, `Young-Consultations/slugger`, and `Young-Consultations/consulting-playbook`. The new `.github` entry is disabled-first, and registry enablement remains an explicit reviewed gate; sibling conformance is **pending owner confirmation**.
 
@@ -66,9 +72,9 @@ caller. It invokes the control-plane-owned `actions/codex-result-receiver`
 composite action at the same immutable release commit; the action loads
 `config/codex-result-trust.json` from its own downloaded bundle. Live
 verification rejects a workflow/action commit mismatch. The target cannot
-supply, override, or inherit trusted journal-author identities. An
-empty/malformed list denies all results; the 2.3.1 candidate intentionally
-remains deny-all until deployment identities receive review.
+supply, override, or inherit trusted journal-author identities. An empty or
+malformed list denies all results; publication requires reviewed identities for
+both admission and result journal roles.
 
 The receiver shall: (1) authenticate the caller; (2) validate the exact v2 result schema with format checking; (3) verify target, delivery, correlation, and source bindings against the admitted delivery record; (4) deduplicate by `delivery_id`; (5) accept identical redelivery without a second visible effect; (6) reject a conflict as ambiguous; (7) preserve durable result evidence; (8) forward exactly one validated projection to the source owner; (9) return sanitized diagnostics only; (10) preserve execution failure rather than reinterpret it as transport success; and (11) never merge, release, deploy, or modify target code.
 
@@ -129,7 +135,7 @@ conformance.
 Before a target is enabled, humans must approve its immutable workflow pin,
 repository-scoped credentials/environment, evidence retention duration,
 reconciliation deadline, control-plane journal-author identities, and
-owner-supplied conformance evidence. Before 2.3.1 publication,
+owner-supplied conformance evidence. Before 2.3.2 publication,
 `python scripts/validate_release.py --require-publishable` must also pass for
 every target and the receiver trust policy. These choices do not change consumer
 fields or v2 semantics. Merge, tag/release publication, deployment, and

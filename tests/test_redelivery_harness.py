@@ -92,7 +92,7 @@ def test_scenario_e_router_rejects_conflicting_payload_for_delivery_id(tmp_path,
     execution = canonical()
     monkeypatch.setenv("ROUTER_DELIVERY_LEDGER", str(ledger))
     monkeypatch.setenv("EXECUTION_INPUT", json.dumps(execution))
-    monkeypatch.setenv("WORKFLOW_REF", "Young-Consultations/portfolio-tasks/.github/workflows/codex-execute.yml@codex-adapter-v2.3.1")
+    monkeypatch.setenv("WORKFLOW_REF", "Young-Consultations/portfolio-tasks/.github/workflows/codex-execute.yml@codex-adapter-v2.3.2")
     monkeypatch.setattr(subprocess, "run", lambda *a, **k: subprocess.CompletedProcess(a, 0))
     from scripts import codex_router
     repositories = codex_router.validate_registry()
