@@ -26,7 +26,7 @@ def test_sim_passes_without_real_effects(tmp_path: Path) -> None:
     payload = json.loads(report.read_text(encoding="utf-8"))
     assert payload["test_id"] == "TC-MVP-E2E-001-SIM"
     assert payload["published_baseline"] == "2.3.2"
-    assert payload["candidate_release"] == "2.3.3"
+    assert payload["candidate_release"] == "2.4.0"
     assert payload["candidate_tag_published"] is False
     assert payload["execution_provider"] == "fake"
     assert payload["target"] == e2e.REAL_TARGET
@@ -50,8 +50,8 @@ def test_real_preflight_fails_closed_until_release_and_target_pin_are_ready(tmp_
     report = tmp_path / "sim.json"
     assert e2e.run_sim(report, target_root) == []
     errors = e2e.run_real_preflight(report, target_root)
-    assert "ai-sdlc-v2.3.3 is not published; REAL remains blocked" in errors
-    assert "enabled target is not pinned to the ai-sdlc-v2.3.3 receiver" in errors
+    assert "ai-sdlc-v2.4.0 is not published; REAL remains blocked" in errors
+    assert "enabled target is not pinned to the ai-sdlc-v2.4.0 receiver" in errors
 
 
 def test_sim_cannot_claim_real_acceptance(tmp_path: Path) -> None:
