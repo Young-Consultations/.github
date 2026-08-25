@@ -53,11 +53,11 @@ This repository is the organization AI-SDLC control plane. It owns the shared
 canonical task, execution-input, and execution-result semantics; schemas and
 validation; immutable target capabilities, mutable activation, and routing
 policy; admission and result boundaries; shared failure, identity, correlation,
-compatibility, verification,
-and release policy; and the related architecture and boundary documentation.
-For the next MVP it may also be a target for explicitly selected documentation,
-CI, repository-maintenance, and testing work, but only through the separate,
-target-only trust boundary established by ADR-011.
+compatibility, verification, and release policy; and the related architecture
+and boundary documentation. For the next MVP it may also be a target for
+explicitly selected documentation, CI, repository-maintenance, and testing work,
+but only through the separate target-only trust boundary established by
+ADR-011.
 
 It does **not** own portfolio intake, priority, readiness, or approval; target
 implementation logic, prompts, source modification, local testing, branch or
@@ -98,7 +98,8 @@ applies:
    that select and allocate work compliant with the requirements above. For
    work on the controlled end-to-end acceptance path, also read the approved
    [TC-MVP-E2E-001 acceptance design](docs/acceptance/TC-MVP-E2E-001.md), which
-   defines the shared SIM/REAL architecture and human-trigger boundary.
+   defines the shared SIM/REAL architecture, corrective compatibility boundary,
+   and human-trigger rule.
 4. [Architecture index](docs/architecture/README.md) — approved next-MVP design
    map and interpretation rules. Always consult [ADRs](docs/architecture/ADR.md)
    and [repository boundaries](docs/architecture/RepositoryBoundaries.md);
@@ -110,8 +111,7 @@ applies:
    designs relevant to the task.
 5. [MVP v2 interface baseline](docs/interfaces/mvp-v2-compatibility.md) — the
    single current organization payload family, workflow obligations,
-   conformance matrix, trust separation, and deployment gates. Also consult the
-   normative interface requirements linked above.
+   conformance matrix, trust separation, retry semantics, and deployment gates.
 6. [Repository README](README.md) — repository navigation and locally described
    package and verification usage; [contract overview](contracts/README.md),
    [router documentation](docs/codex-router.md), and [release policy](docs/releases.md)
@@ -128,9 +128,9 @@ silently override approved higher-authority product documentation.
 - The approved vision and requirements, followed by applicable approved
   architecture/design and accepted ADRs, are implementation authority. The
   next-MVP planning baseline selects and allocates compliant work but cannot
-  override their normative obligations. Before **every**
-  implementation task, load this file first and follow its ordered reading path
-  and repository boundaries before inspecting implementation details or editing.
+  override their normative obligations. Before **every** implementation task,
+  load this file first and follow its ordered reading path and repository
+  boundaries before inspecting implementation details or editing.
 - Per the approved requirements baseline and current release documentation,
   the project is pre-production and no backward-compatibility requirement has
   been approved. These facts do not weaken governance or security controls.
@@ -143,22 +143,17 @@ silently override approved higher-authority product documentation.
 - The organization supports exactly **one active cross-repository contract**
   and **one current execution path**. For this MVP, the locally authoritative
   interface baseline identifies that contract as the closed v2 task,
-  `execution-input/v2`, and `execution-result/v2` family. This statement is a
-  policy and required target state, not a claim that every current artifact or
-  consumer is already aligned.
-- Do not preserve backward compatibility, deprecated execution paths, duplicate
-  contracts, wrappers, aliases, transitional structures, earlier contract
-  shapes, compatibility adapters, migration layers, dual-schema validation,
-  obsolete workflow inputs, or fallback interfaces unless an authoritative
-  requirement explicitly requires them. A version field or discriminator may
-  identify the single current payload shape; it does not require support for
-  earlier versions.
-- Repository-local interfaces must conform to that single organization
-  contract as defined by the locally available authoritative interface
-  documentation. Historical releases may remain immutable evidence without
-  being active interfaces.
-- This documentation-only task does not authorize deletion, replacement,
-  contract modification, workflow modification, or other implementation work.
+  `execution-input/v2`, and `execution-result/v2` family. Release SemVer may
+  advance independently of that payload namespace.
+- Do not preserve deprecated execution paths, duplicate contracts, wrappers,
+  aliases, transitional structures, earlier contract shapes, compatibility
+  adapters, migration layers, dual-schema validation, obsolete workflow inputs,
+  or fallback interfaces unless an authoritative requirement explicitly
+  requires them.
+- Repository-local interfaces must conform to the single organization contract
+  as defined by the locally available authoritative interface documentation.
+  Historical releases remain immutable evidence and are not silently
+  reinterpreted when a corrective release is prepared.
 - Do not invent missing requirements, architecture, external behavior, or
   integration details. When work depends on an undecided external interface or
   unavailable owner decision, fail closed and report the blocker; use only
@@ -180,13 +175,30 @@ without implementation evidence.
 `TC-MVP-E2E-001` is one acceptance architecture with two modes, not two
 execution paths. `TC-MVP-E2E-001-SIM` resolves and executes the exact immutable
 adapter of the sole enabled target through deterministic fake Codex/publication
-effects and must report zero real effects. `TC-MVP-E2E-001-REAL` uses the
+effects and passes target-produced results through the actual candidate receiver
+logic using in-memory journal/forwarding effects. `TC-MVP-E2E-001-REAL` uses the
 existing source, router, target, receiver, and source-projection path after a
 non-mutating preflight. The REAL execution trigger remains the existing
 authorized-human `status:approved` action in `portfolio-tasks`; the control
 plane must not fabricate source approval, impersonate a target, or introduce a
 second execution engine. Passing SIM is required before REAL and never counts
 as REAL acceptance.
+
+The published immutable compatibility baseline remains `ai-sdlc-v2.3.2` at
+commit `5738ace3ee90dde11336f8f8099e64e5645f7139`. DEF-0032 exposed that the
+published receiver rejects a correct target redelivery result when the first
+success is `draft-pr-created` and the same managed draft is later reported as
+`duplicate-reused`. The resolved interface rule accepts that single
+non-identical transition as an idempotent no-op only when it represents the same
+stable managed-draft effect; every other non-identical result remains ambiguous
+and fails closed.
+
+PR #54 prepares `ai-sdlc-v2.4.0` as an **unpublished MINOR candidate** because
+this adds a backward-compatible accepted receiver outcome while keeping the
+closed v2 payload schemas unchanged. The 2.3.2 tag must not move or be
+reinterpreted. REAL remains blocked until 2.4.0 is published and the registered
+`consulting-playbook` adapter is rebound by reviewed immutable evidence to a
+target workflow that consumes the 2.4.0 receiver.
 
 Explicitly excluded are exactly-once transport, autonomous approval, automatic
 merge, release or deployment automation authority, production operation,
@@ -237,26 +249,32 @@ git diff --check
 ```
 
 `python scripts/validate_release.py` verifies structural candidate coherence.
-Before an actual compatibility tag, the separately reviewed final release
-change must also pass `python scripts/validate_release.py --require-publishable`;
-the 2.3.2 recovery must retain every adapter and receiver-trust prerequisite.
+PR #54's 2.4.0 candidate intentionally has `tag_published: false`, so it is not
+itself publication evidence. Before an actual 2.4.0 compatibility tag, the
+affected `consulting-playbook` target must consume the corrected receiver under
+a reviewed immutable adapter and publish complete no-real-effects conformance
+evidence; the registry must bind that tag/commit/report digest; and the
+separately reviewed final release change must pass
+`python scripts/validate_release.py --require-publishable`.
+
 Conformance reports identify a canonical non-recursive v2 pin of exact shared
 and target files. They never predict the SHA of the commit that contains them;
 the registry later binds the immutable adapter tag to its resolved commit and
-the report digest as separate checks (ADR-015).
-Static workflow inspection proves only the transport and receiver boundary.
-Idempotency and publication behavior must be executed through the exact adapter
-and harness blobs bound by that pin; comments or keyword presence are never
-behavioral evidence. Preflight must observe both the deterministic branch and
-all pull-request state before Codex, and inconsistent ownership fails
-`ambiguous-rejected` (ADR-016).
+the report digest as separate checks (ADR-015). Static workflow inspection
+proves only the transport and receiver boundary. Idempotency and publication
+behavior must be executed through the exact adapter and harness blobs bound by
+that pin; comments or keyword presence are never behavioral evidence. Preflight
+must observe both the deterministic branch and all pull-request state before
+Codex, and inconsistent ownership fails `ambiguous-rejected` (ADR-016).
 
 For `TC-MVP-E2E-001`, the repository workflow
 `.github/workflows/tc-mvp-e2e-001.yml` runs the deterministic SIM path on pull
 requests and supports manual SIM or REAL-preflight dispatch. REAL-preflight is
-non-mutating. A real Codex acceptance execution is never started by that
-workflow; after merge and a green preflight, an authorized human triggers the
-existing source-owned `portfolio-tasks` approval event described in
+non-mutating and must remain blocked while the corrective release is unpublished
+or the selected target receiver pin is stale. A real Codex acceptance execution
+is never started by that workflow. Only after a published corrective release,
+green REAL preflight, and source revision review does an authorized human
+trigger the existing source-owned `portfolio-tasks` approval event described in
 `docs/acceptance/TC-MVP-E2E-001.md`.
 
 `python scripts/verify_target_workflows.py` is applicable only when its
@@ -308,15 +326,19 @@ decided and justified during the relevant implementation task.
   `portfolio-tasks` and `slugger` conformance pins omitted the exact
   report-producing harness even though local tests and reports were green. The
   original tags remain immutable. Their 2.3.2 adapter tags bind the harness and
-  preserve complete 29-scenario, zero-prohibited-effect evidence; the 2.3.2
-  control-plane registry records those new tag/commit/report-digest tuples.
-  This repair is compatibility evidence, not a production-readiness or
-  activation claim. Subsequent governance review approved
-  `consulting-playbook` as the sole enabled target based on its immutable
-  passing adapter evidence and a green target-compatibility run; `.github`,
-  `portfolio-tasks`, and `slugger` remain disabled. Source-consumer deployment,
-  credential, retention, and reconciliation evidence remain external
-  governance decisions, not permission to create another path.
+  preserve complete no-prohibited-effect evidence; the 2.3.2 control-plane
+  registry records those tag/commit/report-digest tuples.
+- Subsequent governance review approved `consulting-playbook` as the sole
+  enabled target based on its immutable passing adapter evidence and a green
+  target-compatibility run; `.github`, `portfolio-tasks`, and `slugger` remain
+  disabled.
+- DEF-0032 is resolved in the 2.4.0 candidate architecture and implementation
+  but is **not yet a live published correction**. The currently registered
+  `consulting-playbook` adapter still consumes the historical receiver. Before
+  REAL, that target must be updated in its own reviewed change, produce fresh
+  immutable conformance evidence, be rebound in the registry, and the 2.4.0
+  compatibility unit must be reviewed and published. Until then REAL preflight
+  must fail closed.
 - Repository-specific requirement IDs, credentials, retention duration, and
   reconciliation deadline remain pending their documented owner confirmation
   or human governance decisions. Further target enablement also requires an
@@ -332,12 +354,12 @@ decided and justified during the relevant implementation task.
   tests, registry, and release documentation as authoritative for implemented
   behavior and directed agents to preserve schema compatibility. That rule has
   been replaced by the authority hierarchy and single-active-contract policy
-  above: implementation is evidence, and backward compatibility is not
-  currently required.
-No material contradiction among the locally approved vision,
-requirements, applicable approved architecture, and v2 interface direction was
-identified during this task. The gaps above must remain visible and fail closed
-where applicable.
+  above: implementation is evidence, and compatibility/release changes follow
+  the current approved release policy rather than accidental historical code.
+
+No unresolved architectural speculation is recorded here. The remaining 2.4.0
+work is an implementation/release-governance sequence under the resolved
+TC-MVP-E2E-001 and receiver semantics.
 
 ## Maintenance rule
 
