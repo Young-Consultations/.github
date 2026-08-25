@@ -48,7 +48,7 @@ jobs:
       diagnostic_summary: ${{ steps.receive.outputs.diagnostic_summary }}
     steps:
       - id: receive
-        uses: Young-Consultations/.github/actions/codex-result-receiver@ai-sdlc-v2.3.3
+        uses: Young-Consultations/.github/actions/codex-result-receiver@ai-sdlc-v2.4.0
         with:
           result-token: ${{ secrets.CODEX_RESULT_TOKEN }}
           execution-result: ${{ inputs.execution_result }}
