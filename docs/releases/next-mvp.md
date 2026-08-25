@@ -63,9 +63,17 @@ implementation or documentation.
    draft-PR link correlated to the approved revision. No automation merges,
    releases, deploys, or performs production operations.
 
-Acceptance requires the planned `TC-MVP-E2E-001` controlled integration test
-and all simulated cases in `TC-MVP-CI-001`; a dispatch acknowledgement alone is
-not success.
+Acceptance uses one shared `TC-MVP-E2E-001` architecture with two explicitly
+separated modes defined in
+[`TC-MVP-E2E-001`](../acceptance/TC-MVP-E2E-001.md):
+`TC-MVP-E2E-001-SIM` and `TC-MVP-E2E-001-REAL`. SIM is repeatable,
+no-real-effects evidence that exercises the immutable enabled-target adapter
+with deterministic fake Codex/publication effects. REAL uses the deployed
+source/router/target/receiver path and the existing source-owned human approval
+gate. Both modes preserve the same contract identities, target boundary,
+result semantics, source projection, and idempotency expectations. Passing SIM
+is required before REAL but can never satisfy REAL acceptance or MVP
+completion. A dispatch acknowledgement or REAL preflight alone is not success.
 
 ## Continuous interface-validation objective
 
@@ -87,10 +95,23 @@ contract or declared adapter is incompatible. A consumer demonstrates
 conformance by running the shared fixture suite against its own adapter and
 publishing the versioned report; it need not access sibling repositories.
 
-At least one separately controlled, intentionally initiated
-`TC-MVP-E2E-001` test may use a real approved issue, Codex, target branch, and
+`TC-MVP-E2E-001-SIM` complements the shared compatibility matrix by resolving
+the sole enabled target from current activation, resolving its exact immutable
+registered adapter commit, and executing that target-owned adapter through
+deterministic fake effect/provider seams. It shall cover a successful implement
+result, managed-draft reuse, duplicate/redelivery behavior, receiver/source
+idempotency, conflicting duplicate-result rejection, and explicit zero real
+Codex/publication/merge/release/deployment/production/secret-output effects.
+SIM may run in normal CI and by manual dispatch.
+
+`TC-MVP-E2E-001-REAL` is separately controlled and intentionally initiated. It
+may use one real approved issue, real Codex, one target branch, and one managed
 draft PR. It is excluded from normal CI, uses scoped credentials and an
-explicit human gate, never merges, and cleans up only under human control.
+explicit human gate, never merges, and cleans up only under human control. The
+control plane must not synthesize source approval or impersonate a target to
+start REAL. The existing `portfolio-tasks` source workflow's authorized-human
+`status:approved` event is the REAL execution trigger after the non-mutating
+REAL preflight has passed.
 
 ## Included capabilities and exclusions
 
@@ -98,7 +119,8 @@ Included: approved v2 task admission; canonical construction; four-target
 registration and gated enablement; deterministic routing; `verify` and
 `implement` modes; target execution and validation; at-least-once-safe result
 return; draft-PR discovery/reuse; source correlation; deterministic conformance
-simulation; and controlled real-path evidence.
+simulation; the target-owned `TC-MVP-E2E-001-SIM` provider seam; a non-mutating
+REAL readiness preflight; and controlled human-triggered real-path evidence.
 
 The shared fixture set currently provides the authoritative scenario catalog
 and canonical examples, but not executable inputs and expected outputs for
@@ -111,7 +133,9 @@ Excluded: exactly-once transport; autonomous approval; automatic merge;
 release, deployment, production operation, or production-scale SLOs; unrelated
 features; and claims of production readiness. `verify` is read-only and returns
 verification evidence without Codex, branch, or PR. `implement` permits Codex
-and draft-only publication after approval.
+and draft-only publication after approval. A control-plane workflow that applies
+or fabricates source approval is also excluded because it would bypass the
+source-owned human-authorization boundary.
 
 ## Approval and execution lifecycle
 
@@ -175,8 +199,13 @@ consumer, and all four target profiles pass.
 
 ## Success criteria
 
-- One intentionally approved real-path run ends in one validated draft PR and
-  a schema-valid result visibly correlated to the source issue.
+- `TC-MVP-E2E-001-SIM` passes against the exact immutable adapter of the sole
+  enabled target with all prohibited real-effect counters at zero and an
+  explicit assertion that REAL acceptance remains unsatisfied.
+- One intentionally approved `TC-MVP-E2E-001-REAL` run ends in one validated
+  draft PR and a schema-valid result visibly correlated to the source issue.
+- The REAL execution is triggered only by the existing authorized-human source
+  approval boundary after REAL preflight and SIM have passed.
 - All four registered targets pass the shared simulated matrix before enablement; a target
   that has not passed remains disabled.
 - Every material revision has a distinct task ID and fresh `approved` state; stale, withdrawn,
@@ -204,7 +233,10 @@ and require owner confirmation and conformance evidence.
 Risks are label/provenance drift, incompatible target adapters, ambiguous
 delivery acknowledgement, duplicate publication, result loss, permissions
 that exceed the MVP boundary, and a simulation that diverges from the real
-path. The ADRs below resolve approval and result transport for the MVP; no
+path. The dual-mode acceptance design reduces that last risk by running the
+exact registered target adapter in SIM while leaving real source approval,
+credentials, dispatch, Codex, publication, receiver, and source projection to
+REAL. The ADRs below resolve approval and result transport for the MVP; no
 organization-level implementation-blocking decision remains open. The receiver
 author identities are now explicitly approved, and `consulting-playbook` is the
 sole enabled target after approval of its immutable passing adapter evidence and
@@ -222,7 +254,7 @@ enablement remains a separate deployment/governance decision. `.github`,
 | Software | [GH-FR-005, GH-FR-008–012, GH-FR-017–018, GH-QR-008](../requirements/software-requirements.md) |
 | Interfaces | [Repository interface specification](../requirements/repository-interfaces.md), [external interfaces](../requirements/external-interfaces.md) |
 | Decisions | [ADR-003, ADR-004, ADR-008–014](../architecture/ADR.md) |
-| Architecture/design | [State models](../architecture/StateModels.md), [sequence diagrams](../architecture/SequenceDiagrams.md), [data flow](../architecture/DataFlow.md), [repository boundaries](../architecture/RepositoryBoundaries.md) |
+| Architecture/design | [State models](../architecture/StateModels.md), [sequence diagrams](../architecture/SequenceDiagrams.md), [data flow](../architecture/DataFlow.md), [repository boundaries](../architecture/RepositoryBoundaries.md), [TC-MVP-E2E-001 acceptance design](../acceptance/TC-MVP-E2E-001.md) |
 | Traceability | [Requirements RTM](../requirements/requirements-traceability.md), [architecture RTM](../architecture/ArchitectureTraceability.md) |
 | Release policy | [Control-plane releases](../releases.md) |
 
