@@ -1,9 +1,9 @@
 # TC-MVP-E2E-001: controlled end-to-end MVP acceptance
 
-**Status:** Approved next-MVP acceptance design  
-**Owner:** `Young-Consultations/.github`  
-**Published baseline:** `ai-sdlc-v2.3.2` / `ai-sdlc-contract/v2`  
-**Corrective candidate required for REAL:** `ai-sdlc-v2.4.0`  
+**Status:** Approved next-MVP acceptance design
+**Owner:** `Young-Consultations/.github`
+**Published baseline:** `ai-sdlc-v2.3.2` / `ai-sdlc-contract/v2`
+**Corrective candidate required for REAL:** `ai-sdlc-v2.4.0`
 **Initial enabled target:** `Young-Consultations/consulting-playbook`
 
 ## Purpose
