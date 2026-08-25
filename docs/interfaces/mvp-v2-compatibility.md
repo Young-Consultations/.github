@@ -1,8 +1,8 @@
 # MVP v2 shared-interface and compatibility baseline
 
-**Normative status:** organization-owned baseline for consumer alignment.  
-**Payload version:** `ai-sdlc-contract/v2` (v3 is out of scope).  
-**Published compatibility release:** `2.3.2`, fixture `2.3.0`.  
+**Normative status:** organization-owned baseline for consumer alignment.
+**Payload version:** `ai-sdlc-contract/v2` (v3 is out of scope).
+**Published compatibility release:** `2.3.2`, fixture `2.3.0`.
 **Current corrective candidate:** `2.4.0`, unpublished until release gates pass.
 
 Published `ai-sdlc-v2.3.2` remains immutable at commit
