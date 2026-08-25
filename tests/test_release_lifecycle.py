@@ -19,7 +19,7 @@ def test_unpublished_candidate_cannot_satisfy_publication_gate():
 def test_mvp_fixture_targets_match_candidate_manifest():
     manifest = json.loads((ROOT / "release/release-manifest.json").read_text(encoding="utf-8"))
     fixture = json.loads((ROOT / "tests/fixtures/mvp-v2/manifest.json").read_text(encoding="utf-8"))
-    assert manifest["release_version"] == "2.3.3"
+    assert manifest["release_version"] == "2.4.0"
     assert manifest["tag_published"] is False
     assert "immutable_reference" not in fixture
     assert "immutable_reference" not in manifest
@@ -65,9 +65,9 @@ def test_candidate_does_not_embed_its_own_future_commit_identity():
     assert "immutable_reference" not in manifest
 
 
-def test_patch_candidate_preserves_published_2_3_2_as_history():
+def test_minor_candidate_preserves_published_2_3_2_as_history():
     manifest = json.loads((ROOT / "release/release-manifest.json").read_text(encoding="utf-8"))
-    assert manifest["release_version"] == "2.3.3"
+    assert manifest["release_version"] == "2.4.0"
     assert manifest["recovery_of"] == {
         "release_version": "2.3.2",
         "commit_sha": "5738ace3ee90dde11336f8f8099e64e5645f7139",
