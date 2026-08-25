@@ -35,9 +35,12 @@ The SIM harness shall:
 3. run the exact target-owned adapter from that immutable commit;
 4. inject deterministic fake Codex and publication effects at the target's existing effect/provider seam;
 5. preserve canonical `execution-input/v2` and `execution-result/v2` semantics;
-6. exercise successful implement behavior, managed-draft reuse, duplicate delivery, receiver idempotency, and conflicting duplicate-result rejection;
-7. assert zero real Codex, branch, commit, push, PR, merge, release, deployment, production, or secret-output effects;
-8. emit machine-readable evidence that explicitly records `real_acceptance_satisfied: false`.
+6. pass target-produced results through the real organization receiver implementation with an in-memory journal/forwarding effect seam;
+7. exercise successful implement behavior, managed-draft reuse, equivalent `draft-pr-created -> duplicate-reused` receiver no-op behavior, identical receiver idempotency, and conflicting duplicate-result rejection;
+8. assert zero real Codex, branch, commit, push, PR, merge, release, deployment, production, or secret-output effects;
+9. emit machine-readable evidence that explicitly records `real_acceptance_satisfied: false` and that both the shared target-adapter and receiver paths were exercised.
+
+For retry evidence, `duplicate-reused` is accepted without another source projection only when it describes the same stable managed-draft effect as the prior successful result. A different branch, pull request, validation/test outcome, failure category, or any other non-approved result transition remains ambiguous and fails closed.
 
 SIM may run on pull requests and by manual dispatch. It is not production-readiness evidence and cannot substitute for the live acceptance run.
 
@@ -86,7 +89,7 @@ After PR #54 is merged and the preflight is green:
 9. The target creates exactly one managed draft PR or reuses the existing owned draft for the delivery.
 10. The target returns one canonical `execution-result/v2` through the organization receiver.
 11. `portfolio-tasks` shows the correlated terminal result, validation status, and draft-PR link.
-12. Re-run/redelivery of the same approved delivery is used to verify no second visible implementation effect is created.
+12. Re-run/redelivery of the same approved delivery verifies that the target returns `duplicate-reused` for the same managed draft, the receiver accepts that equivalent visible effect as a no-op, and no second source projection or draft PR is created.
 
 ### REAL evidence
 
@@ -109,8 +112,8 @@ Sensitive values and issue content not required for audit must be omitted or red
 
 ## Acceptance decision
 
-`TC-MVP-E2E-001-SIM` passes only when its deterministic evidence is green and every prohibited real-effect counter is zero.
+`TC-MVP-E2E-001-SIM` passes only when its deterministic evidence is green, the exact immutable target adapter and real receiver semantics were exercised, the equivalent retry produces no second visible effect, and every prohibited real-effect counter is zero.
 
-`TC-MVP-E2E-001-REAL` passes only after the deliberate human-triggered live run completes with one correlated managed draft PR, one canonical result, correct source projection, and successful retry/idempotency evidence.
+`TC-MVP-E2E-001-REAL` passes only after the deliberate human-triggered live run completes with one correlated managed draft PR, one canonical source projection, and successful equivalent retry/idempotency evidence.
 
 The MVP must not be reported accepted based on SIM, REAL preflight, dispatch acknowledgement, or draft-PR creation alone.
