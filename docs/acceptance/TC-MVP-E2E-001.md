@@ -3,7 +3,7 @@
 **Status:** Approved next-MVP acceptance design  
 **Owner:** `Young-Consultations/.github`  
 **Published baseline:** `ai-sdlc-v2.3.2` / `ai-sdlc-contract/v2`  
-**Corrective candidate required for REAL:** `ai-sdlc-v2.3.3`  
+**Corrective candidate required for REAL:** `ai-sdlc-v2.4.0`  
 **Initial enabled target:** `Young-Consultations/consulting-playbook`
 
 ## Purpose
@@ -23,7 +23,7 @@ The published `ai-sdlc-v2.3.2` unit remains immutable. While replacing a simplif
 
 The approved correction preserves both intended rules by distinguishing canonical-result identity from stable visible-effect identity. `draft-pr-created -> duplicate-reused` is accepted as an idempotent no-op only when it represents the same delivery, target, correlation, managed branch/PR, validation result, test result, and failure category. Every other non-identical result remains ambiguous and fails closed.
 
-Because 2.3.2 is already published, that correction requires a new immutable compatibility unit. PR #54 prepares `ai-sdlc-v2.3.3` as an **unpublished candidate**. SIM may exercise the candidate receiver semantics before publication, but REAL must remain blocked until 2.3.3 is published and the selected target is immutably pinned to that receiver.
+Because 2.3.2 is already published, that correction requires a new immutable compatibility unit. The release policy classifies the added accepted receiver behavior as a backward-compatible MINOR change, so PR #54 prepares `ai-sdlc-v2.4.0` as an **unpublished candidate**. SIM may exercise the candidate receiver semantics before publication, but REAL must remain blocked until 2.4.0 is published and the selected target is immutably pinned to that receiver.
 
 ## Shared architecture
 
@@ -47,7 +47,7 @@ The SIM harness shall:
 6. pass target-produced results through the candidate organization receiver implementation with an in-memory journal/forwarding effect seam;
 7. exercise successful implement behavior, managed-draft reuse, equivalent `draft-pr-created -> duplicate-reused` receiver no-op behavior, and conflicting duplicate-result rejection;
 8. assert zero real Codex, branch, commit, push, PR, merge, release, deployment, production, or secret-output effects;
-9. emit machine-readable evidence that records published baseline 2.3.2, corrective candidate 2.3.3, exact target adapter identity, `real_acceptance_satisfied: false`, and whether the candidate tag is published.
+9. emit machine-readable evidence that records published baseline 2.3.2, corrective candidate 2.4.0, exact target adapter identity, `real_acceptance_satisfied: false`, and whether the candidate tag is published.
 
 For retry evidence, `duplicate-reused` is accepted without another source projection only when it describes the same stable managed-draft effect as the prior successful result. A different branch, pull request, validation/test outcome, failure category, or any other non-approved result transition remains ambiguous and fails closed.
 
@@ -73,10 +73,10 @@ No alternate control-plane dispatch path is permitted.
 
 Before the human approval action, the acceptance workflow shall fail closed unless:
 
-- `ai-sdlc-v2.3.3` has been reviewed and published;
+- `ai-sdlc-v2.4.0` has been reviewed and published;
 - the published 2.3.2 tag remains unchanged as historical/rollback evidence;
 - `consulting-playbook` is the sole enabled target;
-- the registry identifies an exact immutable consulting adapter whose workflow consumes the `ai-sdlc-v2.3.3` receiver;
+- the registry identifies an exact immutable consulting adapter whose workflow consumes the `ai-sdlc-v2.4.0` receiver;
 - fresh `TC-MVP-E2E-001-SIM` evidence passes and explicitly does not claim REAL acceptance;
 - the selected task is harmless, deterministic, documentation-only where permitted, and within target policy;
 - the intended publication boundary is draft-only;
@@ -86,12 +86,12 @@ The preflight itself performs no Codex invocation, branch creation, commit, push
 
 ### Release/target coordination before REAL
 
-PR #54 is the control-plane 2.3.3 candidate, not the final live acceptance action. After that candidate is reviewed and merged, the release procedure requires the target-side correction and final immutable publication before REAL:
+PR #54 is the control-plane 2.4.0 candidate, not the final live acceptance action. After that candidate is reviewed and merged, the release procedure requires the target-side correction and final immutable publication before REAL:
 
-1. update `consulting-playbook` in its own reviewed change so its target workflow consumes the corrected receiver from the reviewed control-plane candidate/2.3.3 release path;
+1. update `consulting-playbook` in its own reviewed change so its target workflow consumes the corrected receiver from the reviewed control-plane candidate/2.4.0 release path;
 2. run the target's full no-real-effects conformance harness and publish a new immutable target adapter tag only after it passes;
 3. update the control-plane registry with the exact target adapter tag, commit, and report digest;
-4. complete the final release review, set `tag_published: true`, pass the publishable release gate, merge, and create the immutable `ai-sdlc-v2.3.3` tag;
+4. complete the final release review, set `tag_published: true`, pass the publishable release gate, merge, and create the immutable `ai-sdlc-v2.4.0` tag;
 5. run REAL preflight again and require it to pass before human approval of the live test issue.
 
 ### REAL execution procedure
@@ -107,7 +107,7 @@ After the corrective release and target pin are published and REAL preflight is 
 7. Real Codex executes only inside the selected target repository.
 8. Target validation/tests pass before publication.
 9. The target creates exactly one managed draft PR or reuses the existing owned draft for the delivery.
-10. The target returns one canonical `execution-result/v2` through the published 2.3.3 organization receiver.
+10. The target returns one canonical `execution-result/v2` through the published 2.4.0 organization receiver.
 11. `portfolio-tasks` shows the correlated terminal result, validation status, and draft-PR link.
 12. Re-run/redelivery of the same approved delivery verifies that the target returns `duplicate-reused` for the same managed draft, the receiver accepts that equivalent visible effect as a no-op, and no second source projection or draft PR is created.
 
@@ -117,7 +117,7 @@ The acceptance record must preserve links or immutable identities for:
 
 - source issue and exact approved revision;
 - task ID, delivery ID, attempt identity where available, and correlation ID;
-- published `ai-sdlc-v2.3.3` release identity;
+- published `ai-sdlc-v2.4.0` release identity;
 - enabled target and registered immutable adapter commit;
 - portfolio admission/router workflow run;
 - target workflow run;
