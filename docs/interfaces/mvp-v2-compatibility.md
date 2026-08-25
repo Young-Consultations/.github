@@ -3,20 +3,21 @@
 **Normative status:** organization-owned baseline for consumer alignment.  
 **Payload version:** `ai-sdlc-contract/v2` (v3 is out of scope).  
 **Published compatibility release:** `2.3.2`, fixture `2.3.0`.  
-**Current corrective candidate:** `2.3.3`, unpublished until release gates pass.
+**Current corrective candidate:** `2.4.0`, unpublished until release gates pass.
 
 Published `ai-sdlc-v2.3.2` remains immutable at commit
 `5738ace3ee90dde11336f8f8099e64e5645f7139`. It preserves earlier tags as
 immutable history and remains the previous-known-good rollback point while the
-2.3.3 candidate is reviewed.
+2.4.0 candidate is reviewed.
 
-The 2.3.3 candidate does not change the closed v2 payload schemas. It corrects
+The 2.4.0 candidate does not change the closed v2 payload schemas. It corrects
 DEF-0032 in receiver retry semantics: a target may legitimately return
 `draft-pr-created` on first successful delivery and `duplicate-reused` when the
 same managed draft is found on redelivery. The receiver therefore distinguishes
-canonical-result identity from stable visible-effect identity. This correction
-must be published as a new immutable compatibility unit; 2.3.2 is not moved or
-reinterpreted.
+canonical-result identity from stable visible-effect identity. Because this adds
+a backward-compatible accepted receiver outcome, the release policy classifies
+it as a MINOR change rather than a PATCH. This correction must be published as a
+new immutable compatibility unit; 2.3.2 is not moved or reinterpreted.
 
 The four and only four MVP targets are `Young-Consultations/.github`,
 `Young-Consultations/portfolio-tasks`, `Young-Consultations/slugger`, and
@@ -178,22 +179,22 @@ immutable adapter ref; its SHA-256 digest and the tag's resolved commit are
 recorded separately in the registry.
 
 The published 2.3.2 registry contains passing evidence for all four current
-adapter profiles. For 2.3.3 publication, the receiver correction requires fresh
+adapter profiles. For 2.4.0 publication, the receiver correction requires fresh
 review of the affected consumer path. In particular, `consulting-playbook` must
 publish new immutable adapter evidence after its target workflow consumes the
-2.3.3 receiver. Existing 2.3.2-era evidence is history and cannot prove the new
+2.4.0 receiver. Existing 2.3.2-era evidence is history and cannot prove the new
 receiver binding.
 
 ## Deployment/governance gates
 
-Before the 2.3.3 compatibility unit is published:
+Before the 2.4.0 compatibility unit is published:
 
 1. the control-plane candidate must pass structural validation and its no-real-effects tests;
 2. the affected target must consume the corrected receiver through a reviewed immutable adapter and publish complete passing conformance evidence;
 3. the registry must bind that adapter tag, commit, and report digest;
 4. reviewed journal-author identities and required credentials/settings must remain valid;
 5. `python scripts/validate_release.py --require-publishable` must pass on the final release candidate;
-6. a human merges the final release change and creates the immutable `ai-sdlc-v2.3.3` tag.
+6. a human merges the final release change and creates the immutable `ai-sdlc-v2.4.0` tag.
 
 Until those gates pass, `tag_published` remains false and
 `TC-MVP-E2E-001-REAL` must fail closed. Merge, tag/release publication,
