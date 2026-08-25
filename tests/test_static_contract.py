@@ -116,7 +116,7 @@ def test_result_receiver_owns_journal_author_policy():
     assert "CODEX_TRUSTED_JOURNAL_AUTHORS" not in receiver
     assert "actions/checkout@" not in receiver
     assert receiver.count(
-        "Young-Consultations/.github/actions/codex-result-receiver@ai-sdlc-v2.3.2"
+        "Young-Consultations/.github/actions/codex-result-receiver@ai-sdlc-v2.3.3"
     ) == 1
     assert '$GITHUB_ACTION_PATH/../../scripts/codex_result_receiver.py' in action
     assert "config/codex-result-trust.json" in script
