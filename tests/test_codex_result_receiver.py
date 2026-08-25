@@ -66,6 +66,52 @@ def test_identical_result_is_noop_and_conflict_is_ambiguous():
     assert error.value.ambiguous and len(journal.projections) == 1
 
 
+def test_duplicate_reused_for_same_managed_draft_is_equivalent_noop():
+    created = dict(
+        RESULT,
+        execution_status='draft-pr-created',
+        failure_category='none',
+        failure_message=None,
+        branch_name='codex/delivery-001',
+        pull_request_url='https://github.com/Young-Consultations/consulting-playbook/pull/7',
+        validation_result='passed',
+        test_result='passed',
+    )
+    journal = FakeJournal()
+    receive(json.dumps(created), SOURCE, RESULT['target_repository'], journal)
+
+    reused = dict(
+        created,
+        execution_status='duplicate-reused',
+        workflow_url='https://github.com/Young-Consultations/consulting-playbook/actions/runs/999',
+        started_at='2099-01-01T00:00:00Z',
+        completed_at='2099-01-01T00:00:01Z',
+    )
+    receipt = receive(json.dumps(reused), SOURCE, RESULT['target_repository'], journal)
+    assert receipt.accepted and receipt.duplicate
+    assert receipt.execution_status == 'duplicate-reused'
+    assert len(journal.projections) == 1
+
+
+def test_duplicate_reused_with_different_draft_is_ambiguous():
+    created = dict(
+        RESULT,
+        execution_status='draft-pr-created',
+        failure_category='none',
+        failure_message=None,
+        branch_name='codex/delivery-001',
+        pull_request_url='https://github.com/Young-Consultations/consulting-playbook/pull/7',
+        validation_result='passed',
+        test_result='passed',
+    )
+    journal = FakeJournal()
+    receive(json.dumps(created), SOURCE, RESULT['target_repository'], journal)
+    reused = dict(created, execution_status='duplicate-reused', pull_request_url='https://github.com/Young-Consultations/consulting-playbook/pull/8')
+    with pytest.raises(ReceiverError) as error:
+        receive(json.dumps(reused), SOURCE, RESULT['target_repository'], journal)
+    assert error.value.ambiguous and len(journal.projections) == 1
+
+
 def test_recorded_receipt_retries_projection_until_forwarded_marker_exists():
     journal = FakeJournal()
     journal.fail_forward = True
