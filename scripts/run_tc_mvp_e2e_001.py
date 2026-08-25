@@ -28,7 +28,7 @@ REGISTRY = ROOT / "config/codex-repositories.json"
 RELEASE_MANIFEST = ROOT / "release/release-manifest.json"
 REAL_TARGET = "Young-Consultations/consulting-playbook"
 PUBLISHED_BASELINE = "2.3.2"
-CANDIDATE_RELEASE = "2.3.3"
+CANDIDATE_RELEASE = "2.4.0"
 TARGET_ROOT_ENV = "TC_MVP_E2E_TARGET_ROOT"
 
 
