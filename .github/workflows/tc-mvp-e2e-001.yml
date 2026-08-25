@@ -6,10 +6,12 @@ on:
       - '.github/workflows/tc-mvp-e2e-001.yml'
       - 'scripts/run_tc_mvp_e2e_001.py'
       - 'scripts/run_tc_mvp_ci_001.py'
+      - 'scripts/codex_result_receiver.py'
       - 'config/codex-activation.json'
       - 'config/codex-repositories.json'
       - 'release/release-manifest.json'
       - 'tests/test_tc_mvp_e2e_001.py'
+      - 'tests/test_codex_result_receiver.py'
   workflow_dispatch:
     inputs:
       mode:
@@ -61,8 +63,8 @@ jobs:
           cache: pip
       - name: Install dependencies
         run: python -m pip install -r requirements-dev.txt
-      - name: Run dual-mode harness tests
-        run: python -m pytest tests/test_tc_mvp_e2e_001.py
+      - name: Run receiver and dual-mode harness tests
+        run: python -m pytest tests/test_codex_result_receiver.py tests/test_tc_mvp_e2e_001.py
       - name: Run TC-MVP-E2E-001-SIM
         run: python scripts/run_tc_mvp_e2e_001.py --mode sim --report reports/tc-mvp-e2e-001-sim.json
       - name: Upload SIM evidence
@@ -105,6 +107,8 @@ jobs:
           cache: pip
       - name: Install dependencies
         run: python -m pip install -r requirements-dev.txt
+      - name: Run receiver and dual-mode harness tests
+        run: python -m pytest tests/test_codex_result_receiver.py tests/test_tc_mvp_e2e_001.py
       - name: Generate fresh SIM evidence
         run: python scripts/run_tc_mvp_e2e_001.py --mode sim --report reports/tc-mvp-e2e-001-sim.json
       - name: Verify REAL preflight gates
