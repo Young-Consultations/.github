@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """TC-MVP-E2E-001 dual-mode acceptance harness.
 
-SIM executes the enabled target's immutable adapter through deterministic fake
-Codex/publication effects. REAL currently performs fail-closed readiness
-preflight only; it never invokes Codex or mutates GitHub from this script.
+SIM executes the enabled target's immutable adapter and the control plane's real
+receiver logic through deterministic fake external effects. REAL performs
+fail-closed readiness preflight only; it never invokes Codex or mutates GitHub
+from this script.
 """
 from __future__ import annotations
 
@@ -21,7 +22,13 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.run_tc_mvp_ci_001 import TrappedReceiver
+from scripts.codex_result_receiver import (
+    ADMISSION,
+    JournalComment,
+    ReceiverError,
+    marker,
+    receive,
+)
 
 ACTIVATION = ROOT / "config/codex-activation.json"
 REGISTRY = ROOT / "config/codex-repositories.json"
@@ -97,8 +104,8 @@ def _registry_entry() -> dict[str, Any]:
 def _target_identity_errors(target_root: Path) -> list[str]:
     entry = _registry_entry()
     expected = entry.get("conformance", {}).get("adapter_commit_sha")
-    marker = target_root / ".git"
-    if not marker.exists():
+    marker_path = target_root / ".git"
+    if not marker_path.exists():
         return ["target checkout is not a Git repository"]
     import subprocess
 
@@ -153,6 +160,36 @@ class FakeTargetEffects:
         return "https://github.com/Young-Consultations/consulting-playbook/pull/999999"
 
 
+class SimJournal:
+    """In-memory external-effect seam around the real receiver implementation."""
+
+    def __init__(self, payload: dict[str, Any]) -> None:
+        binding = {
+            "contract_version": payload["contract_version"],
+            "delivery_id": payload["delivery_id"],
+            "correlation_id": payload["correlation_id"],
+            "source_issue": payload["source_issue"],
+            "target_repository": payload["target_repository"],
+        }
+        self.entries = [JournalComment(marker(ADMISSION, binding), "router-bot")]
+        self.projections: list[dict[str, Any]] = []
+
+    def authenticate(self, repository: str) -> None:
+        return None
+
+    def comments(self, repository: str, issue: int) -> list[JournalComment]:
+        return list(self.entries)
+
+    def trusted_author(self, author: str, role: str) -> bool:
+        return author == ("router-bot" if role == "admission" else "receiver-bot")
+
+    def append(self, repository: str, issue: int, body: str) -> None:
+        self.entries.append(JournalComment(body, "receiver-bot"))
+
+    def forward(self, repository: str, projection: dict[str, Any]) -> None:
+        self.projections.append(projection)
+
+
 def _managed(adapter: ModuleType, payload: dict[str, Any]) -> dict[str, Any]:
     return {
         "url": "https://github.com/Young-Consultations/consulting-playbook/pull/999999",
@@ -174,21 +211,26 @@ def _run_target(adapter: ModuleType, payload: dict[str, Any], effects: FakeTarge
 
 
 def run_sim(report_path: Path, target_root: Path | None = None) -> list[str]:
-    """Exercise the enabled target adapter and result semantics with fake effects."""
+    """Exercise the enabled target adapter and real receiver with fake effects."""
     target_root = target_root or _target_root()
     errors = _release_errors() + _activation_errors() + _target_identity_errors(target_root)
     traps = EffectTraps()
-    receiver = TrappedReceiver()
+    journal: SimJournal | None = None
     try:
         adapter = _load_target_adapter(target_root)
         if getattr(adapter, "TARGET", None) != REAL_TARGET:
             errors.append("loaded adapter does not identify the enabled target")
         payload = _payload(target_root)
+        journal = SimJournal(payload)
+
         result = _run_target(adapter, payload, FakeTargetEffects(adapter, traps))
         if result.get("execution_status") != "draft-pr-created":
             errors.append(f"SIM expected draft-pr-created, got {result.get('execution_status')}")
-        if receiver.receive(result) != "accepted" or receiver.forward_count != 1:
-            errors.append("SIM receiver/source projection did not accept exactly once")
+        receipt = receive(
+            json.dumps(result), payload["source_issue"], REAL_TARGET, journal
+        )
+        if not receipt.accepted or receipt.duplicate or len(journal.projections) != 1:
+            errors.append("SIM real receiver/source projection did not accept exactly once")
 
         replay = _run_target(
             adapter,
@@ -197,10 +239,22 @@ def run_sim(report_path: Path, target_root: Path | None = None) -> list[str]:
         )
         if replay.get("execution_status") != "duplicate-reused":
             errors.append("SIM duplicate delivery did not reuse managed draft")
+        replay_receipt = receive(
+            json.dumps(replay), payload["source_issue"], REAL_TARGET, journal
+        )
+        if not replay_receipt.accepted or not replay_receipt.duplicate:
+            errors.append("SIM equivalent duplicate result was not accepted as a no-op")
+        if len(journal.projections) != 1:
+            errors.append("SIM duplicate delivery produced a second source projection")
 
         conflicting = dict(result)
         conflicting["completed_at"] = "2099-01-01T00:00:00Z"
-        if receiver.receive(conflicting) != "ambiguous-rejected":
+        try:
+            receive(json.dumps(conflicting), payload["source_issue"], REAL_TARGET, journal)
+        except ReceiverError as exc:
+            if not exc.ambiguous:
+                errors.append("SIM conflicting duplicate result was rejected without ambiguity")
+        else:
             errors.append("SIM conflicting duplicate result did not fail closed")
     except (FileNotFoundError, ImportError, KeyError, TypeError, ValueError) as exc:
         result, replay = {}, {}
@@ -219,11 +273,12 @@ def run_sim(report_path: Path, target_root: Path | None = None) -> list[str]:
         "target_adapter_commit": entry["conformance"]["adapter_commit_sha"],
         "execution_provider": "fake",
         "shared_target_adapter_path": True,
+        "shared_receiver_path": True,
         "sim_passed": not errors,
         "real_acceptance_satisfied": False,
         "primary_execution_status": result.get("execution_status"),
         "duplicate_execution_status": replay.get("execution_status"),
-        "receiver_forward_count": receiver.forward_count,
+        "receiver_forward_count": len(journal.projections) if journal is not None else 0,
         "conflicting_duplicate_result": "ambiguous-rejected" if result else "not-run",
         "effect_traps": effect_counts,
         "failures": errors,
@@ -245,6 +300,8 @@ def run_real_preflight(sim_report_path: Path, target_root: Path | None = None) -
         errors.append("SIM evidence is not a passing TC-MVP-E2E-001-SIM report")
     if sim.get("real_acceptance_satisfied") is not False:
         errors.append("SIM evidence incorrectly claims REAL acceptance")
+    if sim.get("shared_target_adapter_path") is not True or sim.get("shared_receiver_path") is not True:
+        errors.append("SIM evidence did not exercise the shared target and receiver paths")
     entry = _registry_entry()
     if (
         sim.get("target") != REAL_TARGET
