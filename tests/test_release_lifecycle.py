@@ -7,18 +7,20 @@ from scripts import validate_release
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_current_release_is_coherent_and_immutable():
+def test_current_release_candidate_is_structurally_coherent():
     assert validate_release.validate() == []
 
 
-def test_final_release_candidate_satisfies_publication_gate():
-    assert validate_release.validate(require_publishable=True) == []
+def test_unpublished_candidate_cannot_satisfy_publication_gate():
+    errors = validate_release.validate(require_publishable=True)
+    assert "publishable release must declare tag_published true" in errors
 
 
-def test_mvp_fixture_uses_current_release_identity_and_targets():
+def test_mvp_fixture_targets_match_candidate_manifest():
     manifest = json.loads((ROOT / "release/release-manifest.json").read_text(encoding="utf-8"))
     fixture = json.loads((ROOT / "tests/fixtures/mvp-v2/manifest.json").read_text(encoding="utf-8"))
-    assert manifest["tag_published"] is True
+    assert manifest["release_version"] == "2.3.3"
+    assert manifest["tag_published"] is False
     assert "immutable_reference" not in fixture
     assert "immutable_reference" not in manifest
     assert sorted(fixture["targets"]) == manifest["supported_targets"]
@@ -42,10 +44,13 @@ def test_mutable_router_reference_is_rejected(tmp_path):
     assert any("mutable organization workflow ref" in error for error in validate_release.validate(tmp_path))
 
 
-def test_previous_known_good_is_a_restorable_commit():
+def test_previous_known_good_is_published_2_3_2_commit():
     manifest = json.loads((ROOT / "release/release-manifest.json").read_text(encoding="utf-8"))
+    assert manifest["previous_known_good"] == {
+        "release_version": "2.3.2",
+        "commit_sha": "5738ace3ee90dde11336f8f8099e64e5645f7139",
+    }
     sha = manifest["previous_known_good"]["commit_sha"]
-    assert len(sha) == 40
     result = subprocess.run(
         ["git", "cat-file", "-e", f"{sha}^{{commit}}"],
         cwd=ROOT,
@@ -60,10 +65,10 @@ def test_candidate_does_not_embed_its_own_future_commit_identity():
     assert "immutable_reference" not in manifest
 
 
-def test_patch_candidate_preserves_the_broken_baseline_as_history():
+def test_patch_candidate_preserves_published_2_3_2_as_history():
     manifest = json.loads((ROOT / "release/release-manifest.json").read_text(encoding="utf-8"))
-    assert manifest["release_version"] == "2.3.2"
+    assert manifest["release_version"] == "2.3.3"
     assert manifest["recovery_of"] == {
-        "release_version": "2.3.1",
-        "commit_sha": "fa9f8caa4e1416528167c45cb03a2bad6b3c7867",
+        "release_version": "2.3.2",
+        "commit_sha": "5738ace3ee90dde11336f8f8099e64e5645f7139",
     }
