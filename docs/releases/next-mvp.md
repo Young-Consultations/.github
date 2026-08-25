@@ -1,7 +1,7 @@
 # Next MVP: approved issue to validated draft pull request
 
-**Status:** Organization-level planning baseline  
-**Scope owner:** `Young-Consultations/.github`  
+**Status:** Organization-level planning baseline
+**Scope owner:** `Young-Consultations/.github`
 **Normative requirement baseline:** [AI-SDLC control-plane requirements](../requirements/README.md)
 
 ## Objective
