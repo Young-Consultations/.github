@@ -2,7 +2,7 @@
   "activation_format_version": 1,
   "targets": {
     "Young-Consultations/.github": false,
-    "Young-Consultations/consulting-playbook": false,
+    "Young-Consultations/consulting-playbook": true,
     "Young-Consultations/portfolio-tasks": false,
     "Young-Consultations/slugger": false
   }
