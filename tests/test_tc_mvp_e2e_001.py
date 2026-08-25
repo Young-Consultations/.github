@@ -28,8 +28,13 @@ def test_sim_passes_without_real_effects(tmp_path: Path) -> None:
     assert payload["execution_provider"] == "fake"
     assert payload["target"] == e2e.REAL_TARGET
     assert payload["shared_target_adapter_path"] is True
+    assert payload["shared_receiver_path"] is True
     assert payload["sim_passed"] is True
     assert payload["real_acceptance_satisfied"] is False
+    assert payload["primary_execution_status"] == "draft-pr-created"
+    assert payload["duplicate_execution_status"] == "duplicate-reused"
+    assert payload["receiver_forward_count"] == 1
+    assert payload["conflicting_duplicate_result"] == "ambiguous-rejected"
     assert all(value == 0 for value in payload["effect_traps"].values())
 
 
@@ -52,5 +57,17 @@ def test_sim_cannot_claim_real_acceptance(tmp_path: Path) -> None:
     payload["real_acceptance_satisfied"] = True
     report.write_text(json.dumps(payload), encoding="utf-8")
     assert "SIM evidence incorrectly claims REAL acceptance" in e2e.run_real_preflight(
+        report, target_root
+    )
+
+
+def test_real_preflight_requires_shared_receiver_evidence(tmp_path: Path) -> None:
+    target_root = _target_root()
+    report = tmp_path / "sim.json"
+    assert e2e.run_sim(report, target_root) == []
+    payload = json.loads(report.read_text(encoding="utf-8"))
+    payload["shared_receiver_path"] = False
+    report.write_text(json.dumps(payload), encoding="utf-8")
+    assert "SIM evidence did not exercise the shared target and receiver paths" in e2e.run_real_preflight(
         report, target_root
     )
