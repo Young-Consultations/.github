@@ -107,9 +107,10 @@ request.
 It owns the canonical schemas, shared Python validator, immutable
 target-capability registry, mutable target activation state, organization
 router, result-receiver boundary, and contract tests. It validates and routes
-work but does not execute repository changes. All targets remain
-disabled until their owners approve immutable adapter revisions and publish the
-required conformance evidence.
+work but does not execute repository changes. `consulting-playbook` is the sole
+enabled target after approval of its immutable passing adapter evidence and
+target-compatibility result. `.github`, `portfolio-tasks`, and `slugger` remain
+disabled pending separate enablement decisions.
 
 The four registered target repositories—`.github`, `portfolio-tasks`,
 `consulting-playbook`, and `slugger`—own their `codex-execute.yml` workflows.
@@ -139,6 +140,9 @@ loads trusted journal-author identities from
 self-pinned composite action in the same immutable control-plane release;
 targets supply only the result-delivery credential. It never uses the
 caller-associated reusable-workflow context to select policy content.
-The current empty list is deny-all, not a permissive default. All targets remain
-disabled pending owner conformance and deployment evidence. See the
-[next-MVP path audit](docs/next-mvp-path-audit.md).
+The current reviewed author lists are explicit policy, not permissive defaults.
+`consulting-playbook` is the sole enabled target; its registry entry records
+immutable passing adapter evidence sufficient for activation, and the
+target-compatibility workflow is green. `.github`, `portfolio-tasks`, and
+`slugger` remain disabled. See the [next-MVP path
+audit](docs/next-mvp-path-audit.md).

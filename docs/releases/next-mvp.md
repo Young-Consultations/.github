@@ -205,11 +205,13 @@ Risks are label/provenance drift, incompatible target adapters, ambiguous
 delivery acknowledgement, duplicate publication, result loss, permissions
 that exceed the MVP boundary, and a simulation that diverges from the real
 path. The ADRs below resolve approval and result transport for the MVP; no
-organization-level implementation-blocking decision remains open. Owners must
-still approve the result journal-author identities, credentials, retention
-duration, and each target's enablement as deployment/governance decisions before
-the controlled real test. Until then the receiver author allowlist is
-empty/deny-all and every target remains disabled.
+organization-level implementation-blocking decision remains open. The receiver
+author identities are now explicitly approved, and `consulting-playbook` is the
+sole enabled target after approval of its immutable passing adapter evidence and
+green target-compatibility result. Owners must still approve credentials and
+retention duration before the controlled real test, and any further target
+enablement remains a separate deployment/governance decision. `.github`,
+`portfolio-tasks`, and `slugger` remain disabled.
 
 ## Trace links and requirement allocation
 
