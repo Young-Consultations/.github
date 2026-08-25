@@ -95,7 +95,10 @@ applies:
      ownership and integration boundaries.
 3. [Next-MVP planning baseline](docs/releases/next-mvp.md) — the objective,
    responsibility allocation, acceptance scenario, exclusions, and deferrals
-   that select and allocate work compliant with the requirements above.
+   that select and allocate work compliant with the requirements above. For
+   work on the controlled end-to-end acceptance path, also read the approved
+   [TC-MVP-E2E-001 acceptance design](docs/acceptance/TC-MVP-E2E-001.md), which
+   defines the shared SIM/REAL architecture and human-trigger boundary.
 4. [Architecture index](docs/architecture/README.md) — approved next-MVP design
    map and interpretation rules. Always consult [ADRs](docs/architecture/ADR.md)
    and [repository boundaries](docs/architecture/RepositoryBoundaries.md);
@@ -174,6 +177,17 @@ end-to-end MVP ends at one validated draft pull request and one correlated
 canonical result. Planned capabilities must not be described as implemented
 without implementation evidence.
 
+`TC-MVP-E2E-001` is one acceptance architecture with two modes, not two
+execution paths. `TC-MVP-E2E-001-SIM` resolves and executes the exact immutable
+adapter of the sole enabled target through deterministic fake Codex/publication
+effects and must report zero real effects. `TC-MVP-E2E-001-REAL` uses the
+existing source, router, target, receiver, and source-projection path after a
+non-mutating preflight. The REAL execution trigger remains the existing
+authorized-human `status:approved` action in `portfolio-tasks`; the control
+plane must not fabricate source approval, impersonate a target, or introduce a
+second execution engine. Passing SIM is required before REAL and never counts
+as REAL acceptance.
+
 Explicitly excluded are exactly-once transport, autonomous approval, automatic
 merge, release or deployment automation authority, production operation,
 production-scale SLO claims, and unrelated product, portfolio, consulting, or
@@ -237,6 +251,14 @@ behavioral evidence. Preflight must observe both the deterministic branch and
 all pull-request state before Codex, and inconsistent ownership fails
 `ambiguous-rejected` (ADR-016).
 
+For `TC-MVP-E2E-001`, the repository workflow
+`.github/workflows/tc-mvp-e2e-001.yml` runs the deterministic SIM path on pull
+requests and supports manual SIM or REAL-preflight dispatch. REAL-preflight is
+non-mutating. A real Codex acceptance execution is never started by that
+workflow; after merge and a green preflight, an authorized human triggers the
+existing source-owned `portfolio-tasks` approval event described in
+`docs/acceptance/TC-MVP-E2E-001.md`.
+
 `python scripts/verify_target_workflows.py` is applicable only when its
 documented target-workflow credentials and external access are available; pass
 `--fixtures-only` to run the script in offline mode without live credentials.
@@ -299,7 +321,10 @@ decided and justified during the relevant implementation task.
   reconciliation deadline remain pending their documented owner confirmation
   or human governance decisions. Further target enablement also requires an
   explicit governance decision; this repository records only the approved
-  `consulting-playbook` activation.
+  `consulting-playbook` activation. Required REAL acceptance credentials must
+  be confirmed by their existing owners before the human-triggered live run;
+  this repository must not invent a new cross-repository credential or bypass
+  the source-owned approval gate to compensate for missing confirmation.
 - ADR-001, ADR-002, ADR-005, ADR-006, and ADR-007 retain explicitly documented
   open questions. They block invention in the affected area but do not relax
   their decisions or authorize implementation artifacts to answer them.
