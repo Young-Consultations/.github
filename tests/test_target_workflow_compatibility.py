@@ -20,6 +20,10 @@ FIXTURE = ROOT / "tests/fixtures/target_workflows/portfolio-tasks-codex-execute.
 CANONICAL = FIXTURE.read_text(encoding="utf-8")
 
 
+def current_receiver_release() -> str:
+    return json.loads((ROOT / "release/release-manifest.json").read_text(encoding="utf-8"))["tag"]
+
+
 def workflow(inputs: str) -> str:
     return "on:\n  workflow_dispatch:\n    inputs:\n" + inputs
 
@@ -114,7 +118,7 @@ def test_target_receiver_pin_must_be_immutable():
 
 def test_canonical_receiver_accepts_only_result_delivery_credential():
     source = (ROOT / ".github/workflows/codex-result-receiver.yml").read_text()
-    assert checker.verify_receiver_interface(source) == "ai-sdlc-v2.3.2"
+    assert checker.verify_receiver_interface(source) == current_receiver_release()
     checker.verify_receiver_action(
         (ROOT / "actions/codex-result-receiver/action.yml").read_text()
     )
@@ -144,7 +148,7 @@ def test_receiver_cannot_checkout_policy_from_caller_context():
 
 def test_receiver_action_bundle_pin_must_be_immutable():
     source = (ROOT / ".github/workflows/codex-result-receiver.yml").read_text()
-    mutable = source.replace("@ai-sdlc-v2.3.2", "@main")
+    mutable = source.replace(f"@{current_receiver_release()}", "@main")
     with pytest.raises(checker.CompatibilityError, match="immutable"):
         checker.verify_receiver_interface(mutable)
 

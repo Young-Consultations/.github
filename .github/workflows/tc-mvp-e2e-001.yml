@@ -1,0 +1,126 @@
+name: TC-MVP-E2E-001 Acceptance
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/tc-mvp-e2e-001.yml'
+      - 'scripts/run_tc_mvp_e2e_001.py'
+      - 'scripts/run_tc_mvp_ci_001.py'
+      - 'scripts/codex_router.py'
+      - 'scripts/codex_result_receiver.py'
+      - 'scripts/validate_release.py'
+      - 'contracts/**'
+      - 'config/codex-activation.json'
+      - 'config/codex-repositories.json'
+      - 'config/codex-result-trust.json'
+      - 'release/release-manifest.json'
+      - 'pyproject.toml'
+      - 'tests/fixtures/mvp-v2/**'
+      - 'tests/test_tc_mvp_e2e_001.py'
+      - 'tests/test_codex_router.py'
+      - 'tests/test_codex_result_receiver.py'
+      - 'tests/test_release_lifecycle.py'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Acceptance mode'
+        required: true
+        default: sim
+        type: choice
+        options:
+          - sim
+          - real-preflight
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: '3.11'
+  TC_MVP_E2E_TARGET_ROOT: ${{ github.workspace }}/.e2e-target/consulting-playbook
+
+jobs:
+  sim:
+    name: Deterministic SIM path
+    if: github.event_name == 'pull_request' || inputs.mode == 'sim'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout control plane
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Resolve registered target adapter commit
+        id: target
+        shell: bash
+        run: |
+          set -euo pipefail
+          sha="$(python -c 'import json; print(json.load(open("config/codex-repositories.json"))["repositories"]["Young-Consultations/consulting-playbook"]["conformance"]["adapter_commit_sha"])')"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+      - name: Checkout immutable consulting-playbook adapter
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: Young-Consultations/consulting-playbook
+          ref: ${{ steps.target.outputs.sha }}
+          path: .e2e-target/consulting-playbook
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - name: Install dependencies
+        run: python -m pip install -r requirements-dev.txt
+      - name: Run receiver and dual-mode harness tests
+        run: python -m pytest tests/test_codex_router.py tests/test_codex_result_receiver.py tests/test_release_lifecycle.py tests/test_tc_mvp_e2e_001.py
+      - name: Run TC-MVP-E2E-001-SIM
+        run: python scripts/run_tc_mvp_e2e_001.py --mode sim --report reports/tc-mvp-e2e-001-sim.json
+      - name: Upload SIM evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: tc-mvp-e2e-001-sim
+          path: reports/tc-mvp-e2e-001-sim.json
+          if-no-files-found: error
+
+  real-preflight:
+    name: REAL readiness preflight only
+    if: github.event_name == 'workflow_dispatch' && inputs.mode == 'real-preflight'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout control plane
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Resolve registered target adapter commit
+        id: target
+        shell: bash
+        run: |
+          set -euo pipefail
+          sha="$(python -c 'import json; print(json.load(open("config/codex-repositories.json"))["repositories"]["Young-Consultations/consulting-playbook"]["conformance"]["adapter_commit_sha"])')"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+      - name: Checkout immutable consulting-playbook adapter
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: Young-Consultations/consulting-playbook
+          ref: ${{ steps.target.outputs.sha }}
+          path: .e2e-target/consulting-playbook
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - name: Install dependencies
+        run: python -m pip install -r requirements-dev.txt
+      - name: Run receiver and dual-mode harness tests
+        run: python -m pytest tests/test_codex_router.py tests/test_codex_result_receiver.py tests/test_release_lifecycle.py tests/test_tc_mvp_e2e_001.py
+      - name: Generate fresh SIM evidence
+        run: python scripts/run_tc_mvp_e2e_001.py --mode sim --report reports/tc-mvp-e2e-001-sim.json
+      - name: Verify REAL preflight gates
+        run: python scripts/run_tc_mvp_e2e_001.py --mode real-preflight --sim-report reports/tc-mvp-e2e-001-sim.json
+      - name: State safety boundary
+        run: |
+          echo 'REAL preflight passed. This workflow version intentionally performs no real Codex, branch, PR, receiver, or source mutation.'

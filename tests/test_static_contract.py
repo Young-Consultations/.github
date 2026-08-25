@@ -112,11 +112,12 @@ def test_result_receiver_owns_journal_author_policy():
     action = Path("actions/codex-result-receiver/action.yml").read_text(encoding="utf-8")
     script = Path("scripts/codex_result_receiver.py").read_text(encoding="utf-8")
     policy = json.loads(Path("config/codex-result-trust.json").read_text(encoding="utf-8"))
+    manifest = json.loads(Path("release/release-manifest.json").read_text(encoding="utf-8"))
 
     assert "CODEX_TRUSTED_JOURNAL_AUTHORS" not in receiver
     assert "actions/checkout@" not in receiver
     assert receiver.count(
-        "Young-Consultations/.github/actions/codex-result-receiver@ai-sdlc-v2.3.2"
+        f"Young-Consultations/.github/actions/codex-result-receiver@{manifest['tag']}"
     ) == 1
     assert '$GITHUB_ACTION_PATH/../../scripts/codex_result_receiver.py' in action
     assert "config/codex-result-trust.json" in script

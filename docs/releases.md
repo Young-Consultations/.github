@@ -13,12 +13,12 @@ receive one SemVer release. The immutable tag is
   permissions; expand a required permission; change input/output meaning; break
   a package API; make previously valid schema data invalid; change a closed
   enum; or incompatibly change registry keys or semantics.
-* **MINOR** changes add optional workflow or package APIs, add opt-in router
-  behavior without changing existing calls, or make backward-compatible schema
-  additions after every registered consumer accepts them. Because schemas are
-  closed, producers must not emit an optional addition until compatibility is
-  proven. Adding a registered target is minor; removing one is major unless it
-  was already formally deprecated.
+* **MINOR** changes add backward-compatible workflow or package behavior,
+  optional APIs, opt-in router behavior without breaking existing calls, or
+  backward-compatible schema additions after every registered consumer accepts
+  them. Because schemas are closed, producers must not emit an optional schema
+  addition until compatibility is proven. Adding a registered target is minor;
+  removing one is major unless it was already formally deprecated.
 * **PATCH** changes fix implementation or documentation without changing the
   accepted interface or observable policy. Security fixes use the level their
   compatibility impact requires; SemVer is not bypassed.
@@ -33,18 +33,19 @@ validated keys; changing their meaning is breaking.
 
 ## Controlled release procedure
 
-1. Create a focused recovery candidate pull request updating implementation,
+1. Create a focused candidate pull request updating implementation,
    documentation, package version, and manifest together. Run
    `python scripts/validate_release.py`, the complete test suite, registry
    validation, YAML validation, actionlint, and `git diff --check`. Structural
    coherence does not assert publication readiness.
-2. Correct each target independently. Publish no adapter tag until its real
-   repository adapter passes every shared-oracle scenario with all prohibited
-   effects at zero. Bind that report to a canonical v2 conformance pin containing
-   exact shared-file and target adapter/harness blob identities. The report must
-   not try to embed the SHA of its own containing commit. Then create the
-   immutable `codex-adapter-vMAJOR.MINOR.PATCH` tag and record its independently
-   resolved commit plus the committed report digest in the capability registry.
+2. Correct each affected target independently. Publish no adapter tag until its
+   real repository adapter passes every shared-oracle scenario with all
+   prohibited effects at zero. Bind that report to a canonical v2 conformance
+   pin containing exact shared-file and target adapter/harness blob identities.
+   The report must not try to embed the SHA of its own containing commit. Then
+   create the immutable `codex-adapter-vMAJOR.MINOR.PATCH` tag and record its
+   independently resolved commit plus the committed report digest in the
+   capability registry.
 3. Explicitly verify every registered target with
    `python scripts/verify_target_workflows.py --repository OWNER/REPOSITORY`.
    The unselected default report treats disabled targets as `not-evaluated` and
@@ -60,9 +61,10 @@ validated keys; changing their meaning is breaking.
    unused, then create and push one annotated `ai-sdlc-vX.Y.Z` tag. Never move,
    delete, or recreate a published tag. This task prepares the lifecycle only;
    it creates no production tag and publishes no Python distribution.
-6. Consumers pin the router to that exact tag or, before tag approval, the
-   reviewed 40-character merge SHA. Package consumers pin exactly the manifest
-   package version and schema consumers retrieve the same tag or SHA.
+6. Consumers pin the router/receiver to that exact tag or, before tag approval,
+   the reviewed 40-character merge SHA where the consumer contract permits it.
+   Package consumers pin exactly the manifest package version and schema
+   consumers retrieve the same release unit.
 
 The candidate contents never name their own future merge SHA. Finalize and
 merge first, obtain the immutable commit identity second, and record the pin in
@@ -71,22 +73,20 @@ release update. Target conformance follows the same rule: the report records the
 non-recursive conformance-pin revision, while the later registry entry records
 the tag's resolved commit and report digest.
 
-Reviewed 2.3.0 commit
-`c6090e5bbadcc2102a1cb91875466e9decdada1e` and published
-`ai-sdlc-v2.3.1` remain immutable historical evidence. The 2.3.2 recovery
-records new `portfolio-tasks` and `slugger` adapter tags rather than moving
-their 2.3.1 tags. It does not embed its prospective merge SHA. Every target
-remains disabled; activation is a separate operational change and does not
-require repinning. No `ai-sdlc-contracts==2.3.2` distribution is claimed until
-actually published and verified.
+Published `ai-sdlc-v2.3.1` and `ai-sdlc-v2.3.2` remain immutable historical
+evidence. Release 2.3.2 repaired incomplete `portfolio-tasks` and `slugger`
+conformance bindings by publishing new adapter tags whose pins include the exact
+report-producing harness. Subsequent governance review enabled only
+`consulting-playbook`; activation remains mutable operational state separate
+from immutable compatibility.
 
 Production mode remains draft-only. Release validation does not dispatch work,
 change settings or secrets, widen permissions, or create an approval bypass.
 
 ## Upgrade, deprecation, and consumer coordination
 
-Upgrade a consumer in its own pull request: update immutable router and
-schema/package pins as one change, validate its reusable-workflow call against
+Upgrade a consumer in its own pull request: update immutable router/receiver and
+schema/package pins as applicable, validate its reusable-workflow call against
 the manifest, run repository tests, then run organization target compatibility.
 Do not update an unregistered repository.
 
@@ -96,42 +96,55 @@ registered consumers migrate. Critical security remediation may shorten the
 window only with an explicit risk record and maintainer approval. Pre-releases
 do not start the window.
 
-The four registered consumers—`.github`, `portfolio-tasks`, `consulting-playbook`, and
-`slugger`—must each replace any mutable organization-router reference in a
-separate repository pull request with the new tag (or reviewed merge SHA).
-Cross-repository edits are intentionally not combined here. Release approval
-must record those three consumer PRs or confirm that no router call exists.
+Cross-repository consumer edits are intentionally separate. Release approval
+must record the affected consumer/target PRs or confirm that no update is
+required for a given registered repository.
 
 ## Current compatibility update
 
-The `ai-sdlc-v2.3.2` recovery corrects two incomplete target evidence bindings
-found by live verification after 2.3.1 publication. The affected target reports
-were generated by `scripts/run_tc_mvp_ci_001.py`, but their pins omitted that
-exact harness blob. The repaired `codex-adapter-v2.3.2` tags for
-`portfolio-tasks` and `slugger` bind the workflow, adapter, harness, validator,
-and contract test files and retain zero prohibited effects. Unaffected targets
-remain on their verified immutable 2.3.1 adapter tags. This PATCH changes no
-payload or router semantics and enables no target; `@main` is never a
-compatibility unit.
+Published `ai-sdlc-v2.3.2` remains the previous-known-good release at commit
+`5738ace3ee90dde11336f8f8099e64e5645f7139`.
+
+PR #54 prepares the unpublished `ai-sdlc-v2.4.0` candidate after
+`TC-MVP-E2E-001-SIM` exposed DEF-0032. The published receiver rejected every
+non-identical second result for one `delivery_id`, while a conforming target
+legitimately reports `draft-pr-created` on first success and
+`duplicate-reused` when the same managed draft is discovered on redelivery.
+The 2.4.0 candidate adds one backward-compatible receiver outcome: that specific
+transition is accepted as an idempotent no-op only when the stable managed-draft
+effect is unchanged. Every other non-identical result remains ambiguous and
+fails closed.
+
+This is a MINOR candidate rather than PATCH because the receiver gains new
+observable accepted behavior even though the closed v2 payload schemas and
+existing successful calls remain compatible. `tag_published` stays false until
+the normal release gates pass.
+
+Before 2.4.0 publication, `consulting-playbook` must consume the corrected
+receiver through a separately reviewed immutable target adapter, publish fresh
+no-real-effects conformance evidence, and be rebound in the registry to that
+adapter tag/commit/report digest. The final release change must then pass
+`python scripts/validate_release.py --require-publishable`. Until those steps
+are complete, `TC-MVP-E2E-001-REAL` remains fail-closed and no real acceptance
+Codex run is authorized by this candidate.
 
 ## Rollback
 
 Stop new dispatches through the normal approval control, then change each
-consumer pin back to `previous_known_good.commit_sha` from the manifest in
-reviewed, repository-local pull requests. Restore package and schema pins from
-that same unit; mixing versions is unsupported. Re-run contract tests, every
-registered target check, and the verify-mode smoke test before resuming. Do not
-move the failed tag and do not weaken the allowlist. The first managed release
-records the pre-versioning known-good commit as its rollback point. A corrective
-PATCH release updates `previous_known_good` to the last successful release.
+affected consumer pin back to `previous_known_good.commit_sha` from the manifest
+in reviewed, repository-local pull requests. Restore package and schema pins
+from that same unit; mixing versions is unsupported. Re-run contract tests,
+every registered target check, and the verify-mode smoke test before resuming.
+Do not move the failed tag and do not weaken the allowlist.
 
-### 2.3.2 recovery rollback
+### 2.4.0 candidate rollback
 
-Disable result calls and target dispatch first. Re-pin consumers to the 2.2.0
-known-good commit in the release manifest. Restore the portfolio and Slugger
-adapter entries to their immutable 2.3.1 records only for forensic comparison;
-those incomplete bindings are not activation evidence. Revoke the result-only
-credential and retain admission/result journal comments for reconciliation. Do
-not delete receipts or reinterpret an acknowledged transport as execution
-success. Re-run the offline fixture harness and receiver tests before restoring
-dispatch.
+If the 2.4.0 candidate fails before publication, do not create its tag. Restore
+the control-plane manifest/receiver/package references to published 2.3.2 and
+leave any candidate target adapter tags unused or retained only as immutable
+forensic evidence according to repository policy. If 2.4.0 is published and a
+post-publication issue is found, stop dispatch first and use the manifest's
+`previous_known_good` 2.3.2 commit as the rollback unit through reviewed
+repository-local changes. Preserve admission/result journal evidence for
+reconciliation; do not delete receipts or reinterpret transport acknowledgement
+as execution success.

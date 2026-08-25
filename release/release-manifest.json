@@ -1,12 +1,12 @@
 {
-  "release_version": "2.3.2",
-  "tag": "ai-sdlc-v2.3.2",
-  "tag_published": true,
-  "contract_package_version": "2.3.2",
+  "release_version": "2.4.0",
+  "tag": "ai-sdlc-v2.4.0",
+  "tag_published": false,
+  "contract_package_version": "2.4.0",
   "contract_payload_version": "ai-sdlc-contract/v2",
   "schema_version": "ai-sdlc-contract/v2",
   "registry_format_version": 1,
-  "router_interface_version": "2.3.2",
+  "router_interface_version": "2.4.0",
   "router_workflow": ".github/workflows/codex-router.yml",
   "registry": "config/codex-repositories.json",
   "supported_targets": [
@@ -16,12 +16,12 @@
     "Young-Consultations/slugger"
   ],
   "previous_known_good": {
-    "release_version": "2.2.0",
-    "commit_sha": "f2491872976a4dcc1633997954c03c07cbc4fced"
+    "release_version": "2.3.2",
+    "commit_sha": "5738ace3ee90dde11336f8f8099e64e5645f7139"
   },
   "recovery_of": {
-    "release_version": "2.3.1",
-    "commit_sha": "fa9f8caa4e1416528167c45cb03a2bad6b3c7867"
+    "release_version": "2.3.2",
+    "commit_sha": "5738ace3ee90dde11336f8f8099e64e5645f7139"
   },
   "result_receiver_workflow": ".github/workflows/codex-result-receiver.yml",
   "result_receiver_action": "actions/codex-result-receiver/action.yml",
