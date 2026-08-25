@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Authenticated, idempotent execution-result/v2 receiver.
 
-GitHub issue comments are the durable, source-owned delivery journal.  Only
-identity fields and a SHA-256 digest are stored; the canonical payload is sent
-to the source repository with ``repository_dispatch`` only after validation.
+GitHub issue comments are the durable, source-owned delivery journal. Only
+identity fields and digests are stored; the canonical payload is sent to the
+source repository with ``repository_dispatch`` only after validation.
 """
 from __future__ import annotations
 
@@ -87,6 +87,36 @@ def canonical_digest(value: dict[str, Any]) -> str:
     return hashlib.sha256(raw).hexdigest()
 
 
+def visible_effect(result: dict[str, Any]) -> tuple[str, str]:
+    """Return the stable visible-effect class and digest for retry comparison.
+
+    ``draft-pr-created`` followed by ``duplicate-reused`` is the one approved
+    non-identical result transition for a logical delivery. It is equivalent
+    only when the managed draft and validation outcome are unchanged. Attempt
+    metadata such as timestamps and workflow URL deliberately does not affect
+    this digest.
+    """
+    status = result["execution_status"]
+    effect_class = (
+        "managed-draft"
+        if status in {"draft-pr-created", "duplicate-reused"}
+        else status
+    )
+    value = {
+        "contract_version": result["contract_version"],
+        "correlation_id": result["correlation_id"],
+        "delivery_id": result["delivery_id"],
+        "target_repository": result["target_repository"],
+        "effect_class": effect_class,
+        "branch_name": result["branch_name"],
+        "pull_request_url": result["pull_request_url"],
+        "validation_result": result["validation_result"],
+        "test_result": result["test_result"],
+        "failure_category": result["failure_category"],
+    }
+    return effect_class, canonical_digest(value)
+
+
 def marker(prefix: str, value: dict[str, Any]) -> str:
     return prefix + json.dumps(value, separators=(",", ":"), sort_keys=True) + " -->"
 
@@ -124,6 +154,17 @@ class Receipt:
     duplicate: bool = False
 
 
+def _equivalent_managed_draft_redelivery(
+    prior: dict[str, Any], result: dict[str, Any], effect_class: str, effect_sha256: str
+) -> bool:
+    return (
+        result["execution_status"] == "duplicate-reused"
+        and effect_class == "managed-draft"
+        and prior.get("effect_class") == "managed-draft"
+        and prior.get("effect_sha256") == effect_sha256
+    )
+
+
 def receive(raw: str, source_issue: str, caller: str, journal: Journal) -> Receipt:
     try:
         result = json.loads(raw)
@@ -157,21 +198,50 @@ def receive(raw: str, source_issue: str, caller: str, journal: Journal) -> Recei
     unique_bindings = {json.dumps(item, separators=(",", ":"), sort_keys=True) for item in bindings}
     if len(unique_bindings) != 1 or any(bindings[0].get(key) != value for key, value in expected.items()):
         raise ReceiverError("authorization", "result does not match one admitted delivery binding")
+
     digest = canonical_digest(result)
+    effect_class, effect_sha256 = visible_effect(result)
+    evidence = {
+        **expected,
+        "result_sha256": digest,
+        "effect_class": effect_class,
+        "effect_sha256": effect_sha256,
+    }
+
     receipts = [item for item in parse_markers(comments, RECEIPT, "result", journal) if item.get("delivery_id") == result["delivery_id"]]
+    equivalent_redelivery = False
     if receipts:
-        if len(receipts) != 1 or receipts[0].get("result_sha256") != digest:
+        if len(receipts) != 1:
+            raise ReceiverError("unknown", "conflicting result exists for delivery", ambiguous=True)
+        prior = receipts[0]
+        if prior.get("result_sha256") == digest:
+            pass
+        elif _equivalent_managed_draft_redelivery(prior, result, effect_class, effect_sha256):
+            equivalent_redelivery = True
+        else:
             raise ReceiverError("unknown", "conflicting result exists for delivery", ambiguous=True)
     else:
-        evidence = {**expected, "result_sha256": digest, "receiver_run_id": os.getenv("GITHUB_RUN_ID", "offline")}
-        journal.append(source_repository, issue_number, marker(RECEIPT, evidence))
+        journal.append(
+            source_repository,
+            issue_number,
+            marker(RECEIPT, {**evidence, "receiver_run_id": os.getenv("GITHUB_RUN_ID", "offline")}),
+        )
+
     forwarded = [item for item in parse_markers(comments, FORWARDED, "result", journal) if item.get("delivery_id") == result["delivery_id"]]
     if forwarded:
-        if len(forwarded) == 1 and forwarded[0].get("result_sha256") == digest:
-            return Receipt(True, result["delivery_id"], result["correlation_id"], result["execution_status"], result["failure_category"], "Identical result already forwarded; no projection repeated.", True)
+        if len(forwarded) != 1:
+            raise ReceiverError("unknown", "conflicting forwarded state exists for delivery", ambiguous=True)
+        prior_forwarded = forwarded[0]
+        if prior_forwarded.get("result_sha256") == digest or (
+            equivalent_redelivery
+            and prior_forwarded.get("effect_class") == effect_class
+            and prior_forwarded.get("effect_sha256") == effect_sha256
+        ):
+            return Receipt(True, result["delivery_id"], result["correlation_id"], result["execution_status"], result["failure_category"], "Equivalent result already forwarded; no projection repeated.", True)
         raise ReceiverError("unknown", "conflicting forwarded state exists for delivery", ambiguous=True)
+
     journal.forward(source_repository, {"source_issue": source_issue, "execution_result": result})
-    journal.append(source_repository, issue_number, marker(FORWARDED, {**expected, "result_sha256": digest}))
+    journal.append(source_repository, issue_number, marker(FORWARDED, evidence))
     return Receipt(True, result["delivery_id"], result["correlation_id"], result["execution_status"], result["failure_category"], "Validated result durably recorded and forwarded.")
 
 
