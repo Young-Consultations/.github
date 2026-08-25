@@ -29,7 +29,15 @@ def test_registry_json_syntax_and_required_fields():
     assert len(repos) == 4
     activation = json.loads(Path("config/codex-activation.json").read_text(encoding="utf-8"))
     assert activation["activation_format_version"] == 1
-    assert activation["targets"] == {name: False for name in repos}
+    assert activation["targets"] == {
+        "Young-Consultations/.github": False,
+        "Young-Consultations/consulting-playbook": True,
+        "Young-Consultations/portfolio-tasks": False,
+        "Young-Consultations/slugger": False,
+    }
+    assert {
+        name for name, enabled in activation["targets"].items() if enabled
+    } == {"Young-Consultations/consulting-playbook"}
     expected_adapter_refs = {
         "Young-Consultations/.github": "codex-adapter-v2.3.1",
         "Young-Consultations/consulting-playbook": "codex-adapter-v2.3.1",

@@ -289,13 +289,17 @@ decided and justified during the relevant implementation task.
   preserve complete 29-scenario, zero-prohibited-effect evidence; the 2.3.2
   control-plane registry records those new tag/commit/report-digest tuples.
   This repair is compatibility evidence, not a production-readiness or
-  activation claim. Every target remains disabled. Source-consumer deployment,
-  credential, retention, reconciliation, and target-enablement approval remain
-  external governance evidence, not permission to create another path.
-- Repository-specific requirement IDs, target enablement, credentials,
-  retention duration, and reconciliation deadline remain pending their
-  documented owner confirmation or human governance decisions. This repository
-  does not establish their current state.
+  activation claim. Subsequent governance review approved
+  `consulting-playbook` as the sole enabled target based on its immutable
+  passing adapter evidence and a green target-compatibility run; `.github`,
+  `portfolio-tasks`, and `slugger` remain disabled. Source-consumer deployment,
+  credential, retention, and reconciliation evidence remain external
+  governance decisions, not permission to create another path.
+- Repository-specific requirement IDs, credentials, retention duration, and
+  reconciliation deadline remain pending their documented owner confirmation
+  or human governance decisions. Further target enablement also requires an
+  explicit governance decision; this repository records only the approved
+  `consulting-playbook` activation.
 - ADR-001, ADR-002, ADR-005, ADR-006, and ADR-007 retain explicitly documented
   open questions. They block invention in the affected area but do not relax
   their decisions or authorize implementation artifacts to answer them.
