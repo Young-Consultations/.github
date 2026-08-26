@@ -47,20 +47,34 @@ validated keys; changing their meaning is breaking.
    independently resolved commit plus the committed report digest in the
    capability registry.
 3. Explicitly verify every registered target with
-   `python scripts/verify_target_workflows.py --repository OWNER/REPOSITORY`.
-   The unselected default report treats disabled targets as `not-evaluated` and
-   exits nonzero; disabled, skipped, movable, missing, or substituted evidence
-   cannot satisfy release approval. Run the Router smoke test in `verify` mode,
+   `python scripts/verify_release_target_workflows.py --repository OWNER/REPOSITORY`.
+   This release-aware command delegates to the normal immutable verifier first.
+   Before the control-plane tag exists, it may verify the current reviewed
+   checkout only when the target pins the exact tag named by the current release
+   manifest and GitHub confirms that exact tag is still absent. The local
+   receiver must self-pin that exact manifest tag and its action, trust policy,
+   receiver implementation, and result schema must pass the same interface and
+   policy checks. Any other missing, movable, substituted, or incompatible ref
+   fails closed. After the tag exists, normal remote immutable verification
+   takes precedence. The unselected default report treats disabled targets as
+   `not-evaluated` and exits nonzero. Run the Router smoke test in `verify` mode,
    confirming it invokes no Codex runtime and creates no branch or pull request.
 4. In the final release pull request, record the reviewed journal-author
    identities, set `tag_published` to `true`, and run
-   `python scripts/validate_release.py --require-publishable`. Obtain
-   protected-branch checks and maintainer/security approval. Never bypass
-   existing approval controls. Merge the reviewed change before tagging.
-5. From the reviewed merge commit, re-run the gates, confirm the manifest tag is
-   unused, then create and push one annotated `ai-sdlc-vX.Y.Z` tag. Never move,
-   delete, or recreate a published tag. This task prepares the lifecycle only;
-   it creates no production tag and publishes no Python distribution.
+   `python scripts/validate_release.py --require-publishable`. In this lifecycle,
+   `tag_published: true` is the reviewed publication-state marker authorizing the
+   release to proceed to the immutable-tag step; it does not by itself prove the
+   Git tag already exists. Actual tag existence is checked separately after the
+   reviewed merge and before REAL acceptance. Obtain protected-branch checks and
+   maintainer/security approval. Never bypass existing approval controls. Merge
+   the reviewed change before tagging.
+5. From the reviewed merge commit, re-run the release-aware target verification,
+   release validation, complete test suite, and verify-mode Router smoke test.
+   Confirm the manifest tag is still unused, then create and push one annotated
+   `ai-sdlc-vX.Y.Z` tag. Never move, delete, or recreate a published tag. After
+   tag creation, re-run verification so the same checks resolve the immutable
+   tag remotely. This task prepares the lifecycle only; it creates no production
+   tag and publishes no Python distribution.
 6. Consumers pin the router/receiver to that exact tag or, before tag approval,
    the reviewed 40-character merge SHA where the consumer contract permits it.
    Package consumers pin exactly the manifest package version and schema
@@ -105,7 +119,7 @@ required for a given registered repository.
 Published `ai-sdlc-v2.3.2` remains the previous-known-good release at commit
 `5738ace3ee90dde11336f8f8099e64e5645f7139`.
 
-PR #54 prepares the unpublished `ai-sdlc-v2.4.0` candidate after
+PR #54 prepared the `ai-sdlc-v2.4.0` candidate after
 `TC-MVP-E2E-001-SIM` exposed DEF-0032. The published receiver rejected every
 non-identical second result for one `delivery_id`, while a conforming target
 legitimately reports `draft-pr-created` on first success and
@@ -117,16 +131,19 @@ fails closed.
 
 This is a MINOR candidate rather than PATCH because the receiver gains new
 observable accepted behavior even though the closed v2 payload schemas and
-existing successful calls remain compatible. `tag_published` stays false until
-the normal release gates pass.
+existing successful calls remain compatible. The final release review sets the
+manifest publication-state marker only after target conformance and registry
+binding are complete; the immutable tag is still created only after that final
+review merges and all release gates pass.
 
 Before 2.4.0 publication, `consulting-playbook` must consume the corrected
 receiver through a separately reviewed immutable target adapter, publish fresh
 no-real-effects conformance evidence, and be rebound in the registry to that
-adapter tag/commit/report digest. The final release change must then pass
-`python scripts/validate_release.py --require-publishable`. Until those steps
-are complete, `TC-MVP-E2E-001-REAL` remains fail-closed and no real acceptance
-Codex run is authorized by this candidate.
+adapter tag/commit/report digest. Those target and registry steps are complete.
+The final release change must pass `python scripts/validate_release.py
+--require-publishable`, release-aware registered-target verification, and the
+verify-mode Router smoke test. Until the immutable `ai-sdlc-v2.4.0` tag actually
+exists and REAL preflight passes, no real acceptance Codex run is authorized.
 
 ## Rollback
 
