@@ -88,9 +88,10 @@ jobs:
     if: github.event_name == 'workflow_dispatch' && inputs.mode == 'real-preflight'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout control plane
+      - name: Checkout immutable control-plane release
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
+          ref: ai-sdlc-v2.4.0
           persist-credentials: false
           fetch-depth: 0
       - name: Resolve registered target adapter commit
