@@ -11,16 +11,15 @@ def test_current_release_candidate_is_structurally_coherent():
     assert validate_release.validate() == []
 
 
-def test_unpublished_candidate_cannot_satisfy_publication_gate():
-    errors = validate_release.validate(require_publishable=True)
-    assert "publishable release must declare tag_published true" in errors
+def test_final_release_candidate_satisfies_publication_gate():
+    assert validate_release.validate(require_publishable=True) == []
 
 
-def test_mvp_fixture_targets_match_candidate_manifest():
+def test_mvp_fixture_targets_match_final_release_manifest():
     manifest = json.loads((ROOT / "release/release-manifest.json").read_text(encoding="utf-8"))
     fixture = json.loads((ROOT / "tests/fixtures/mvp-v2/manifest.json").read_text(encoding="utf-8"))
     assert manifest["release_version"] == "2.4.0"
-    assert manifest["tag_published"] is False
+    assert manifest["tag_published"] is True
     assert "immutable_reference" not in fixture
     assert "immutable_reference" not in manifest
     assert sorted(fixture["targets"]) == manifest["supported_targets"]
