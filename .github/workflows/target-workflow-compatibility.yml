@@ -21,7 +21,9 @@ on:
       - 'config/codex-repositories.json'
       - 'config/codex-activation.json'
       - 'scripts/verify_target_workflows.py'
+      - 'scripts/verify_release_target_workflows.py'
       - 'tests/test_target_workflow_compatibility.py'
+      - 'tests/test_release_target_verifier.py'
       - 'release/release-manifest.json'
       - '.github/workflows/target-workflow-compatibility.yml'
 
@@ -46,7 +48,7 @@ jobs:
       - name: Install dependencies
         run: python -m pip install -r requirements-dev.txt
       - name: Run offline compatibility tests
-        run: python -m pytest tests/test_target_workflow_compatibility.py
+        run: python -m pytest tests/test_target_workflow_compatibility.py tests/test_release_target_verifier.py
       - name: Verify canonical target fixture on pull requests
         if: ${{ github.event_name == 'pull_request' }}
         run: python scripts/verify_target_workflows.py --fixtures-only
@@ -63,7 +65,7 @@ jobs:
             local repository="$1"
             local report_name
             report_name="$(printf '%s' "$repository" | tr '/.' '--')"
-            if ! python scripts/verify_target_workflows.py \
+            if ! python scripts/verify_release_target_workflows.py \
                 --repository "$repository" \
                 --report "reports/${report_name}.json"; then
               verification_status=1
