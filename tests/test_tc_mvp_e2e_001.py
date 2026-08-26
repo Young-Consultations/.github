@@ -95,8 +95,12 @@ def test_target_identity_git_failure_is_actionable(monkeypatch: pytest.MonkeyPat
     ]
 
 
-def test_real_preflight_passes_after_published_release_tag_exists(tmp_path: Path) -> None:
+def test_real_preflight_passes_for_published_release_when_identity_is_valid(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     target_root = _target_root()
+    monkeypatch.setattr(e2e, "_control_plane_release_identity_errors", lambda: [])
+
     missing = tmp_path / "missing.json"
     errors = e2e.run_real_preflight(missing, target_root)
     assert "SIM evidence is missing" in errors
