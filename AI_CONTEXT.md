@@ -193,12 +193,14 @@ non-identical transition as an idempotent no-op only when it represents the same
 stable managed-draft effect; every other non-identical result remains ambiguous
 and fails closed.
 
-PR #54 prepares `ai-sdlc-v2.4.0` as an **unpublished MINOR candidate** because
-this adds a backward-compatible accepted receiver outcome while keeping the
-closed v2 payload schemas unchanged. The 2.3.2 tag must not move or be
-reinterpreted. REAL remains blocked until 2.4.0 is published and the registered
-`consulting-playbook` adapter is rebound by reviewed immutable evidence to a
-target workflow that consumes the 2.4.0 receiver.
+PR #54 prepared `ai-sdlc-v2.4.0` as a MINOR candidate because this adds a
+backward-compatible accepted receiver outcome while keeping the closed v2
+payload schemas unchanged. The 2.3.2 tag must not move or be reinterpreted.
+`consulting-playbook` now has reviewed immutable `codex-adapter-v2.4.0`
+evidence and the control-plane registry is rebound to that adapter. The final
+2.4.0 release review may mark the manifest publishable, but REAL remains blocked
+until the immutable `ai-sdlc-v2.4.0` control-plane tag actually exists and the
+non-mutating REAL preflight passes.
 
 Explicitly excluded are exactly-once transport, autonomous approval, automatic
 merge, release or deployment automation authority, production operation,
@@ -245,17 +247,20 @@ packages declared in [`requirements-dev.txt`](requirements-dev.txt):
 python -m pytest
 python scripts/validate_release.py
 python scripts/verify_target_workflows.py
+python scripts/verify_release_target_workflows.py --repository OWNER/REPOSITORY
 git diff --check
 ```
 
 `python scripts/validate_release.py` verifies structural candidate coherence.
-PR #54's 2.4.0 candidate intentionally has `tag_published: false`, so it is not
-itself publication evidence. Before an actual 2.4.0 compatibility tag, the
-affected `consulting-playbook` target must consume the corrected receiver under
-a reviewed immutable adapter and publish complete no-real-effects conformance
-evidence; the registry must bind that tag/commit/report digest; and the
-separately reviewed final release change must pass
-`python scripts/validate_release.py --require-publishable`.
+The final 2.4.0 release review sets `tag_published: true` only after the target
+adapter, conformance evidence, and registry binding are reviewed. In this
+lifecycle that field is the publication-state marker used by the final release
+gate; actual immutable tag existence is a separate check after merge. Before
+tag creation, `verify_release_target_workflows.py` delegates to normal remote
+verification first and may use the current reviewed checkout only when a target
+pins the exact manifest tag and GitHub confirms that exact tag is absent. All
+other missing, substituted, or incompatible refs remain fail-closed. Once the
+tag exists, remote immutable verification takes precedence.
 
 Conformance reports identify a canonical non-recursive v2 pin of exact shared
 and target files. They never predict the SHA of the commit that contains them;
@@ -270,21 +275,25 @@ Codex, and inconsistent ownership fails `ambiguous-rejected` (ADR-016).
 For `TC-MVP-E2E-001`, the repository workflow
 `.github/workflows/tc-mvp-e2e-001.yml` runs the deterministic SIM path on pull
 requests and supports manual SIM or REAL-preflight dispatch. REAL-preflight is
-non-mutating and must remain blocked while the corrective release is unpublished
-or the selected target receiver pin is stale. A real Codex acceptance execution
-is never started by that workflow. Only after a published corrective release,
-green REAL preflight, and source revision review does an authorized human
-trigger the existing source-owned `portfolio-tasks` approval event described in
-`docs/acceptance/TC-MVP-E2E-001.md`.
+non-mutating and must remain blocked while the immutable corrective release tag
+is absent or the selected target receiver pin is stale. A real Codex acceptance
+execution is never started by that workflow. Only after the corrective release
+tag exists, green REAL preflight, and source revision review does an authorized
+human trigger the existing source-owned `portfolio-tasks` approval event
+described in `docs/acceptance/TC-MVP-E2E-001.md`.
 
-`python scripts/verify_target_workflows.py` is applicable only when its
-documented target-workflow credentials and external access are available; pass
-`--fixtures-only` to run the script in offline mode without live credentials.
-The target compatibility workflow separately runs its local pytest coverage.
-Documentation-only work must at minimum validate Markdown links, review the
-diff and changed-file list, apply any available Markdown checks, scan for
-sensitive or unsupported claims, and run `git diff --check`. No standalone
-Markdown linter is configured in this repository.
+`python scripts/verify_target_workflows.py` is the normal immutable target
+verifier. The release-aware wrapper is applicable only to release-gate
+verification and only for the exact current manifest tag before it is created;
+it must never be used as a general fallback for missing receiver refs. Both
+commands require their documented target-workflow credentials and external
+access for live checks; pass `--fixtures-only` to the normal verifier for
+offline target-fixture validation. The target compatibility workflow separately
+runs its local pytest coverage. Documentation-only work must at minimum validate
+Markdown links, review the diff and changed-file list, apply any available
+Markdown checks, scan for sensitive or unsupported claims, and run
+`git diff --check`. No standalone Markdown linter is configured in this
+repository.
 
 ## Rules for future AI implementation tasks
 
@@ -329,16 +338,14 @@ decided and justified during the relevant implementation task.
   preserve complete no-prohibited-effect evidence; the 2.3.2 control-plane
   registry records those tag/commit/report-digest tuples.
 - Subsequent governance review approved `consulting-playbook` as the sole
-  enabled target based on its immutable passing adapter evidence and a green
-  target-compatibility run; `.github`, `portfolio-tasks`, and `slugger` remain
-  disabled.
+  enabled target. Its `codex-adapter-v2.4.0` evidence is now immutable and
+  registered; `.github`, `portfolio-tasks`, and `slugger` remain disabled.
 - DEF-0032 is resolved in the 2.4.0 candidate architecture and implementation
-  but is **not yet a live published correction**. The currently registered
-  `consulting-playbook` adapter still consumes the historical receiver. Before
-  REAL, that target must be updated in its own reviewed change, produce fresh
-  immutable conformance evidence, be rebound in the registry, and the 2.4.0
-  compatibility unit must be reviewed and published. Until then REAL preflight
-  must fail closed.
+  but is not yet a live published correction. Remaining work is the final
+  release review, immutable control-plane tag creation, and REAL preflight.
+  Release-aware target verification may validate the reviewed checkout only for
+  the exact not-yet-created manifest tag; this is a release-gate rule, not a
+  second compatibility or execution path.
 - Repository-specific requirement IDs, credentials, retention duration, and
   reconciliation deadline remain pending their documented owner confirmation
   or human governance decisions. Further target enablement also requires an
@@ -359,7 +366,7 @@ decided and justified during the relevant implementation task.
 
 No unresolved architectural speculation is recorded here. The remaining 2.4.0
 work is an implementation/release-governance sequence under the resolved
-TC-MVP-E2E-001 and receiver semantics.
+TC-MVP-E2E-001, receiver semantics, and release-verification rule.
 
 ## Maintenance rule
 
