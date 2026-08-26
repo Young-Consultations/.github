@@ -27,7 +27,7 @@ def test_sim_passes_without_real_effects(tmp_path: Path) -> None:
     assert payload["test_id"] == "TC-MVP-E2E-001-SIM"
     assert payload["published_baseline"] == "2.3.2"
     assert payload["candidate_release"] == "2.4.0"
-    assert payload["candidate_tag_published"] is False
+    assert payload["candidate_tag_published"] is True
     assert payload["execution_provider"] == "fake"
     assert payload["dispatch_provider"] == "fake-in-process-target"
     assert payload["target"] == e2e.REAL_TARGET
@@ -95,7 +95,7 @@ def test_target_identity_git_failure_is_actionable(monkeypatch: pytest.MonkeyPat
     ]
 
 
-def test_real_preflight_fails_closed_until_release_is_published(tmp_path: Path) -> None:
+def test_real_preflight_fails_closed_until_release_tag_exists(tmp_path: Path) -> None:
     target_root = _target_root()
     missing = tmp_path / "missing.json"
     errors = e2e.run_real_preflight(missing, target_root)
@@ -104,7 +104,7 @@ def test_real_preflight_fails_closed_until_release_is_published(tmp_path: Path) 
     report = tmp_path / "sim.json"
     assert e2e.run_sim(report, target_root) == []
     errors = e2e.run_real_preflight(report, target_root)
-    assert "ai-sdlc-v2.4.0 is not published; REAL remains blocked" in errors
+    assert "ai-sdlc-v2.4.0 is not published; REAL remains blocked" not in errors
     assert "enabled target is not pinned to the ai-sdlc-v2.4.0 receiver" not in errors
     assert "published tag ai-sdlc-v2.4.0 is not available in this checkout" in errors
 
