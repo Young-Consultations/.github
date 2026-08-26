@@ -95,7 +95,7 @@ def test_target_identity_git_failure_is_actionable(monkeypatch: pytest.MonkeyPat
     ]
 
 
-def test_real_preflight_fails_closed_until_release_tag_exists(tmp_path: Path) -> None:
+def test_real_preflight_passes_after_published_release_tag_exists(tmp_path: Path) -> None:
     target_root = _target_root()
     missing = tmp_path / "missing.json"
     errors = e2e.run_real_preflight(missing, target_root)
@@ -103,10 +103,7 @@ def test_real_preflight_fails_closed_until_release_tag_exists(tmp_path: Path) ->
 
     report = tmp_path / "sim.json"
     assert e2e.run_sim(report, target_root) == []
-    errors = e2e.run_real_preflight(report, target_root)
-    assert "ai-sdlc-v2.4.0 is not published; REAL remains blocked" not in errors
-    assert "enabled target is not pinned to the ai-sdlc-v2.4.0 receiver" not in errors
-    assert "published tag ai-sdlc-v2.4.0 is not available in this checkout" in errors
+    assert e2e.run_real_preflight(report, target_root) == []
 
 
 def test_sim_cannot_claim_real_acceptance(tmp_path: Path) -> None:
