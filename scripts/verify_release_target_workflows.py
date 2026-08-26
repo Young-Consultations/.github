@@ -3,16 +3,19 @@
 
 The normal verifier resolves immutable receiver refs from GitHub. During the narrow
 release window where a reviewed target already pins the exact next manifest tag but
-that tag has not yet been created, release verification must instead validate the
-current reviewed control-plane checkout. All other missing or unavailable receiver
-refs continue to fail closed.
+that tag has not yet been created, release verification may validate the current
+reviewed control-plane checkout. All other missing or unavailable receiver refs
+continue to fail closed.
 """
 from __future__ import annotations
 
 import json
 from pathlib import Path
 
-from scripts import verify_target_workflows as checker
+try:
+    from scripts import verify_target_workflows as checker
+except ModuleNotFoundError:  # Direct execution: python scripts/verify_release_target_workflows.py
+    import verify_target_workflows as checker  # type: ignore[no-redef]
 
 ROOT = Path(__file__).resolve().parents[1]
 _REMOTE_VERIFY_RECEIVER = checker.verify_receiver_at_ref
