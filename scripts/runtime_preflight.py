@@ -125,7 +125,12 @@ def main() -> int:
                 for name in expected["variables"]:
                     if name not in actual_variables:
                         failures.append(f"credentials: {repository} variable {name} is missing")
-            checks.append({"boundary": "credential-metadata", "status": "PASS" if not any(value.startswith("credentials:") for value in failures) else "FAIL"})
+        checks.append({
+            "boundary": "credential-metadata",
+            "status": "PASS" if not any(
+                value.startswith("credentials:") for value in failures
+            ) else "FAIL",
+        })
 
     result = {
         "status": "PASS" if not failures else "FAIL",
