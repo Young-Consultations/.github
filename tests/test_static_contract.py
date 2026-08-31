@@ -41,7 +41,7 @@ def test_registry_json_syntax_and_required_fields():
     } == {"Young-Consultations/consulting-playbook"}
     expected_adapter_refs = {
         "Young-Consultations/.github": "codex-adapter-v2.3.1",
-        "Young-Consultations/consulting-playbook": "codex-adapter-v2.4.0",
+        "Young-Consultations/consulting-playbook": "codex-adapter-v2.4.1",
         "Young-Consultations/portfolio-tasks": "codex-adapter-v2.3.2",
         "Young-Consultations/slugger": "codex-adapter-v2.3.2",
     }
