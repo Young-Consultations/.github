@@ -50,6 +50,30 @@ def test_credential_roles_cover_only_the_enabled_runtime_path():
     assert "Young-Consultations/slugger" not in roles
 
 
+def test_workflow_separates_release_and_audit_credential_roles():
+    workflow = Path(".github/workflows/runtime-preflight.yml").read_text(encoding="utf-8")
+    assert "GH_TOKEN: ${{ github.token }}" in workflow
+    assert "PREFLIGHT_AUDIT_TOKEN: ${{ secrets.PREFLIGHT_AUDIT_TOKEN }}" in workflow
+
+
+def test_credential_metadata_uses_only_the_audit_token(monkeypatch):
+    observed = {}
+
+    def fake_api(endpoint, *, token=None):
+        observed["endpoint"] = endpoint
+        observed["token"] = token
+        return [{"secrets": [{"name": "EXAMPLE"}]}]
+
+    monkeypatch.setattr(runtime_preflight, "api", fake_api)
+    assert runtime_preflight.named_values("org/repo", "secrets", "audit-token") == {
+        "EXAMPLE"
+    }
+    assert observed == {
+        "endpoint": "repos/org/repo/actions/secrets?per_page=100",
+        "token": "audit-token",
+    }
+
+
 def test_remote_release_tag_resolves_lightweight_commit(monkeypatch):
     monkeypatch.setattr(
         runtime_preflight,

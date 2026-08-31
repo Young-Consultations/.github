@@ -16,20 +16,23 @@ def load(relative: str) -> dict[str, Any]:
     return json.loads((ROOT / relative).read_text(encoding="utf-8"))
 
 
-def api(endpoint: str) -> Any:
+def api(endpoint: str, *, token: str | None = None) -> Any:
+    env = None if token is None else {**os.environ, "GH_TOKEN": token}
     completed = subprocess.run(
         ["gh", "api", "--paginate", "--slurp", endpoint],
         check=True,
         text=True,
         capture_output=True,
+        env=env,
     )
     pages = json.loads(completed.stdout)
     return [item for page in pages for item in page] if all(isinstance(page, list) for page in pages) else pages
 
 
-def api_one(endpoint: str) -> Any:
+def api_one(endpoint: str, *, token: str | None = None) -> Any:
+    env = None if token is None else {**os.environ, "GH_TOKEN": token}
     completed = subprocess.run(
-        ["gh", "api", endpoint], check=True, text=True, capture_output=True,
+        ["gh", "api", endpoint], check=True, text=True, capture_output=True, env=env,
     )
     return json.loads(completed.stdout)
 
@@ -51,8 +54,10 @@ def remote_tag_commit(tag: str) -> str:
     raise ValueError("release tag does not resolve to a commit")
 
 
-def named_values(repository: str, kind: str) -> set[str]:
-    rows = api(f"repos/{repository}/actions/{kind}?per_page=100")
+def named_values(repository: str, kind: str, audit_token: str) -> set[str]:
+    rows = api(
+        f"repos/{repository}/actions/{kind}?per_page=100", token=audit_token
+    )
     field = "secrets" if kind == "secrets" else "variables"
     values = [item for row in rows if isinstance(row, dict) for item in row.get(field, [])]
     return {str(item.get("name")) for item in values if isinstance(item, dict)}
@@ -103,13 +108,14 @@ def main() -> int:
         })
 
     if not args.offline:
-        if not os.environ.get("GH_TOKEN"):
+        audit_token = os.environ.get("PREFLIGHT_AUDIT_TOKEN")
+        if not audit_token:
             failures.append("credentials: PREFLIGHT_AUDIT_TOKEN is unavailable")
         else:
             for repository, expected in roles.items():
                 try:
-                    actual_secrets = named_values(repository, "secrets")
-                    actual_variables = named_values(repository, "variables")
+                    actual_secrets = named_values(repository, "secrets", audit_token)
+                    actual_variables = named_values(repository, "variables", audit_token)
                 except (subprocess.CalledProcessError, json.JSONDecodeError) as exc:
                     failures.append(f"credentials: cannot inspect {repository}: {exc}")
                     continue
