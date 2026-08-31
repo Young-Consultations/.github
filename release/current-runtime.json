@@ -34,7 +34,7 @@
       "contract_version": "ai-sdlc-contract/v2",
       "draft_pr_only": true,
       "enabled": true,
-      "workflow_ref": "Young-Consultations/consulting-playbook/.github/workflows/codex-execute.yml@codex-adapter-v2.4.0"
+      "workflow_ref": "Young-Consultations/consulting-playbook/.github/workflows/codex-execute.yml@codex-adapter-v2.4.1"
     },
     "Young-Consultations/portfolio-tasks": {
       "contract_version": "ai-sdlc-contract/v2",
