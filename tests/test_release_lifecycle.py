@@ -7,22 +7,20 @@ from scripts import validate_release
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_current_release_candidate_is_structurally_coherent():
+def test_current_published_release_is_structurally_coherent():
     assert validate_release.validate() == []
 
 
-def test_patch_candidate_is_coherent_but_not_yet_publishable():
+def test_patch_release_is_publishable():
     assert validate_release.validate() == []
-    assert validate_release.validate(require_publishable=True) == [
-        "publishable release must declare tag_published true"
-    ]
+    assert validate_release.validate(require_publishable=True) == []
 
 
-def test_mvp_fixture_targets_match_patch_candidate_manifest():
+def test_mvp_fixture_targets_match_published_patch_manifest():
     manifest = json.loads((ROOT / "release/release-manifest.json").read_text(encoding="utf-8"))
     fixture = json.loads((ROOT / "tests/fixtures/mvp-v2/manifest.json").read_text(encoding="utf-8"))
     assert manifest["release_version"] == "2.4.1"
-    assert manifest["tag_published"] is False
+    assert manifest["tag_published"] is True
     assert "immutable_reference" not in fixture
     assert "immutable_reference" not in manifest
     assert sorted(fixture["targets"]) == manifest["supported_targets"]
@@ -62,10 +60,10 @@ def test_previous_known_good_is_published_2_4_0_commit():
     assert result.returncode == 0, result.stderr.decode()
 
 
-def test_candidate_does_not_embed_its_own_future_commit_identity():
+def test_publication_attests_the_immutable_release_commit():
     manifest = json.loads((ROOT / "release/release-manifest.json").read_text(encoding="utf-8"))
     assert "immutable_reference" not in manifest
-    assert manifest["tag_commit_sha"] is None
+    assert manifest["tag_commit_sha"] == "34ec7dc1cf54f960757781851384e0f6b15f7b63"
 
 
 def test_manifest_paths_cannot_escape_the_repository(tmp_path):

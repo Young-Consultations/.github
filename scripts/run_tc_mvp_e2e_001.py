@@ -97,17 +97,21 @@ def _candidate_release_errors() -> list[str]:
 
 
 def _control_plane_release_identity_errors() -> list[str]:
-    """Require REAL preflight to execute from the immutable published tag."""
+    """Require the published tag to resolve to its explicitly attested commit."""
 
+    # Publication is attested on main after the immutable release tag exists.
+    # Therefore the verifier checkout is intentionally newer than the tag.
+    manifest = _load(RELEASE_MANIFEST)
     tag = f"ai-sdlc-v{CANDIDATE_RELEASE}"
-    head, head_error = _git_output(["rev-parse", "HEAD"])
-    if head_error:
-        return [f"control-plane checkout identity cannot be read: {head_error}"]
+    expected_commit = manifest.get("tag_commit_sha")
     tag_commit, tag_error = _git_output(["rev-list", "-n", "1", tag])
     if tag_error or not tag_commit:
         return [f"published tag {tag} is not available in this checkout"]
-    if head != tag_commit:
-        return [f"REAL preflight must execute from {tag} commit {tag_commit}, got {head}"]
+    if tag_commit != expected_commit:
+        return [
+            f"published tag {tag} resolves to {tag_commit}, not attested commit "
+            f"{expected_commit}"
+        ]
     return []
 
 
@@ -523,16 +527,15 @@ def run_real_preflight(sim_report_path: Path, target_root: Path | None = None) -
     sim = _load(sim_report_path)
     errors.extend(_sim_evidence_errors(sim))
     entry = _registry_entry()
-    current_commit = _control_plane_commit()
+    release_commit = _load(RELEASE_MANIFEST).get("tag_commit_sha")
     if (
         sim.get("target") != REAL_TARGET
         or sim.get("candidate_release") != CANDIDATE_RELEASE
-        or sim.get("candidate_tag_published") is not True
         or sim.get("target_adapter_commit") != entry["conformance"]["adapter_commit_sha"]
-        or sim.get("control_plane_commit") != current_commit
+        or sim.get("control_plane_commit") != release_commit
     ):
         errors.append(
-            "SIM evidence does not match current published control plane/REAL target/candidate/adapter"
+            "SIM evidence does not match the attested immutable control plane/REAL target/adapter"
         )
     return errors
 

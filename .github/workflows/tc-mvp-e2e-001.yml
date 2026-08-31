@@ -150,11 +150,10 @@ jobs:
         run: |
           mkdir -p "$GITHUB_WORKSPACE/reports"
           python scripts/run_tc_mvp_e2e_001.py --mode sim --report "$GITHUB_WORKSPACE/reports/tc-mvp-e2e-001-sim.json"
-      - name: Verify REAL preflight gates from immutable release
-        working-directory: .release-control-plane
+      - name: Verify current attestation against immutable release evidence
         env:
           TC_MVP_E2E_TARGET_ROOT: ${{ github.workspace }}/.release-target/consulting-playbook
         run: python scripts/run_tc_mvp_e2e_001.py --mode real-preflight --sim-report "$GITHUB_WORKSPACE/reports/tc-mvp-e2e-001-sim.json"
       - name: State safety boundary
         run: |
-          echo 'REAL preflight passed. Current tests verified the acceptance logic, while the REAL gate executed from immutable ai-sdlc-v2.4.1 with the adapter registered by that same release. This workflow intentionally performs no real Codex, branch, PR, receiver, or source mutation.'
+          echo 'REAL preflight passed. The current publication attestation matches immutable ai-sdlc-v2.4.1 evidence and the adapter registered by that release. This workflow intentionally performs no real Codex, branch, PR, receiver, or source mutation.'
