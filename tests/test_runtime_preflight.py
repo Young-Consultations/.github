@@ -2,7 +2,7 @@ import json
 import subprocess
 from pathlib import Path
 
-from scripts import generate_current_runtime
+from scripts import generate_current_runtime, runtime_preflight
 
 
 def test_current_runtime_record_is_generated_from_authoritative_state():
@@ -58,3 +58,21 @@ def test_credential_roles_cover_only_the_enabled_runtime_path():
     assert "PORTFOLIO_APPROVERS" in roles["Young-Consultations/portfolio-tasks"]["variables"]
     assert "OPENAI_API_KEY" in roles["Young-Consultations/consulting-playbook"]["secrets"]
     assert "Young-Consultations/slugger" not in roles
+
+
+def test_remote_release_tag_resolves_lightweight_commit(monkeypatch):
+    monkeypatch.setattr(
+        runtime_preflight,
+        "api_one",
+        lambda endpoint: {"object": {"type": "commit", "sha": "a" * 40}},
+    )
+    assert runtime_preflight.remote_tag_commit("ai-sdlc-v2.4.1") == "a" * 40
+
+
+def test_remote_release_tag_resolves_annotated_tag(monkeypatch):
+    values = iter([
+        {"object": {"type": "tag", "sha": "b" * 40}},
+        {"object": {"type": "commit", "sha": "c" * 40}},
+    ])
+    monkeypatch.setattr(runtime_preflight, "api_one", lambda endpoint: next(values))
+    assert runtime_preflight.remote_tag_commit("ai-sdlc-v2.4.1") == "c" * 40

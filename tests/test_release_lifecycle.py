@@ -65,6 +65,15 @@ def test_previous_known_good_is_published_2_4_0_commit():
 def test_candidate_does_not_embed_its_own_future_commit_identity():
     manifest = json.loads((ROOT / "release/release-manifest.json").read_text(encoding="utf-8"))
     assert "immutable_reference" not in manifest
+    assert manifest["tag_commit_sha"] is None
+
+
+def test_manifest_paths_cannot_escape_the_repository(tmp_path):
+    errors = []
+    assert validate_release.safe_manifest_json_path(
+        tmp_path, "../outside.json", "current_runtime", errors
+    ) is None
+    assert errors == ["current_runtime must be a safe repository-relative JSON path"]
 
 
 def test_patch_candidate_preserves_published_2_4_0_as_history():

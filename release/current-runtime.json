@@ -13,6 +13,7 @@
     "router_action": "actions/codex-router/action.yml",
     "router_workflow": ".github/workflows/codex-router.yml",
     "tag": "ai-sdlc-v2.4.1",
+    "tag_commit_sha": null,
     "tag_published": false
   },
   "credential_role_manifest": {

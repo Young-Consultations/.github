@@ -50,7 +50,12 @@ jobs:
       CODEX_ROUTER_TOKEN: ${{ secrets.CODEX_ROUTER_TOKEN }}
 ```
 
-The token should be a repository-scoped token or GitHub App installation token able to dispatch only registered target workflows.
+The token should be a repository-scoped token or GitHub App installation token
+able to dispatch only registered target workflows. The router derives its
+journal author from the created admission comment response, so installation
+tokens are supported without calling the user-only `GET /user` endpoint. On
+redelivery, only an identical marker written by that same author is reused;
+untrusted lookalike comments are never admission authority.
 
 The 2.4.1 reference is a release candidate and must not be used for REAL work
 until its governed immutable tag is published. See [the 2.4.1 release

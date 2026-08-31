@@ -365,8 +365,19 @@ def test_admission_lookup_reads_later_comment_pages(monkeypatch):
     ]
     monkeypatch.setattr(codex_router, "_github_json", lambda *args: pages)
     assert codex_router._existing_admissions(
-        "Young-Consultations/portfolio-tasks", "42", "mightyjoe909", "delivery-42"
-    ) == [binding]
+        "Young-Consultations/portfolio-tasks", "42", "delivery-42"
+    ) == [{"author": "mightyjoe909", "binding": binding}]
+
+
+def test_admission_lookup_ignores_comments_without_a_user_object(monkeypatch):
+    monkeypatch.setattr(
+        codex_router,
+        "_github_json",
+        lambda *args: [[{"body": "marker", "user": None}]],
+    )
+    assert codex_router._existing_admissions(
+        "Young-Consultations/portfolio-tasks", "42", "delivery-42"
+    ) == []
 
 
 def execution_for(repository, task_type):
@@ -394,10 +405,12 @@ def test_dispatch_uses_canonical_json_transport_for_every_repository(
     monkeypatch.delenv("GITHUB_OUTPUT", raising=False)
     def fake_run(cmd, **kwargs):
         calls.append((cmd, kwargs))
-        if cmd[1:3] == ["api", "user"]:
-            return subprocess.CompletedProcess(cmd, 0, stdout='{"login":"mightyjoe909"}')
         if "--slurp" in cmd:
             return subprocess.CompletedProcess(cmd, 0, stdout="[[]]")
+        if cmd[1] == "api" and "POST" in cmd:
+            return subprocess.CompletedProcess(
+                cmd, 0, stdout='{"id":101,"user":{"login":"router-app[bot]"}}'
+            )
         return subprocess.CompletedProcess(cmd, 0, stdout="")
     monkeypatch.setattr(codex_router.subprocess, "run", fake_run)
 
@@ -432,16 +445,19 @@ def test_portfolio_tasks_dispatch_command_matches_workflow_interface(monkeypatch
     commands = []
     def fake_run(cmd, **kwargs):
         commands.append(cmd)
-        if cmd[1:3] == ["api", "user"]:
-            return subprocess.CompletedProcess(cmd, 0, stdout='{"login":"mightyjoe909"}')
         if "--slurp" in cmd:
             return subprocess.CompletedProcess(cmd, 0, stdout="[[]]")
+        if cmd[1] == "api" and "POST" in cmd:
+            return subprocess.CompletedProcess(
+                cmd, 0, stdout='{"id":101,"user":{"login":"router-app[bot]"}}'
+            )
         return subprocess.CompletedProcess(cmd, 0, stdout="")
     monkeypatch.setattr(codex_router.subprocess, "run", fake_run)
 
     codex_router.dispatch()
 
     assert any("--slurp" in command for command in commands)
+    assert not any(command[1:3] == ["api", "user"] for command in commands)
     assert commands[-1][:8] == [
         "gh", "workflow", "run", "codex-execute.yml", "--repo", repository,
         "--ref", "codex-adapter-v2.3.2",

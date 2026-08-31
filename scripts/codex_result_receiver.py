@@ -279,7 +279,14 @@ class GitHubJournal:
             if all(isinstance(page, list) for page in pages)
             else pages
         )
-        return [JournalComment(str(item.get("body", "")), str(item.get("user", {}).get("login", ""))) for item in data if isinstance(item, dict)]
+        comments: list[JournalComment] = []
+        for item in data:
+            if not isinstance(item, dict):
+                continue
+            user = item.get("user")
+            author = user.get("login") if isinstance(user, dict) else ""
+            comments.append(JournalComment(str(item.get("body", "")), str(author)))
+        return comments
 
     def trusted_author(self, author: str, role: str) -> bool:
         return author.casefold() in self._trusted_authors_by_role.get(role, set())

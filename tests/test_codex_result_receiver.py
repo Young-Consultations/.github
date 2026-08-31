@@ -183,6 +183,16 @@ def test_github_journal_reads_every_slurped_comment_page(monkeypatch, tmp_path):
     assert comments[-1].body == "comment-100"
 
 
+def test_github_journal_treats_a_null_user_as_untrusted(monkeypatch, tmp_path):
+    journal = GitHubJournal(write_trust_policy(tmp_path, ["router-bot"]))
+    monkeypatch.setattr(
+        journal, "_api", lambda *args, **kwargs: [[{"body": "marker", "user": None}]]
+    )
+    assert journal.comments("Young-Consultations/portfolio-tasks", 42) == [
+        JournalComment("marker", "")
+    ]
+
+
 def write_trust_policy(tmp_path, admission_authors, result_authors=None):
     path = tmp_path / "codex-result-trust.json"
     path.write_text(json.dumps({

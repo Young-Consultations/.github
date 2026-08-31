@@ -33,6 +33,19 @@ def load_json(path: Path):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def safe_manifest_json_path(root: Path, value: object, field: str, errors: list[str]) -> Path | None:
+    if not isinstance(value, str) or REPORT_PATH.fullmatch(value) is None:
+        errors.append(f"{field} must be a safe repository-relative JSON path")
+        return None
+    candidate = (root / value).resolve()
+    try:
+        candidate.relative_to(root.resolve())
+    except ValueError:
+        errors.append(f"{field} must stay within the repository")
+        return None
+    return candidate
+
+
 def conformance_errors(repository: str, entry: dict, fixture_version: object) -> list[str]:
     evidence = entry.get("conformance")
     if not isinstance(evidence, dict) or set(evidence) != CONFORMANCE_FIELDS:
@@ -69,6 +82,13 @@ def validate(root: Path = ROOT, *, require_publishable: bool = False) -> list[st
         errors.append("tag_published must explicitly record publication state")
     if require_publishable and manifest.get("tag_published") is not True:
         errors.append("publishable release must declare tag_published true")
+    tag_commit_sha = manifest.get("tag_commit_sha")
+    if manifest.get("tag_published") is True and (
+        not isinstance(tag_commit_sha, str) or SHA.fullmatch(tag_commit_sha) is None
+    ):
+        errors.append("published release must record the immutable tag commit SHA")
+    if manifest.get("tag_published") is False and tag_commit_sha is not None:
+        errors.append("candidate release must not claim a tag commit SHA")
     pyproject = (root / "pyproject.toml").read_text(encoding="utf-8")
     package_match = re.search(r'^version = "([^"]+)"$', pyproject, re.MULTILINE)
     if not package_match or package_match.group(1) != manifest.get("contract_package_version"):
@@ -106,9 +126,13 @@ def validate(root: Path = ROOT, *, require_publishable: bool = False) -> list[st
     elif set(targets) != set(registry) or any(not isinstance(value, bool) for value in targets.values()):
         errors.append("activation configuration must contain one boolean per capability")
 
-    runtime_path = root / str(manifest.get("current_runtime", ""))
-    credential_roles_path = root / str(manifest.get("credential_role_manifest", ""))
-    if not runtime_path.is_file():
+    runtime_path = safe_manifest_json_path(
+        root, manifest.get("current_runtime"), "current_runtime", errors
+    )
+    credential_roles_path = safe_manifest_json_path(
+        root, manifest.get("credential_role_manifest"), "credential_role_manifest", errors
+    )
+    if runtime_path is None or not runtime_path.is_file():
         errors.append("generated current runtime record must exist")
     else:
         runtime = load_json(runtime_path)
@@ -117,9 +141,10 @@ def validate(root: Path = ROOT, *, require_publishable: bool = False) -> list[st
             runtime.get("runtime_record_format_version") != 1
             or control_plane.get("tag") != manifest.get("tag")
             or control_plane.get("tag_published") != manifest.get("tag_published")
+            or control_plane.get("tag_commit_sha") != manifest.get("tag_commit_sha")
         ):
             errors.append("generated current runtime record is inconsistent with the manifest")
-    if not credential_roles_path.is_file():
+    if credential_roles_path is None or not credential_roles_path.is_file():
         errors.append("credential role manifest must exist")
     else:
         roles = load_json(credential_roles_path)

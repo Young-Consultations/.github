@@ -27,6 +27,30 @@ def api(endpoint: str) -> Any:
     return [item for page in pages for item in page] if all(isinstance(page, list) for page in pages) else pages
 
 
+def api_one(endpoint: str) -> Any:
+    completed = subprocess.run(
+        ["gh", "api", endpoint], check=True, text=True, capture_output=True,
+    )
+    return json.loads(completed.stdout)
+
+
+def remote_tag_commit(tag: str) -> str:
+    value = api_one(f"repos/Young-Consultations/.github/git/ref/tags/{tag}")
+    obj = value.get("object") if isinstance(value, dict) else None
+    for _ in range(4):
+        if not isinstance(obj, dict):
+            break
+        if obj.get("type") == "commit" and isinstance(obj.get("sha"), str):
+            return obj["sha"]
+        if obj.get("type") != "tag" or not isinstance(obj.get("sha"), str):
+            break
+        tag_object = api_one(
+            f"repos/Young-Consultations/.github/git/tags/{obj['sha']}"
+        )
+        obj = tag_object.get("object") if isinstance(tag_object, dict) else None
+    raise ValueError("release tag does not resolve to a commit")
+
+
 def named_values(repository: str, kind: str) -> set[str]:
     rows = api(f"repos/{repository}/actions/{kind}?per_page=100")
     field = "secrets" if kind == "secrets" else "variables"
@@ -59,6 +83,24 @@ def main() -> int:
             "CANDIDATE" if args.candidate else "FAIL"
         ),
     })
+
+    if runtime["release_state"] == "published" and not args.offline:
+        expected_commit = runtime["control_plane"].get("tag_commit_sha")
+        try:
+            actual_commit = remote_tag_commit(runtime["control_plane"]["tag"])
+        except (subprocess.CalledProcessError, json.JSONDecodeError, ValueError) as exc:
+            failures.append(f"release-tag: cannot resolve remote tag: {exc}")
+        else:
+            if actual_commit != expected_commit:
+                failures.append(
+                    "release-tag: remote tag does not match the reviewed commit"
+                )
+        checks.append({
+            "boundary": "remote-release-tag",
+            "status": "PASS" if not any(
+                value.startswith("release-tag:") for value in failures
+            ) else "FAIL",
+        })
 
     if not args.offline:
         if not os.environ.get("GH_TOKEN"):

@@ -29,6 +29,7 @@ def render() -> str:
             "release_version": manifest["release_version"],
             "tag": manifest["tag"],
             "tag_published": manifest["tag_published"],
+            "tag_commit_sha": manifest["tag_commit_sha"],
             "router_workflow": manifest["router_workflow"],
             "router_action": manifest["router_action"],
             "result_receiver_workflow": manifest["result_receiver_workflow"],

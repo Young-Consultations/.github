@@ -331,13 +331,15 @@ def _github_json(*args: str) -> Any:
     completed = subprocess.run(
         ["gh", "api", *args], check=True, text=True, capture_output=True,
     )
+    if not completed.stdout.strip():
+        return None
     try:
         return json.loads(completed.stdout)
     except json.JSONDecodeError as exc:
         raise ValueError("GitHub API returned invalid JSON") from exc
 
 
-def _existing_admissions(repository: str, issue: str, author: str, delivery_id: str) -> list[dict[str, Any]]:
+def _existing_admissions(repository: str, issue: str, delivery_id: str) -> list[dict[str, Any]]:
     pages = _github_json(
         "--paginate", "--slurp",
         f"repos/{repository}/issues/{issue}/comments?per_page=100",
@@ -347,7 +349,11 @@ def _existing_admissions(repository: str, issue: str, author: str, delivery_id: 
     comments = [item for page in pages for item in page] if all(isinstance(page, list) for page in pages) else pages
     admissions: list[dict[str, Any]] = []
     for comment in comments:
-        if not isinstance(comment, dict) or comment.get("user", {}).get("login") != author:
+        if not isinstance(comment, dict):
+            continue
+        user = comment.get("user")
+        author = user.get("login") if isinstance(user, dict) else None
+        if not isinstance(author, str) or not author:
             continue
         for match in ADMISSION_RE.finditer(str(comment.get("body", ""))):
             try:
@@ -355,7 +361,7 @@ def _existing_admissions(repository: str, issue: str, author: str, delivery_id: 
             except json.JSONDecodeError:
                 continue
             if isinstance(value, dict) and value.get("delivery_id") == delivery_id:
-                admissions.append(value)
+                admissions.append({"author": author, "binding": value})
     return admissions
 
 
@@ -427,23 +433,31 @@ def dispatch() -> None:
         "-f", f"concurrency_group={concurrency_group}",
     ]
     try:
-        identity = _github_json("user")
-        author = identity.get("login") if isinstance(identity, dict) else None
-        if not isinstance(author, str) or not author:
-            raise ValueError("Router credential identity is unavailable")
         existing = _existing_admissions(
-            issue_match.group(1), issue_match.group(2), author, delivery_id,
+            issue_match.group(1), issue_match.group(2), delivery_id,
         )
-        if any(item != binding for item in existing):
+        posted = _github_json(
+            f"repos/{issue_match.group(1)}/issues/{issue_match.group(2)}/comments",
+            "--method", "POST", "-f", f"body={admission_body}",
+        )
+        posted_user = posted.get("user") if isinstance(posted, dict) else None
+        author = posted_user.get("login") if isinstance(posted_user, dict) else None
+        posted_id = posted.get("id") if isinstance(posted, dict) else None
+        if not isinstance(author, str) or not author:
+            raise ValueError("Admission response did not identify the router credential")
+        if not isinstance(posted_id, int):
+            raise ValueError("Admission response did not identify the created journal comment")
+        owned = [item["binding"] for item in existing if item["author"] == author]
+        if any(item != binding for item in owned):
+            _github_json(
+                f"repos/{issue_match.group(1)}/issues/comments/{posted_id}",
+                "--method", "DELETE",
+            )
             reject("authorization", "Conflicting admission journal exists for this delivery.", correlation_id)
-        if not existing:
-            subprocess.run(
-                [
-                    "gh", "api",
-                    f"repos/{issue_match.group(1)}/issues/{issue_match.group(2)}/comments",
-                    "--method", "POST", "-f", f"body={admission_body}",
-                ],
-                check=True, text=True, capture_output=True,
+        if owned:
+            _github_json(
+                f"repos/{issue_match.group(1)}/issues/comments/{posted_id}",
+                "--method", "DELETE",
             )
         subprocess.run(cmd, check=True, text=True, capture_output=True)
     except (OSError, ValueError, subprocess.CalledProcessError) as exc:
