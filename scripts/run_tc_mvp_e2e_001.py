@@ -12,6 +12,7 @@ import argparse
 import importlib.util
 import json
 import os
+import re
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -34,6 +35,7 @@ REAL_TARGET = "Young-Consultations/consulting-playbook"
 PUBLISHED_BASELINE = "2.4.0"
 CANDIDATE_RELEASE = "2.4.1"
 TARGET_ROOT_ENV = "TC_MVP_E2E_TARGET_ROOT"
+COMMIT_SHA = re.compile(r"^[0-9a-f]{40}$")
 
 
 @dataclass
@@ -104,6 +106,11 @@ def _control_plane_release_identity_errors() -> list[str]:
     manifest = _load(RELEASE_MANIFEST)
     tag = f"ai-sdlc-v{CANDIDATE_RELEASE}"
     expected_commit = manifest.get("tag_commit_sha")
+    if not isinstance(expected_commit, str) or COMMIT_SHA.fullmatch(expected_commit) is None:
+        return [
+            "published release must record a valid immutable tag commit SHA "
+            "before tag identity can be verified"
+        ]
     tag_commit, tag_error = _git_output(["rev-list", "-n", "1", tag])
     if tag_error or not tag_commit:
         return [f"published tag {tag} is not available in this checkout"]

@@ -109,6 +109,21 @@ def test_publication_identity_compares_tag_with_attested_commit(
     ]
 
 
+def test_publication_identity_rejects_missing_attestation_before_tag_lookup(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(e2e, "_load", lambda path: {"tag_commit_sha": None})
+
+    def forbidden_git(*args, **kwargs):
+        raise AssertionError("tag lookup must not run without a valid attestation")
+
+    monkeypatch.setattr(e2e, "_git_output", forbidden_git)
+    assert e2e._control_plane_release_identity_errors() == [
+        "published release must record a valid immutable tag commit SHA "
+        "before tag identity can be verified"
+    ]
+
+
 def test_real_preflight_passes_for_published_release_when_identity_is_valid(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
