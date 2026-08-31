@@ -2,7 +2,16 @@ import copy
 import json
 import subprocess
 
+import pytest
+
 from tests.test_codex_router import BASE_TASK, output, run_router
+
+
+@pytest.fixture(autouse=True)
+def release_bound_route(monkeypatch):
+    monkeypatch.setenv("CONTROL_PLANE_RELEASE", "ai-sdlc-v2.4.1")
+    monkeypatch.setenv("CODEX_ACTIVATION_REVISION", "a" * 40)
+    monkeypatch.setenv("CODEX_ACTIVATION_SHA256", "b" * 64)
 
 
 class FakeTarget:
@@ -93,7 +102,13 @@ def test_scenario_e_router_rejects_conflicting_payload_for_delivery_id(tmp_path,
     monkeypatch.setenv("ROUTER_DELIVERY_LEDGER", str(ledger))
     monkeypatch.setenv("EXECUTION_INPUT", json.dumps(execution))
     monkeypatch.setenv("WORKFLOW_REF", "Young-Consultations/portfolio-tasks/.github/workflows/codex-execute.yml@codex-adapter-v2.3.2")
-    monkeypatch.setattr(subprocess, "run", lambda *a, **k: subprocess.CompletedProcess(a, 0))
+    def fake_run(cmd, **kwargs):
+        if cmd[1:3] == ["api", "user"]:
+            return subprocess.CompletedProcess(cmd, 0, stdout='{"login":"mightyjoe909"}')
+        if "--slurp" in cmd:
+            return subprocess.CompletedProcess(cmd, 0, stdout="[[]]")
+        return subprocess.CompletedProcess(cmd, 0, stdout="")
+    monkeypatch.setattr(subprocess, "run", fake_run)
     from scripts import codex_router
     repositories = codex_router.validate_registry()
     monkeypatch.setattr(codex_router, "routing_configuration", lambda: (

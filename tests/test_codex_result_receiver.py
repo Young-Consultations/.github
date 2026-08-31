@@ -147,6 +147,52 @@ def test_malformed_result_and_binding_fail_closed():
     assert not journal.projections
 
 
+def test_receiver_requires_admission_from_its_exact_control_plane_release():
+    journal = FakeJournal()
+    with pytest.raises(ReceiverError, match="receiver release"):
+        receive(
+            json.dumps(RESULT), SOURCE, RESULT["target_repository"], journal,
+            "ai-sdlc-v2.4.1",
+        )
+    binding = {
+        "contract_version": RESULT["contract_version"],
+        "delivery_id": RESULT["delivery_id"],
+        "correlation_id": RESULT["correlation_id"],
+        "source_issue": SOURCE,
+        "target_repository": RESULT["target_repository"],
+        "control_plane_release": "ai-sdlc-v2.4.1",
+        "activation_revision": "a" * 40,
+        "activation_sha256": "b" * 64,
+    }
+    journal.entries[0] = JournalComment(marker(ADMISSION, binding), "router-bot")
+    assert receive(
+        json.dumps(RESULT), SOURCE, RESULT["target_repository"], journal,
+        "ai-sdlc-v2.4.1",
+    ).accepted
+
+
+def test_github_journal_reads_every_slurped_comment_page(monkeypatch, tmp_path):
+    journal = GitHubJournal(write_trust_policy(tmp_path, ["router-bot"]))
+    pages = [
+        [{"body": f"comment-{index}", "user": {"login": "router-bot"}} for index in range(100)],
+        [{"body": "comment-100", "user": {"login": "router-bot"}}],
+    ]
+    monkeypatch.setattr(journal, "_api", lambda *args, **kwargs: pages)
+    comments = journal.comments("Young-Consultations/portfolio-tasks", 42)
+    assert len(comments) == 101
+    assert comments[-1].body == "comment-100"
+
+
+def test_github_journal_treats_a_null_user_as_untrusted(monkeypatch, tmp_path):
+    journal = GitHubJournal(write_trust_policy(tmp_path, ["router-bot"]))
+    monkeypatch.setattr(
+        journal, "_api", lambda *args, **kwargs: [[{"body": "marker", "user": None}]]
+    )
+    assert journal.comments("Young-Consultations/portfolio-tasks", 42) == [
+        JournalComment("marker", "")
+    ]
+
+
 def write_trust_policy(tmp_path, admission_authors, result_authors=None):
     path = tmp_path / "codex-result-trust.json"
     path.write_text(json.dumps({

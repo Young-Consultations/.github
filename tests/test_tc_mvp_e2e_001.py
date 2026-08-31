@@ -25,9 +25,9 @@ def test_sim_passes_without_real_effects(tmp_path: Path) -> None:
     assert e2e.run_sim(report, target_root) == []
     payload = json.loads(report.read_text(encoding="utf-8"))
     assert payload["test_id"] == "TC-MVP-E2E-001-SIM"
-    assert payload["published_baseline"] == "2.3.2"
-    assert payload["candidate_release"] == "2.4.0"
-    assert payload["candidate_tag_published"] is True
+    assert payload["published_baseline"] == "2.4.0"
+    assert payload["candidate_release"] == "2.4.1"
+    assert payload["candidate_tag_published"] is False
     assert payload["execution_provider"] == "fake"
     assert payload["dispatch_provider"] == "fake-in-process-target"
     assert payload["target"] == e2e.REAL_TARGET
@@ -99,7 +99,9 @@ def test_real_preflight_passes_for_published_release_when_identity_is_valid(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     target_root = _target_root()
-    monkeypatch.setattr(e2e, "_control_plane_release_identity_errors", lambda: [])
+    monkeypatch.setattr(e2e, "_real_release_errors", lambda: [])
+    monkeypatch.setattr(e2e, "_target_identity_errors", lambda root: [])
+    monkeypatch.setattr(e2e, "_target_receiver_pin_errors", lambda root: [])
 
     missing = tmp_path / "missing.json"
     errors = e2e.run_real_preflight(missing, target_root)
@@ -107,6 +109,9 @@ def test_real_preflight_passes_for_published_release_when_identity_is_valid(
 
     report = tmp_path / "sim.json"
     assert e2e.run_sim(report, target_root) == []
+    payload = json.loads(report.read_text(encoding="utf-8"))
+    payload["candidate_tag_published"] = True
+    report.write_text(json.dumps(payload), encoding="utf-8")
     assert e2e.run_real_preflight(report, target_root) == []
 
 

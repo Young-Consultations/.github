@@ -1,13 +1,17 @@
 {
-  "release_version": "2.4.0",
-  "tag": "ai-sdlc-v2.4.0",
-  "tag_published": true,
-  "contract_package_version": "2.4.0",
+  "release_version": "2.4.1",
+  "tag": "ai-sdlc-v2.4.1",
+  "tag_published": false,
+  "tag_commit_sha": null,
+  "contract_package_version": "2.4.1",
   "contract_payload_version": "ai-sdlc-contract/v2",
   "schema_version": "ai-sdlc-contract/v2",
   "registry_format_version": 1,
-  "router_interface_version": "2.4.0",
+  "router_interface_version": "2.4.1",
   "router_workflow": ".github/workflows/codex-router.yml",
+  "router_action": "actions/codex-router/action.yml",
+  "current_runtime": "release/current-runtime.json",
+  "credential_role_manifest": "config/codex-credential-roles.json",
   "registry": "config/codex-repositories.json",
   "supported_targets": [
     "Young-Consultations/.github",
@@ -16,13 +20,10 @@
     "Young-Consultations/slugger"
   ],
   "previous_known_good": {
-    "release_version": "2.3.2",
-    "commit_sha": "5738ace3ee90dde11336f8f8099e64e5645f7139"
+    "release_version": "2.4.0",
+    "commit_sha": "42e8e0d3c888efbb3a21bd6762cb4fa416126529"
   },
-  "recovery_of": {
-    "release_version": "2.3.2",
-    "commit_sha": "5738ace3ee90dde11336f8f8099e64e5645f7139"
-  },
+  "recovery_of": null,
   "result_receiver_workflow": ".github/workflows/codex-result-receiver.yml",
   "result_receiver_action": "actions/codex-result-receiver/action.yml",
   "result_trust_policy": "config/codex-result-trust.json",

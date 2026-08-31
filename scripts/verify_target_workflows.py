@@ -380,6 +380,7 @@ def verify_receiver_interface(source: str) -> str:
         "execution-result": "${{ inputs.execution_result }}",
         "source-issue": "${{ inputs.source_issue }}",
         "caller-repository": "${{ github.repository }}",
+        "control-plane-release": action_ref,
     }
     if action_step.get("with") != expected_with or "env" in action_step:
         raise CompatibilityError("result receiver action inputs are incompatible")
@@ -393,6 +394,7 @@ def verify_receiver_action(source: str) -> None:
     inputs = action.get("inputs")
     if not isinstance(inputs, dict) or set(inputs) != {
         "result-token", "execution-result", "source-issue", "caller-repository",
+        "control-plane-release",
     }:
         raise CompatibilityError("result receiver action inputs are incompatible")
     if any(
@@ -427,6 +429,7 @@ def verify_receiver_action(source: str) -> None:
         "EXECUTION_RESULT": "${{ inputs.execution-result }}",
         "SOURCE_ISSUE": "${{ inputs.source-issue }}",
         "CALLER_REPOSITORY": "${{ inputs.caller-repository }}",
+        "CONTROL_PLANE_RELEASE": "${{ inputs.control-plane-release }}",
     }
     if len(receiver_steps) != 1 or receiver_steps[0].get("env") != expected_env:
         raise CompatibilityError("result receiver action does not isolate its credential and payload environment")

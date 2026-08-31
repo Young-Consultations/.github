@@ -1,0 +1,52 @@
+{
+  "activation": {
+    "enabled_targets": [
+      "Young-Consultations/consulting-playbook"
+    ],
+    "sha256": "d1ade8bf193022e72a35738f5baf61528d98441bee28285c5e65a4c7e1dbd9aa",
+    "source": "Young-Consultations/.github@main:config/codex-activation.json"
+  },
+  "control_plane": {
+    "release_version": "2.4.1",
+    "result_receiver_action": "actions/codex-result-receiver/action.yml",
+    "result_receiver_workflow": ".github/workflows/codex-result-receiver.yml",
+    "router_action": "actions/codex-router/action.yml",
+    "router_workflow": ".github/workflows/codex-router.yml",
+    "tag": "ai-sdlc-v2.4.1",
+    "tag_commit_sha": null,
+    "tag_published": false
+  },
+  "credential_role_manifest": {
+    "path": "config/codex-credential-roles.json",
+    "scope": "enabled-portfolio-to-consulting-path",
+    "sha256": "db57bb4f8199f4d338463006881bfff70055e962c19124b6f5070118172c48cf"
+  },
+  "release_state": "candidate",
+  "runtime_record_format_version": 1,
+  "targets": {
+    "Young-Consultations/.github": {
+      "contract_version": "ai-sdlc-contract/v2",
+      "draft_pr_only": true,
+      "enabled": false,
+      "workflow_ref": "Young-Consultations/.github/.github/workflows/codex-execute.yml@codex-adapter-v2.3.1"
+    },
+    "Young-Consultations/consulting-playbook": {
+      "contract_version": "ai-sdlc-contract/v2",
+      "draft_pr_only": true,
+      "enabled": true,
+      "workflow_ref": "Young-Consultations/consulting-playbook/.github/workflows/codex-execute.yml@codex-adapter-v2.4.0"
+    },
+    "Young-Consultations/portfolio-tasks": {
+      "contract_version": "ai-sdlc-contract/v2",
+      "draft_pr_only": true,
+      "enabled": false,
+      "workflow_ref": "Young-Consultations/portfolio-tasks/.github/workflows/codex-execute.yml@codex-adapter-v2.3.2"
+    },
+    "Young-Consultations/slugger": {
+      "contract_version": "ai-sdlc-contract/v2",
+      "draft_pr_only": true,
+      "enabled": false,
+      "workflow_ref": "Young-Consultations/slugger/.github/workflows/codex-execute.yml@codex-adapter-v2.3.2"
+    }
+  }
+}

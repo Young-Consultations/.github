@@ -1,0 +1,83 @@
+name: Codex router control-plane bundle
+description: Validate, admit, and dispatch one task with immutable policy and one activation snapshot.
+
+inputs:
+  router-token:
+    description: Source journal and registered target dispatch credential.
+    required: true
+  task-payload:
+    description: Complete canonical task-contract/v2 JSON object.
+    required: true
+  execution-mode:
+    description: Explicit verify or implement mode.
+    required: true
+  control-plane-release:
+    description: Immutable release tag self-declared by the owner workflow.
+    required: true
+
+outputs:
+  execution_result:
+    value: ${{ steps.dispatch.outputs.execution_result || steps.validate.outputs.execution_result }}
+  correlation_id:
+    value: ${{ steps.dispatch.outputs.correlation_id || steps.validate.outputs.correlation_id }}
+  delivery_id:
+    value: ${{ steps.dispatch.outputs.delivery_id || steps.validate.outputs.delivery_id }}
+  failure_category:
+    value: ${{ steps.dispatch.outputs.failure_category || steps.validate.outputs.failure_category }}
+  diagnostic_summary:
+    value: ${{ steps.dispatch.outputs.diagnostic_summary || steps.validate.outputs.diagnostic_summary }}
+  concurrency_group:
+    value: ${{ steps.validate.outputs.concurrency_group }}
+  activation_revision:
+    value: ${{ steps.activation.outputs.revision }}
+  activation_sha256:
+    value: ${{ steps.activation.outputs.sha256 }}
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout one current activation snapshot
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      with:
+        repository: Young-Consultations/.github
+        ref: main
+        path: control-plane-activation
+        sparse-checkout: config/codex-activation.json
+        sparse-checkout-cone-mode: false
+        persist-credentials: false
+    - name: Identify activation snapshot
+      id: activation
+      shell: bash
+      run: |
+        set -euo pipefail
+        activation="$GITHUB_WORKSPACE/control-plane-activation/config/codex-activation.json"
+        echo "revision=$(git -C "$GITHUB_WORKSPACE/control-plane-activation" rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+        echo "sha256=$(sha256sum "$activation" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+    - name: Install exact schema validator
+      shell: bash
+      run: python -m pip install --disable-pip-version-check --no-input 'jsonschema==4.26.0'
+    - name: Validate registry and construct execution input
+      id: validate
+      shell: bash
+      env:
+        TASK_PAYLOAD: ${{ inputs.task-payload }}
+        EXECUTION_MODE: ${{ inputs.execution-mode }}
+        CONTROL_PLANE_RELEASE: ${{ inputs.control-plane-release }}
+        CODEX_ACTIVATION_PATH: ${{ github.workspace }}/control-plane-activation/config/codex-activation.json
+        CODEX_ACTIVATION_REVISION: ${{ steps.activation.outputs.revision }}
+        CODEX_ACTIVATION_SHA256: ${{ steps.activation.outputs.sha256 }}
+      run: |
+        python3 "$GITHUB_ACTION_PATH/../../scripts/codex_router.py" validate-registry
+        python3 "$GITHUB_ACTION_PATH/../../scripts/codex_router.py" validate
+    - name: Journal admission and dispatch target
+      id: dispatch
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.router-token }}
+        EXECUTION_INPUT: ${{ steps.validate.outputs.execution_input }}
+        WORKFLOW_REF: ${{ steps.validate.outputs.workflow_ref }}
+        CONTROL_PLANE_RELEASE: ${{ inputs.control-plane-release }}
+        CODEX_ACTIVATION_PATH: ${{ github.workspace }}/control-plane-activation/config/codex-activation.json
+        CODEX_ACTIVATION_REVISION: ${{ steps.activation.outputs.revision }}
+        CODEX_ACTIVATION_SHA256: ${{ steps.activation.outputs.sha256 }}
+      run: python3 "$GITHUB_ACTION_PATH/../../scripts/codex_router.py" dispatch

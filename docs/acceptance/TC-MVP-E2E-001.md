@@ -3,10 +3,19 @@
 **Status:** Approved next-MVP acceptance design
 **Owner:** `Young-Consultations/.github`
 **Published baseline:** `ai-sdlc-v2.3.2` / `ai-sdlc-contract/v2`
-**Corrective candidate required for REAL:** `ai-sdlc-v2.4.0`
+**Current stabilization candidate required for the next REAL run:** `ai-sdlc-v2.4.1`
 **Initial enabled target:** `Young-Consultations/consulting-playbook`
 
 ## Purpose
+
+> **2.4.1 operating addendum:** The 2.4.0 receiver correction described below
+> is now published historical evidence. The current REAL gate uses 2.4.1 and
+> additionally requires one-action approval, the self-pinned router bundle, one
+> activation snapshot, router-owned admission, complete comment pagination,
+> the generated current-runtime record, and a passing deployed Runtime
+> Preflight. The state sequence remains `PROPOSED -> APPROVED -> ADMITTED ->
+> DISPATCHED -> TARGET_TERMINAL -> RECEIVED -> PROJECTED`; rejection,
+> reconciliation, and quarantine remain fail-closed outcomes.
 
 `TC-MVP-E2E-001` proves the approved-portfolio-issue-to-correlated-draft-PR path without creating a second orchestration engine. It has two modes that share the same contract identities, admission semantics, target boundary, result semantics, receiver rules, source projection, and idempotency expectations.
 

@@ -165,7 +165,13 @@ def _equivalent_managed_draft_redelivery(
     )
 
 
-def receive(raw: str, source_issue: str, caller: str, journal: Journal) -> Receipt:
+def receive(
+    raw: str,
+    source_issue: str,
+    caller: str,
+    journal: Journal,
+    control_plane_release: str | None = None,
+) -> Receipt:
     try:
         result = json.loads(raw)
     except json.JSONDecodeError as exc:
@@ -198,6 +204,8 @@ def receive(raw: str, source_issue: str, caller: str, journal: Journal) -> Recei
     unique_bindings = {json.dumps(item, separators=(",", ":"), sort_keys=True) for item in bindings}
     if len(unique_bindings) != 1 or any(bindings[0].get(key) != value for key, value in expected.items()):
         raise ReceiverError("authorization", "result does not match one admitted delivery binding")
+    if control_plane_release and bindings[0].get("control_plane_release") != control_plane_release:
+        raise ReceiverError("authorization", "result admission does not match the receiver release")
 
     digest = canonical_digest(result)
     effect_class, effect_sha256 = visible_effect(result)
@@ -260,8 +268,25 @@ class GitHubJournal:
             raise ReceiverError("authentication", "result credential is not authorized for source repository")
 
     def comments(self, repository: str, issue: int) -> list[JournalComment]:
-        data = self._api(f"repos/{repository}/issues/{issue}/comments?per_page=100")
-        return [JournalComment(str(item.get("body", "")), str(item.get("user", {}).get("login", ""))) for item in data if isinstance(item, dict)]
+        pages = self._api(
+            "--paginate", "--slurp",
+            f"repos/{repository}/issues/{issue}/comments?per_page=100",
+        )
+        if not isinstance(pages, list):
+            raise ReceiverError("dependency", "issue comment response is not a list")
+        data = (
+            [item for page in pages for item in page]
+            if all(isinstance(page, list) for page in pages)
+            else pages
+        )
+        comments: list[JournalComment] = []
+        for item in data:
+            if not isinstance(item, dict):
+                continue
+            user = item.get("user")
+            author = user.get("login") if isinstance(user, dict) else ""
+            comments.append(JournalComment(str(item.get("body", "")), str(author)))
+        return comments
 
     def trusted_author(self, author: str, role: str) -> bool:
         return author.casefold() in self._trusted_authors_by_role.get(role, set())
@@ -281,7 +306,13 @@ def _output(name: str, value: Any) -> None:
 
 def main() -> int:
     try:
-        receipt = receive(os.environ.get("EXECUTION_RESULT", ""), os.environ.get("SOURCE_ISSUE", ""), os.environ.get("CALLER_REPOSITORY", ""), GitHubJournal())
+        receipt = receive(
+            os.environ.get("EXECUTION_RESULT", ""),
+            os.environ.get("SOURCE_ISSUE", ""),
+            os.environ.get("CALLER_REPOSITORY", ""),
+            GitHubJournal(),
+            os.environ.get("CONTROL_PLANE_RELEASE") or None,
+        )
     except (ReceiverError, OSError, subprocess.CalledProcessError) as exc:
         category = exc.category if isinstance(exc, ReceiverError) else "dependency"
         ambiguous = isinstance(exc, ReceiverError) and exc.ambiguous
