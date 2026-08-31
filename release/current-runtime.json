@@ -13,15 +13,15 @@
     "router_action": "actions/codex-router/action.yml",
     "router_workflow": ".github/workflows/codex-router.yml",
     "tag": "ai-sdlc-v2.4.1",
-    "tag_commit_sha": null,
-    "tag_published": false
+    "tag_commit_sha": "34ec7dc1cf54f960757781851384e0f6b15f7b63",
+    "tag_published": true
   },
   "credential_role_manifest": {
     "path": "config/codex-credential-roles.json",
     "scope": "enabled-portfolio-to-consulting-path",
     "sha256": "db57bb4f8199f4d338463006881bfff70055e962c19124b6f5070118172c48cf"
   },
-  "release_state": "candidate",
+  "release_state": "published",
   "runtime_record_format_version": 1,
   "targets": {
     "Young-Consultations/.github": {

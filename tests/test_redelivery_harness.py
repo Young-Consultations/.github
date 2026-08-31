@@ -107,6 +107,10 @@ def test_scenario_e_router_rejects_conflicting_payload_for_delivery_id(tmp_path,
             return subprocess.CompletedProcess(cmd, 0, stdout='{"login":"mightyjoe909"}')
         if "--slurp" in cmd:
             return subprocess.CompletedProcess(cmd, 0, stdout="[[]]")
+        if "--method" in cmd and "POST" in cmd:
+            return subprocess.CompletedProcess(
+                cmd, 0, stdout='{"id":1,"user":{"login":"mightyjoe909"}}'
+            )
         return subprocess.CompletedProcess(cmd, 0, stdout="")
     monkeypatch.setattr(subprocess, "run", fake_run)
     from scripts import codex_router
