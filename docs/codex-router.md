@@ -4,12 +4,17 @@ The organization router is a policy boundary between canonical planning output a
 
 ## Canonical route
 
-The reusable `.github/workflows/codex-router.yml` accepts only `task_payload` plus the narrowly scoped dispatch secret. The router:
+The reusable `.github/workflows/codex-router.yml` accepts only `task_payload`,
+`execution_mode`, and the narrowly scoped dispatch secret. It invokes
+`actions/codex-router` at its own immutable release tag, so caller context cannot
+select policy code. The bundle checks out one activation snapshot. The router:
 
 1. validates `ai-sdlc-contract/v2`, approval status, the `codex` executor, and an empty dependency list;
 2. authorizes capability against `config/codex-repositories.json` and current activation against `config/codex-activation.json`;
 3. constructs and schema-validates one execution input;
-4. dispatches the registered target through `workflow_dispatch` with exactly two
+4. writes one idempotent admission marker containing the release and activation
+   identities; and
+5. dispatches the registered target through `workflow_dispatch` with exactly two
    required strings: `execution_input_json`, containing the complete canonical
    input, and `concurrency_group`, equal to the canonical concurrency value.
 
@@ -24,14 +29,18 @@ Rejected routes return a deterministic JSON result and one of: `contract-validat
 
 ## Concurrency
 
-Concurrency keys incorporate the normalized target repository, source issue, parallel-safety mode, and a policy boundary. Parallel-safe work uses the correlation ID boundary. Non-parallel-safe work uses the task project/component boundary. The validation job exposes this key and the dispatch job applies it with `cancel-in-progress: false`, so conflicting dispatches are serialized. Duplicate payloads therefore receive the same group and branch, while explicitly parallel-safe attempts may proceed independently. The canonical execution input also carries `project`, allowing the target execution workflow to preserve the same component boundary.
+All `implement` deliveries use one concurrency group per target. The current sole
+enabled target is therefore serialized regardless of the legacy v2
+`parallel_safe` field. Verify deliveries use a separate source-bound read-only
+group. The target workflow applies the canonical group with
+`cancel-in-progress: false`.
 
 ## Caller
 
 ```yaml
 jobs:
   route:
-    uses: Young-Consultations/.github/.github/workflows/codex-router.yml@f2491872976a4dcc1633997954c03c07cbc4fced
+    uses: Young-Consultations/.github/.github/workflows/codex-router.yml@ai-sdlc-v2.4.1
     permissions:
       contents: read
       actions: read
@@ -43,11 +52,9 @@ jobs:
 
 The token should be a repository-scoped token or GitHub App installation token able to dispatch only registered target workflows.
 
-The complete commit SHA is the approved immutable MVP pin. The declared
-`ai-sdlc-v2.2.0` tag does not currently exist and must not be used until it is
-published through the governed release process. See [control-plane
-releases](releases.md) for upgrades, deprecation, and rollback. Never replace
-the SHA with a branch name.
+The 2.4.1 reference is a release candidate and must not be used for REAL work
+until its governed immutable tag is published. See [the 2.4.1 release
+procedure](releases/2.4.1.md). Never replace the tag with a branch name.
 
 ## Registry changes
 
@@ -97,7 +104,8 @@ The organization repository owns these active workflows:
 
 - `ai-sdlc-contract-tests.yml` validates schemas, the shared Python validator,
   registry policy, router behavior, and static contract boundaries;
-- `codex-router.yml` is the only organization dispatch boundary;
+- `codex-router.yml` is the reusable interface and its same-release
+  `actions/codex-router` bundle is the only organization dispatch implementation;
 - `codex-result-receiver.yml` is the sole implemented canonical result-return boundary; and
 - `router-smoke-test.yml` exercises the router with read-only verification.
 

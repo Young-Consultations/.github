@@ -33,6 +33,11 @@ IMMUTABLE_ADAPTER_TAG_RE = re.compile(
     r"codex-adapter-v(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)"
     r"(?:-[0-9A-Za-z]+(?:[.-][0-9A-Za-z]+)*)?"
 )
+CONTROL_PLANE_TAG_RE = re.compile(
+    r"ai-sdlc-v(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)"
+    r"(?:-[0-9A-Za-z]+(?:[.-][0-9A-Za-z]+)*)?"
+)
+ADMISSION_RE = re.compile(r"<!-- ai-sdlc-admission:v2 (\{[^\n]*\}) -->")
 FAILURE_CATEGORIES = {
     "contract-validation", "authorization", "dependency",
     "repository-routing", "publication", "unknown",
@@ -207,8 +212,29 @@ def routing_configuration() -> tuple[dict[str, Any], dict[str, bool]]:
                 f"Enabled target {name} must use a governed immutable codex-adapter-v* release tag.",
             )
         if enabled:
+            if repositories[name]["max_parallel_tasks"] != 1:
+                reject(
+                    "repository-routing",
+                    f"Enabled target {name} must declare max_parallel_tasks 1 in the v2 runtime.",
+                )
             validate_conformance(name, repositories[name], required=True)
     return repositories, activation
+
+
+def routing_evidence() -> dict[str, str]:
+    """Return the immutable release and exact mutable activation snapshot identity."""
+    evidence = {
+        "control_plane_release": os.environ.get("CONTROL_PLANE_RELEASE", ""),
+        "activation_revision": os.environ.get("CODEX_ACTIVATION_REVISION", ""),
+        "activation_sha256": os.environ.get("CODEX_ACTIVATION_SHA256", ""),
+    }
+    if CONTROL_PLANE_TAG_RE.fullmatch(evidence["control_plane_release"]) is None:
+        reject("repository-routing", "Control-plane release identity is missing or invalid.")
+    if SHA_RE.fullmatch(evidence["activation_revision"]) is None:
+        reject("repository-routing", "Activation revision identity is missing or invalid.")
+    if DIGEST_RE.fullmatch(evidence["activation_sha256"]) is None:
+        reject("repository-routing", "Activation content digest is missing or invalid.")
+    return evidence
 
 
 def slug(value: str) -> str:
@@ -232,6 +258,7 @@ def load_task() -> dict[str, Any]:
 
 def validate() -> dict[str, Any]:
     repositories, activation = routing_configuration()
+    route_evidence = routing_evidence()
     task = load_task()
     correlation_id = task["task_id"]
     delivery_id = task["task_id"]
@@ -258,10 +285,13 @@ def validate() -> dict[str, Any]:
     if task["contract_version"] != entry["contract_version"]:
         reject("contract-validation", "Task contract version is not supported by the target.", correlation_id)
 
-    issue = slug(task["source_issue"])
-    boundary = slug(correlation_id if task["parallel_safe"] else task["project"])
-    mode = "parallel" if task["parallel_safe"] else "serial"
-    group = f"codex-{slug(target)}-{issue}-{mode}-{boundary}"
+    # The only enabled REAL path is intentionally serialized per target. The
+    # v2 parallel_safe field remains contract data, not an unenforced promise.
+    group = (
+        f"codex-{slug(target)}-real"
+        if execution_mode == "implement"
+        else f"codex-{slug(target)}-verify-{slug(task['source_issue'])}"
+    )
     execution = {
         "contract_version": entry["contract_version"],
         "correlation_id": correlation_id,
@@ -290,10 +320,43 @@ def validate() -> dict[str, Any]:
         "codex_environment": entry["codex_environment"], "concurrency_group": group,
         "execution_input": execution, "correlation_id": correlation_id, "delivery_id": delivery_id,
         "diagnostic_summary": "Canonical task accepted and execution input validated.",
+        **route_evidence,
     }
     for key, value in values.items():
         output(key, value)
     return values
+
+
+def _github_json(*args: str) -> Any:
+    completed = subprocess.run(
+        ["gh", "api", *args], check=True, text=True, capture_output=True,
+    )
+    try:
+        return json.loads(completed.stdout)
+    except json.JSONDecodeError as exc:
+        raise ValueError("GitHub API returned invalid JSON") from exc
+
+
+def _existing_admissions(repository: str, issue: str, author: str, delivery_id: str) -> list[dict[str, Any]]:
+    pages = _github_json(
+        "--paginate", "--slurp",
+        f"repos/{repository}/issues/{issue}/comments?per_page=100",
+    )
+    if not isinstance(pages, list):
+        raise ValueError("GitHub issue comment response is not a list")
+    comments = [item for page in pages for item in page] if all(isinstance(page, list) for page in pages) else pages
+    admissions: list[dict[str, Any]] = []
+    for comment in comments:
+        if not isinstance(comment, dict) or comment.get("user", {}).get("login") != author:
+            continue
+        for match in ADMISSION_RE.finditer(str(comment.get("body", ""))):
+            try:
+                value = json.loads(match.group(1))
+            except json.JSONDecodeError:
+                continue
+            if isinstance(value, dict) and value.get("delivery_id") == delivery_id:
+                admissions.append(value)
+    return admissions
 
 
 def dispatch() -> None:
@@ -311,6 +374,7 @@ def dispatch() -> None:
         reject("contract-validation", "Execution input requires a non-empty concurrency_group.", correlation_id)
 
     repositories, activation = routing_configuration()
+    route_evidence = routing_evidence()
     target_repository = execution["target_repository"]
     entry = repositories.get(target_repository)
     if entry is None:
@@ -351,13 +415,10 @@ def dispatch() -> None:
     binding = {key: execution[key] for key in (
         "contract_version", "delivery_id", "correlation_id", "source_issue", "target_repository",
     )}
+    binding.update(route_evidence)
     admission_body = "<!-- ai-sdlc-admission:v2 " + json.dumps(
         binding, separators=(",", ":"), sort_keys=True
     ) + " -->"
-    admission_cmd = [
-        "gh", "api", f"repos/{issue_match.group(1)}/issues/{issue_match.group(2)}/comments",
-        "--method", "POST", "-f", f"body={admission_body}",
-    ]
     cmd = [
         "gh", "workflow", "run", workflow_path,
         "--repo", target_repository,
@@ -366,12 +427,26 @@ def dispatch() -> None:
         "-f", f"concurrency_group={concurrency_group}",
     ]
     try:
-        # The source-owned journal is written before dispatch.  A retry may add
-        # an identical admission marker; the receiver requires one unique
-        # binding value, not one physical comment.
-        subprocess.run(admission_cmd, check=True, text=True, capture_output=True)
+        identity = _github_json("user")
+        author = identity.get("login") if isinstance(identity, dict) else None
+        if not isinstance(author, str) or not author:
+            raise ValueError("Router credential identity is unavailable")
+        existing = _existing_admissions(
+            issue_match.group(1), issue_match.group(2), author, delivery_id,
+        )
+        if any(item != binding for item in existing):
+            reject("authorization", "Conflicting admission journal exists for this delivery.", correlation_id)
+        if not existing:
+            subprocess.run(
+                [
+                    "gh", "api",
+                    f"repos/{issue_match.group(1)}/issues/{issue_match.group(2)}/comments",
+                    "--method", "POST", "-f", f"body={admission_body}",
+                ],
+                check=True, text=True, capture_output=True,
+            )
         subprocess.run(cmd, check=True, text=True, capture_output=True)
-    except (OSError, subprocess.CalledProcessError) as exc:
+    except (OSError, ValueError, subprocess.CalledProcessError) as exc:
         detail = getattr(exc, "stderr", None) or getattr(exc, "stdout", None) or str(exc)
         reject("publication", f"Target workflow dispatch failed: {detail}", correlation_id)
     if ledger_path:

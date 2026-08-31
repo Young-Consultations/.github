@@ -31,8 +31,8 @@ ACTIVATION = ROOT / "config/codex-activation.json"
 REGISTRY = ROOT / "config/codex-repositories.json"
 RELEASE_MANIFEST = ROOT / "release/release-manifest.json"
 REAL_TARGET = "Young-Consultations/consulting-playbook"
-PUBLISHED_BASELINE = "2.3.2"
-CANDIDATE_RELEASE = "2.4.0"
+PUBLISHED_BASELINE = "2.4.0"
+CANDIDATE_RELEASE = "2.4.1"
 TARGET_ROOT_ENV = "TC_MVP_E2E_TARGET_ROOT"
 
 
@@ -199,11 +199,18 @@ def _task() -> dict[str, Any]:
 def _route_task(task: dict[str, Any]) -> dict[str, Any]:
     """Run production router admission/construction without external dispatch."""
 
-    names = ("TASK_PAYLOAD", "EXECUTION_MODE", "GITHUB_OUTPUT")
+    names = (
+        "TASK_PAYLOAD", "EXECUTION_MODE", "GITHUB_OUTPUT",
+        "CONTROL_PLANE_RELEASE", "CODEX_ACTIVATION_REVISION",
+        "CODEX_ACTIVATION_SHA256",
+    )
     previous = {name: os.environ.get(name) for name in names}
     os.environ["TASK_PAYLOAD"] = json.dumps(task)
     os.environ["EXECUTION_MODE"] = "implement"
     os.environ["GITHUB_OUTPUT"] = os.devnull
+    os.environ["CONTROL_PLANE_RELEASE"] = f"ai-sdlc-v{CANDIDATE_RELEASE}"
+    os.environ["CODEX_ACTIVATION_REVISION"] = "a" * 40
+    os.environ["CODEX_ACTIVATION_SHA256"] = "b" * 64
     try:
         try:
             return codex_router.validate()
@@ -264,6 +271,11 @@ class SimJournal:
                 "target_repository",
             )
         }
+        binding.update({
+            "control_plane_release": f"ai-sdlc-v{CANDIDATE_RELEASE}",
+            "activation_revision": "a" * 40,
+            "activation_sha256": "b" * 64,
+        })
         self.entries = [JournalComment(marker(ADMISSION, binding), "router-bot")]
         self.projections: list[dict[str, Any]] = []
 
@@ -353,7 +365,10 @@ def run_sim(report_path: Path, target_root: Path | None = None) -> list[str]:
             }:
                 errors.append(f"SIM primary fake-effect calls are unexpected: {primary_counts}")
 
-            receipt = receive(json.dumps(result), payload["source_issue"], REAL_TARGET, journal)
+            receipt = receive(
+                json.dumps(result), payload["source_issue"], REAL_TARGET, journal,
+                f"ai-sdlc-v{CANDIDATE_RELEASE}",
+            )
             first_receipt = "accepted" if receipt.accepted else "rejected"
             if not receipt.accepted or receipt.duplicate or len(journal.projections) != 1:
                 errors.append("SIM receiver/source projection did not accept exactly once")
@@ -371,7 +386,10 @@ def run_sim(report_path: Path, target_root: Path | None = None) -> list[str]:
             }:
                 errors.append(f"SIM retry invoked unexpected fake effects: {replay_counts}")
 
-            replay_receipt = receive(json.dumps(replay), payload["source_issue"], REAL_TARGET, journal)
+            replay_receipt = receive(
+                json.dumps(replay), payload["source_issue"], REAL_TARGET, journal,
+                f"ai-sdlc-v{CANDIDATE_RELEASE}",
+            )
             replay_receipt_status = (
                 "accepted-duplicate"
                 if replay_receipt.accepted and replay_receipt.duplicate
@@ -383,7 +401,10 @@ def run_sim(report_path: Path, target_root: Path | None = None) -> list[str]:
             conflicting = dict(result)
             conflicting["pull_request_url"] = "https://github.com/Young-Consultations/consulting-playbook/pull/999998"
             try:
-                receive(json.dumps(conflicting), payload["source_issue"], REAL_TARGET, journal)
+                receive(
+                    json.dumps(conflicting), payload["source_issue"], REAL_TARGET,
+                    journal, f"ai-sdlc-v{CANDIDATE_RELEASE}",
+                )
             except ReceiverError as exc:
                 conflict_decision = "ambiguous-rejected" if exc.ambiguous else "rejected-non-ambiguous"
                 if not exc.ambiguous:

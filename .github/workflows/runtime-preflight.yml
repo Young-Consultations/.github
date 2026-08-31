@@ -1,0 +1,39 @@
+name: AI-SDLC Runtime Preflight
+
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_mode:
+        description: Allow an unpublished reviewed candidate for SIM only.
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Verify generated runtime composition
+        run: python3 scripts/generate_current_runtime.py --check
+      - name: Check deployed configuration and credential names
+        env:
+          GH_TOKEN: ${{ secrets.PREFLIGHT_AUDIT_TOKEN }}
+        run: |
+          args=()
+          if [[ "${{ inputs.candidate_mode }}" == "true" ]]; then args+=(--candidate); fi
+          python3 scripts/runtime_preflight.py "${args[@]}" --output "$RUNNER_TEMP/preflight.json"
+      - name: Publish one mobile-friendly summary
+        if: always()
+        run: |
+          if [[ -f "$RUNNER_TEMP/preflight.json" ]]; then
+            jq -r '"## Runtime preflight: " + .status + "\n\n- Release: `" + .release + "` (" + .release_state + ")\n- Next action: " + .next_action' "$RUNNER_TEMP/preflight.json" >> "$GITHUB_STEP_SUMMARY"
+          else
+            printf '## Runtime preflight: FAIL\n\n- Last good boundary: checkout\n- Next action: inspect the failed preflight step\n' >> "$GITHUB_STEP_SUMMARY"
+          fi

@@ -10,6 +10,7 @@ import yaml
 WORKFLOWS = Path(".github/workflows")
 CONTRACT_WORKFLOW = WORKFLOWS / "ai-sdlc-contract-tests.yml"
 ROUTER_WORKFLOW = WORKFLOWS / "codex-router.yml"
+ROUTER_ACTION = Path("actions/codex-router/action.yml")
 ORGANIZATION_REPOSITORY = "Young-Consultations/.github"
 OBSOLETE_EXECUTOR_INPUTS = {
     "project_component",
@@ -130,19 +131,11 @@ def test_result_receiver_owns_journal_author_policy():
 
 def test_router_is_the_only_organization_dispatch_boundary():
     dispatchers = []
-    for workflow in WORKFLOWS.glob("*.yml"):
-        text = workflow.read_text(encoding="utf-8")
-        has_dispatch = any(
-            marker in text
-            for marker in (
-                "codex_router.py dispatch",
-                "gh workflow run",
-                "repository_dispatch",
-            )
-        )
-        if has_dispatch:
-            dispatchers.append(workflow)
-    assert dispatchers == [ROUTER_WORKFLOW]
+    for path in [*WORKFLOWS.glob("*.yml"), ROUTER_ACTION]:
+        text = path.read_text(encoding="utf-8")
+        if any(marker in text for marker in ("codex_router.py\" dispatch", "gh workflow run")):
+            dispatchers.append(path)
+    assert dispatchers == [ROUTER_ACTION]
 
 
 def test_active_workflows_do_not_expose_obsolete_executor_inputs():
@@ -248,20 +241,25 @@ def test_router_uses_least_privilege_permissions():
     assert "pull-requests: write" not in text
 
 
-def test_router_checkout_uses_policy_repository():
-    text = Path(".github/workflows/codex-router.yml").read_text(encoding="utf-8")
+def test_router_action_checks_out_activation_repository_once():
+    text = ROUTER_ACTION.read_text(encoding="utf-8")
     assert "repository: Young-Consultations/.github" in text
     assert "persist-credentials: false" in text
 
 
-def test_router_loads_current_activation_outside_immutable_checkout():
-    text = Path(".github/workflows/codex-router.yml").read_text(encoding="utf-8")
-    assert text.count("ref: ${{ github.workflow_sha }}") == 2
-    assert text.count("ref: main") == 2
-    assert text.count("sparse-checkout: config/codex-activation.json") == 2
-    assert "CODEX_ACTIVATION_PATH: ${{ github.workspace }}/control-plane/config/codex-activation.json" in text
-    assert "python3 immutable-policy/scripts/codex_router.py validate" in text
-    assert "python3 immutable-policy/scripts/codex_router.py dispatch" in text
+def test_router_self_pins_policy_and_loads_one_activation_snapshot():
+    workflow = ROUTER_WORKFLOW.read_text(encoding="utf-8")
+    action = ROUTER_ACTION.read_text(encoding="utf-8")
+    manifest = json.loads(Path("release/release-manifest.json").read_text(encoding="utf-8"))
+    assert workflow.count(
+        f"Young-Consultations/.github/actions/codex-router@{manifest['tag']}"
+    ) == 1
+    assert "github.workflow_sha" not in workflow
+    assert action.count("ref: main") == 1
+    assert action.count("sparse-checkout: config/codex-activation.json") == 1
+    assert action.count("CODEX_ACTIVATION_PATH:") == 2
+    assert 'codex_router.py\" validate' in action
+    assert 'codex_router.py\" dispatch' in action
 
 
 def test_activation_changes_trigger_target_compatibility():
@@ -289,16 +287,16 @@ def test_manual_target_compatibility_can_verify_disabled_targets():
 
 
 def test_router_installs_validator_dependencies_and_enforces_concurrency():
-    text = Path(".github/workflows/codex-router.yml").read_text(encoding="utf-8")
+    text = ROUTER_ACTION.read_text(encoding="utf-8")
     assert "--no-deps" not in text
-    assert "concurrency_group: ${{ steps.validate.outputs.concurrency_group }}" in text
-    assert "group: ${{ needs.route.outputs.concurrency_group }}" in text
-    assert "cancel-in-progress: false" in text
+    assert "jsonschema==4.26.0" in text
+    assert "concurrency_group:" in text
 
 
 def test_smoke_and_production_routes_select_modes_explicitly():
     router = Path(".github/workflows/codex-router.yml").read_text(encoding="utf-8")
+    action = ROUTER_ACTION.read_text(encoding="utf-8")
     smoke = Path(".github/workflows/router-smoke-test.yml").read_text(encoding="utf-8")
     assert "default: implement" in router
-    assert "EXECUTION_MODE: ${{ inputs.execution_mode }}" in router
+    assert "EXECUTION_MODE: ${{ inputs.execution-mode }}" in action
     assert "execution_mode: verify" in smoke

@@ -106,6 +106,47 @@ def validate(root: Path = ROOT, *, require_publishable: bool = False) -> list[st
     elif set(targets) != set(registry) or any(not isinstance(value, bool) for value in targets.values()):
         errors.append("activation configuration must contain one boolean per capability")
 
+    runtime_path = root / str(manifest.get("current_runtime", ""))
+    credential_roles_path = root / str(manifest.get("credential_role_manifest", ""))
+    if not runtime_path.is_file():
+        errors.append("generated current runtime record must exist")
+    else:
+        runtime = load_json(runtime_path)
+        control_plane = runtime.get("control_plane", {}) if isinstance(runtime, dict) else {}
+        if (
+            runtime.get("runtime_record_format_version") != 1
+            or control_plane.get("tag") != manifest.get("tag")
+            or control_plane.get("tag_published") != manifest.get("tag_published")
+        ):
+            errors.append("generated current runtime record is inconsistent with the manifest")
+    if not credential_roles_path.is_file():
+        errors.append("credential role manifest must exist")
+    else:
+        roles = load_json(credential_roles_path)
+        if (
+            roles.get("credential_role_format_version") != 1
+            or not isinstance(roles.get("repositories"), dict)
+            or not roles["repositories"]
+        ):
+            errors.append("credential role manifest is invalid")
+
+    router = manifest.get("router_workflow")
+    router_action = manifest.get("router_action")
+    if not isinstance(router, str) or not (root / router).is_file():
+        errors.append("release router workflow must exist")
+    elif not isinstance(router_action, str) or not (root / router_action).is_file():
+        errors.append("release router action must exist")
+    else:
+        router_source = (root / router).read_text(encoding="utf-8")
+        expected_router_action = (
+            "Young-Consultations/.github/actions/codex-router@"
+            + str(manifest.get("tag", ""))
+        )
+        if router_source.count(expected_router_action) != 1:
+            errors.append("release router must self-pin its action bundle to the release tag")
+        if "github.workflow_sha" in router_source or "actions/checkout@" in router_source:
+            errors.append("release router workflow must not resolve policy through caller context")
+
     previous = manifest.get("previous_known_good", {})
     if not re.fullmatch(r"[0-9a-f]{40}", previous.get("commit_sha", "")):
         errors.append("previous known-good release must have a full commit SHA")

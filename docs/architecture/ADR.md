@@ -204,3 +204,32 @@ gate now tests the behavior it claims. **Consequences:** wrapper comments cannot
 manufacture idempotency assurance; the pinned adapter is mandatory evidence;
 orphaned remote state fails before paid execution. **Trace:** GH-FR-009/013–015;
 GH-QR-007; IF-06/IF-08; TC-MVP-CI-001.
+
+## ADR-017 — Stabilize v2 with owner-pinned routing and single state authority
+
+**Status:** Accepted for the 2.4.1 patch candidate. **Context:** Live-path review
+found that the reusable router resolved immutable policy through the
+caller-associated `github.workflow_sha`, read mutable activation twice, shared
+approval authority between an issue-body field and a label, and shared admission
+journal ownership with the source workflow. Those conditions made a valid path
+dependent on context inference and manually synchronized state. The sole operator
+works mainly from an iPhone, so normal approval must be one safe action.
+**Decision:** Retain the source, organization router, target, receiver, and v2
+source-projector trust roles for this patch. The router workflow invokes an
+owner-controlled composite action pinned to the same immutable release tag. That
+bundle checks out activation once, records its revision and digest, validates the
+task, writes one idempotent release-bound admission marker, and dispatches the
+target. Adding `status:approved` is the only human approval action; the source
+compares material task identity rather than `updated_at` and writes only the
+queued projection after successful routing. Repository membership is authorized
+only by the organization registry. All REAL work is serialized per enabled target.
+**Alternatives:** infer policy from reusable-workflow context; retain two approval
+fields; let both source and router write admission; remove the source result
+projector in the recovery patch. **Tradeoffs:** the self-pinned action is an
+additional repository artifact and the v2 result projector remains until a
+versioned protocol migration, but the deployed path no longer depends on caller
+SHA interpretation or duplicate writable state. **Consequences:** release
+validation proves router workflow/action pin agreement; one generated runtime
+record and one credential-role manifest describe the candidate; boundary and
+payload changes remain deferred to v3. **Trace:** IF-01/IF-04/IF-05/IF-08;
+TC-MVP-E2E-001; ASR-001/003/005/008/009/012/013.

@@ -193,14 +193,18 @@ non-identical transition as an idempotent no-op only when it represents the same
 stable managed-draft effect; every other non-identical result remains ambiguous
 and fails closed.
 
-PR #54 prepared `ai-sdlc-v2.4.0` as a MINOR candidate because this adds a
-backward-compatible accepted receiver outcome while keeping the closed v2
-payload schemas unchanged. The 2.3.2 tag must not move or be reinterpreted.
-`consulting-playbook` now has reviewed immutable `codex-adapter-v2.4.0`
-evidence and the control-plane registry is rebound to that adapter. The final
-2.4.0 release review may mark the manifest publishable, but REAL remains blocked
-until the immutable `ai-sdlc-v2.4.0` control-plane tag actually exists and the
-non-mutating REAL preflight passes.
+`ai-sdlc-v2.4.0` is published at
+`42e8e0d3c888efbb3a21bd6762cb4fa416126529`; its tags and the published
+`consulting-playbook` `codex-adapter-v2.4.0` tag remain immutable. The current
+2.4.1 patch candidate keeps the closed v2 payload schemas and result projector,
+but self-pins the router bundle, consumes one activation snapshot, makes the
+approval label the sole human action, gives the router sole admission ownership,
+records release/activation identity, fixes journal pagination, serializes REAL
+work per enabled target, and adds a generated runtime record plus credential
+preflight. `release/current-runtime.json` is the current composition record and
+`docs/releases/2.4.1.md` is the current operator procedure. REAL remains blocked
+until the candidate is finalized, tagged, and the default deployed preflight
+passes.
 
 Explicitly excluded are exactly-once transport, autonomous approval, automatic
 merge, release or deployment automation authority, production operation,

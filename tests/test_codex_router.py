@@ -41,6 +41,9 @@ def enabled_in_process_routing(monkeypatch):
         return repositories, {repository: True for repository in repositories}
 
     monkeypatch.setattr(codex_router, "routing_configuration", active_configuration)
+    monkeypatch.setenv("CONTROL_PLANE_RELEASE", "ai-sdlc-v2.4.1")
+    monkeypatch.setenv("CODEX_ACTIVATION_REVISION", "a" * 40)
+    monkeypatch.setenv("CODEX_ACTIVATION_SHA256", "b" * 64)
 
 
 def run_router(
@@ -183,18 +186,18 @@ def test_duplicate_attempt_has_same_group_and_branch():
     assert json.loads(output(first, "execution_input"))["requested_branch"] == json.loads(output(second, "execution_input"))["requested_branch"]
 
 
-def test_parallel_safe_execution_uses_attempt_boundary():
+def test_parallel_safe_real_execution_is_still_serialized_per_target():
     first = run_router(parallel_safe=True, task_id="attempt-a")
     second = run_router(parallel_safe=True, task_id="attempt-b")
-    assert output(first, "concurrency_group") != output(second, "concurrency_group")
-    assert "-parallel-" in output(first, "concurrency_group")
+    assert output(first, "concurrency_group") == output(second, "concurrency_group")
+    assert output(first, "concurrency_group").endswith("-real")
 
 
-def test_non_parallel_safe_execution_uses_component_boundary():
+def test_non_parallel_safe_real_execution_uses_target_boundary():
     first = run_router(task_id="attempt-a")
     second = run_router(task_id="attempt-b")
     assert output(first, "concurrency_group") == output(second, "concurrency_group")
-    assert "-serial-publication-output" in output(first, "concurrency_group")
+    assert output(first, "concurrency_group").endswith("-real")
     assert json.loads(output(first, "execution_input"))["concurrency_group"] == output(first, "concurrency_group")
 
 
@@ -273,6 +276,9 @@ def test_output_transport_does_not_change_router_semantics(tmp_path, monkeypatch
         "correlation_id",
         "delivery_id",
         "diagnostic_summary",
+        "control_plane_release",
+        "activation_revision",
+        "activation_sha256",
     )
     assert {key: output(stdout_result, key) for key in keys} == {
         key: file_values[key] for key in keys
@@ -311,6 +317,30 @@ def test_enabled_activation_rejects_missing_shared_oracle_evidence():
     assert "TC-MVP-CI-001" in output(result, "diagnostic_summary")
 
 
+def test_enabled_v2_target_must_declare_actual_single_task_serialization():
+    registry = json.loads(Path("config/codex-repositories.json").read_text(encoding="utf-8"))
+    activation = json.loads(Path("config/codex-activation.json").read_text(encoding="utf-8"))
+    target = "Young-Consultations/consulting-playbook"
+    registry["repositories"][target]["max_parallel_tasks"] = 2
+    registry_path = Path("config/codex-repositories.json")
+    original = registry_path.read_text(encoding="utf-8")
+    try:
+        registry_path.write_text(json.dumps(registry), encoding="utf-8")
+        result = subprocess.run(
+            ["python3", "scripts/codex_router.py", "validate-registry"],
+            env={
+                **os.environ,
+                "CODEX_ACTIVATION_PATH": "config/codex-activation.json",
+            },
+            text=True,
+            capture_output=True,
+        )
+        assert result.returncode == 1
+        assert "max_parallel_tasks 1" in result.stdout
+    finally:
+        registry_path.write_text(original, encoding="utf-8")
+
+
 def test_repository_specific_configuration_is_registry_only():
     router = open("scripts/codex_router.py", encoding="utf-8").read()
     for repository in (
@@ -319,6 +349,24 @@ def test_repository_specific_configuration_is_registry_only():
         "Young-Consultations/portfolio-tasks",
     ):
         assert repository not in router
+
+
+def test_admission_lookup_reads_later_comment_pages(monkeypatch):
+    binding = {
+        "delivery_id": "delivery-42",
+        "control_plane_release": "ai-sdlc-v2.4.1",
+    }
+    marker = "<!-- ai-sdlc-admission:v2 " + json.dumps(
+        binding, separators=(",", ":"), sort_keys=True
+    ) + " -->"
+    pages = [
+        [{"body": "unrelated", "user": {"login": "mightyjoe909"}}] * 100,
+        [{"body": marker, "user": {"login": "mightyjoe909"}}],
+    ]
+    monkeypatch.setattr(codex_router, "_github_json", lambda *args: pages)
+    assert codex_router._existing_admissions(
+        "Young-Consultations/portfolio-tasks", "42", "mightyjoe909", "delivery-42"
+    ) == [binding]
 
 
 def execution_for(repository, task_type):
@@ -344,11 +392,18 @@ def test_dispatch_uses_canonical_json_transport_for_every_repository(
     monkeypatch.setenv("EXECUTION_INPUT", json.dumps(execution))
     monkeypatch.setenv("WORKFLOW_REF", workflow_ref)
     monkeypatch.delenv("GITHUB_OUTPUT", raising=False)
-    monkeypatch.setattr(codex_router.subprocess, "run", lambda cmd, **kwargs: calls.append((cmd, kwargs)))
+    def fake_run(cmd, **kwargs):
+        calls.append((cmd, kwargs))
+        if cmd[1:3] == ["api", "user"]:
+            return subprocess.CompletedProcess(cmd, 0, stdout='{"login":"mightyjoe909"}')
+        if "--slurp" in cmd:
+            return subprocess.CompletedProcess(cmd, 0, stdout="[[]]")
+        return subprocess.CompletedProcess(cmd, 0, stdout="")
+    monkeypatch.setattr(codex_router.subprocess, "run", fake_run)
 
     codex_router.dispatch()
 
-    assert calls[0][0][1:3] == ["api", f"repos/{repository}/issues/8/comments"]
+    assert any("--slurp" in cmd for cmd, _ in calls)
     cmd, kwargs = calls[-1]
     fields = [cmd[index + 1] for index, value in enumerate(cmd) if value == "-f"]
     assert len(fields) == 2
@@ -375,11 +430,18 @@ def test_portfolio_tasks_dispatch_command_matches_workflow_interface(monkeypatch
     )
     monkeypatch.delenv("GITHUB_OUTPUT", raising=False)
     commands = []
-    monkeypatch.setattr(codex_router.subprocess, "run", lambda cmd, **kwargs: commands.append(cmd))
+    def fake_run(cmd, **kwargs):
+        commands.append(cmd)
+        if cmd[1:3] == ["api", "user"]:
+            return subprocess.CompletedProcess(cmd, 0, stdout='{"login":"mightyjoe909"}')
+        if "--slurp" in cmd:
+            return subprocess.CompletedProcess(cmd, 0, stdout="[[]]")
+        return subprocess.CompletedProcess(cmd, 0, stdout="")
+    monkeypatch.setattr(codex_router.subprocess, "run", fake_run)
 
     codex_router.dispatch()
 
-    assert commands[0][1:3] == ["api", f"repos/{repository}/issues/8/comments"]
+    assert any("--slurp" in command for command in commands)
     assert commands[-1][:8] == [
         "gh", "workflow", "run", "codex-execute.yml", "--repo", repository,
         "--ref", "codex-adapter-v2.3.2",

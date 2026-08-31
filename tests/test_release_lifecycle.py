@@ -11,15 +11,18 @@ def test_current_release_candidate_is_structurally_coherent():
     assert validate_release.validate() == []
 
 
-def test_final_release_candidate_satisfies_publication_gate():
-    assert validate_release.validate(require_publishable=True) == []
+def test_patch_candidate_is_coherent_but_not_yet_publishable():
+    assert validate_release.validate() == []
+    assert validate_release.validate(require_publishable=True) == [
+        "publishable release must declare tag_published true"
+    ]
 
 
-def test_mvp_fixture_targets_match_final_release_manifest():
+def test_mvp_fixture_targets_match_patch_candidate_manifest():
     manifest = json.loads((ROOT / "release/release-manifest.json").read_text(encoding="utf-8"))
     fixture = json.loads((ROOT / "tests/fixtures/mvp-v2/manifest.json").read_text(encoding="utf-8"))
-    assert manifest["release_version"] == "2.4.0"
-    assert manifest["tag_published"] is True
+    assert manifest["release_version"] == "2.4.1"
+    assert manifest["tag_published"] is False
     assert "immutable_reference" not in fixture
     assert "immutable_reference" not in manifest
     assert sorted(fixture["targets"]) == manifest["supported_targets"]
@@ -43,11 +46,11 @@ def test_mutable_router_reference_is_rejected(tmp_path):
     assert any("mutable organization workflow ref" in error for error in validate_release.validate(tmp_path))
 
 
-def test_previous_known_good_is_published_2_3_2_commit():
+def test_previous_known_good_is_published_2_4_0_commit():
     manifest = json.loads((ROOT / "release/release-manifest.json").read_text(encoding="utf-8"))
     assert manifest["previous_known_good"] == {
-        "release_version": "2.3.2",
-        "commit_sha": "5738ace3ee90dde11336f8f8099e64e5645f7139",
+        "release_version": "2.4.0",
+        "commit_sha": "42e8e0d3c888efbb3a21bd6762cb4fa416126529",
     }
     sha = manifest["previous_known_good"]["commit_sha"]
     result = subprocess.run(
@@ -64,10 +67,7 @@ def test_candidate_does_not_embed_its_own_future_commit_identity():
     assert "immutable_reference" not in manifest
 
 
-def test_minor_candidate_preserves_published_2_3_2_as_history():
+def test_patch_candidate_preserves_published_2_4_0_as_history():
     manifest = json.loads((ROOT / "release/release-manifest.json").read_text(encoding="utf-8"))
-    assert manifest["release_version"] == "2.4.0"
-    assert manifest["recovery_of"] == {
-        "release_version": "2.3.2",
-        "commit_sha": "5738ace3ee90dde11336f8f8099e64e5645f7139",
-    }
+    assert manifest["release_version"] == "2.4.1"
+    assert manifest["recovery_of"] is None

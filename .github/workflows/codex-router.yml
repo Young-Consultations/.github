@@ -14,27 +14,26 @@ on:
         default: implement
     secrets:
       CODEX_ROUTER_TOKEN:
-        description: Repository-scoped token or GitHub App token permitted to dispatch the registered workflow.
+        description: Repository-scoped token or GitHub App token permitted to journal admission and dispatch the registered workflow.
         required: true
     outputs:
       execution_result:
         description: Dispatch status or deterministic canonical rejection JSON.
-        value: ${{ jobs.dispatch.outputs.execution_result || jobs.route.outputs.execution_result }}
+        value: ${{ jobs.route.outputs.execution_result }}
       correlation_id:
-        description: Correlation ID preserved from the canonical task ID.
-        value: ${{ jobs.dispatch.outputs.correlation_id || jobs.route.outputs.correlation_id }}
+        value: ${{ jobs.route.outputs.correlation_id }}
       delivery_id:
-        description: Immutable canonical delivery identity for idempotent targets.
-        value: ${{ jobs.dispatch.outputs.delivery_id || jobs.route.outputs.delivery_id }}
+        value: ${{ jobs.route.outputs.delivery_id }}
       failure_category:
-        description: Canonical failure category when validation or routing fails.
-        value: ${{ jobs.dispatch.outputs.failure_category || jobs.route.outputs.failure_category }}
+        value: ${{ jobs.route.outputs.failure_category }}
       diagnostic_summary:
-        description: Sanitized deterministic routing diagnostic.
-        value: ${{ jobs.dispatch.outputs.diagnostic_summary || jobs.route.outputs.diagnostic_summary }}
+        value: ${{ jobs.route.outputs.diagnostic_summary }}
       concurrency_group:
-        description: Deterministic concurrency boundary applied to dispatch.
         value: ${{ jobs.route.outputs.concurrency_group }}
+      activation_revision:
+        value: ${{ jobs.route.outputs.activation_revision }}
+      activation_sha256:
+        value: ${{ jobs.route.outputs.activation_sha256 }}
 
 permissions:
   contents: read
@@ -42,98 +41,22 @@ permissions:
 
 jobs:
   route:
-    name: Validate canonical Codex task
+    name: Validate, admit, and dispatch canonical task
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      actions: read
     outputs:
-      execution_result: ${{ steps.validate.outputs.execution_result }}
-      correlation_id: ${{ steps.validate.outputs.correlation_id }}
-      delivery_id: ${{ steps.validate.outputs.delivery_id }}
-      failure_category: ${{ steps.validate.outputs.failure_category }}
-      diagnostic_summary: ${{ steps.validate.outputs.diagnostic_summary }}
-      execution_input: ${{ steps.validate.outputs.execution_input }}
-      workflow_ref: ${{ steps.validate.outputs.workflow_ref }}
-      concurrency_group: ${{ steps.validate.outputs.concurrency_group }}
+      execution_result: ${{ steps.router.outputs.execution_result }}
+      correlation_id: ${{ steps.router.outputs.correlation_id }}
+      delivery_id: ${{ steps.router.outputs.delivery_id }}
+      failure_category: ${{ steps.router.outputs.failure_category }}
+      diagnostic_summary: ${{ steps.router.outputs.diagnostic_summary }}
+      concurrency_group: ${{ steps.router.outputs.concurrency_group }}
+      activation_revision: ${{ steps.router.outputs.activation_revision }}
+      activation_sha256: ${{ steps.router.outputs.activation_sha256 }}
     steps:
-      - name: Checkout immutable organization policy
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - id: router
+        uses: Young-Consultations/.github/actions/codex-router@ai-sdlc-v2.4.1
         with:
-          repository: Young-Consultations/.github
-          ref: ${{ github.workflow_sha }}
-          path: immutable-policy
-          persist-credentials: false
-
-      - name: Checkout current activation state
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          repository: Young-Consultations/.github
-          ref: main
-          path: control-plane
-          sparse-checkout: config/codex-activation.json
-          sparse-checkout-cone-mode: false
-          persist-credentials: false
-
-      - name: Install schema validator
-        run: python -m pip install --disable-pip-version-check 'jsonschema>=4.18,<5'
-
-      - name: Validate repository registry
-        env:
-          CODEX_ACTIVATION_PATH: ${{ github.workspace }}/control-plane/config/codex-activation.json
-        run: python3 immutable-policy/scripts/codex_router.py validate-registry
-
-      - name: Validate task and build execution input
-        id: validate
-        env:
-          TASK_PAYLOAD: ${{ inputs.task_payload }}
-          EXECUTION_MODE: ${{ inputs.execution_mode }}
-          CODEX_ACTIVATION_PATH: ${{ github.workspace }}/control-plane/config/codex-activation.json
-        run: python3 immutable-policy/scripts/codex_router.py validate
-
-  dispatch:
-    name: Dispatch canonical Codex task
-    needs: route
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      actions: read
-    concurrency:
-      group: ${{ needs.route.outputs.concurrency_group }}
-      cancel-in-progress: false
-    outputs:
-      execution_result: ${{ steps.dispatch.outputs.execution_result }}
-      correlation_id: ${{ steps.dispatch.outputs.correlation_id }}
-      delivery_id: ${{ steps.dispatch.outputs.delivery_id }}
-      failure_category: ${{ steps.dispatch.outputs.failure_category }}
-      diagnostic_summary: ${{ steps.dispatch.outputs.diagnostic_summary }}
-    steps:
-      - name: Checkout immutable organization policy
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          repository: Young-Consultations/.github
-          ref: ${{ github.workflow_sha }}
-          path: immutable-policy
-          persist-credentials: false
-
-      - name: Checkout current activation state
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          repository: Young-Consultations/.github
-          ref: main
-          path: control-plane
-          sparse-checkout: config/codex-activation.json
-          sparse-checkout-cone-mode: false
-          persist-credentials: false
-
-      - name: Install schema validator
-        run: python -m pip install --disable-pip-version-check 'jsonschema>=4.18,<5'
-
-      - name: Dispatch canonical execution input
-        id: dispatch
-        env:
-          GH_TOKEN: ${{ secrets.CODEX_ROUTER_TOKEN }}
-          EXECUTION_INPUT: ${{ needs.route.outputs.execution_input }}
-          WORKFLOW_REF: ${{ needs.route.outputs.workflow_ref }}
-          CODEX_ACTIVATION_PATH: ${{ github.workspace }}/control-plane/config/codex-activation.json
-        run: python3 immutable-policy/scripts/codex_router.py dispatch
+          router-token: ${{ secrets.CODEX_ROUTER_TOKEN }}
+          task-payload: ${{ inputs.task_payload }}
+          execution-mode: ${{ inputs.execution_mode }}
+          control-plane-release: ai-sdlc-v2.4.1
