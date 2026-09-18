@@ -57,12 +57,14 @@ tokens are supported without calling the user-only `GET /user` endpoint. On
 redelivery, only an identical marker written by that same author is reused;
 untrusted lookalike comments are never admission authority.
 
-`ai-sdlc-v2.4.1` is the current published production control-plane release.
-The 2.4.2 repair is a release candidate and must not be used by the portfolio
-source consumer for REAL work until the governed `ai-sdlc-v2.4.2` tag is
-published and resolves to the reviewed control-plane commit. See [the 2.4.2
-release procedure](releases/2.4.2.md). Never replace an immutable tag with a
-branch name or assume a registry edit on `main` changes an older tagged router.
+`ai-sdlc-v2.4.2` is the current published control-plane release and resolves to
+reviewed commit `1ea59832996dc398923c2d1516eb464546e30877`. The production
+`portfolio-tasks` source consumer remains pinned to `ai-sdlc-v2.4.1` until the
+2.4.2 publication attestation merges and deployed Runtime Preflight passes.
+Only then may the separate consumer repin merge and select 2.4.2 for REAL work.
+See [the 2.4.2 release procedure](releases/2.4.2.md). Never replace an immutable
+tag with a branch name or assume a registry edit on `main` changes an older
+tagged router.
 
 ## Registry changes
 

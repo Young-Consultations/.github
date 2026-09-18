@@ -193,20 +193,19 @@ non-identical transition as an idempotent no-op only when it represents the same
 stable managed-draft effect; every other non-identical result remains ambiguous
 and fails closed.
 
-`ai-sdlc-v2.4.1` is the current published control-plane release at
-`34ec7dc1cf54f960757781851384e0f6b15f7b63` and remains immutable. The
-`consulting-playbook` production path is still bound through that release to the
-pre-repair `codex-adapter-v2.4.1` runtime. The 2.4.2 release-repair candidate
-keeps the closed v2 payload schemas and existing approval/state ownership, but
-self-pins the router and receiver bundles to `ai-sdlc-v2.4.2` and binds the
-published repaired target `codex-adapter-v2.4.2` at
+`ai-sdlc-v2.4.2` is the current published control-plane release, with its
+immutable tag resolving to reviewed commit
+`1ea59832996dc398923c2d1516eb464546e30877`. It keeps the closed v2 payload
+schemas and existing approval/state ownership, self-pins the router and receiver
+bundles to `ai-sdlc-v2.4.2`, and binds the published repaired target
+`codex-adapter-v2.4.2` at
 `6ce0bf941c10c0c37b51c90d433d39f377ccad85`. The source consumer in
-`portfolio-tasks` must remain on `ai-sdlc-v2.4.1` until the immutable
-control-plane tag is published and release-aware verification passes. `release/current-runtime.json`
-is therefore a candidate composition record, and `docs/releases/2.4.2.md` is the
-current repair procedure. REAL work on the 2.4.2 path remains blocked until the
-control-plane tag, publication attestation, source-consumer repin, and deployed
-preflight are complete.
+`portfolio-tasks` must remain on `ai-sdlc-v2.4.1` until release-aware verification,
+the separate consumer repin, and deployed Runtime Preflight pass.
+`release/current-runtime.json` records the published control-plane composition,
+and `docs/releases/2.4.2.md` remains the repair procedure. REAL work on the 2.4.2
+path remains blocked until the source-consumer repin and deployed preflight are
+complete.
 
 Explicitly excluded are exactly-once transport, autonomous approval, automatic
 merge, release or deployment automation authority, production operation,
