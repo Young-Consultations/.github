@@ -140,8 +140,19 @@ def test_real_preflight_passes_for_published_release_when_identity_is_valid(
     report = tmp_path / "sim.json"
     assert e2e.run_sim(report, target_root) == []
     payload = json.loads(report.read_text(encoding="utf-8"))
-    payload["control_plane_commit"] = "34ec7dc1cf54f960757781851384e0f6b15f7b63"
+    attested_commit = "1" * 40
+    payload["control_plane_commit"] = attested_commit
     report.write_text(json.dumps(payload), encoding="utf-8")
+    original_load = e2e._load
+
+    def published_manifest(path):
+        value = original_load(path)
+        if path == e2e.RELEASE_MANIFEST:
+            value = dict(value)
+            value["tag_commit_sha"] = attested_commit
+        return value
+
+    monkeypatch.setattr(e2e, "_load", published_manifest)
     assert e2e.run_real_preflight(report, target_root) == []
 
 
