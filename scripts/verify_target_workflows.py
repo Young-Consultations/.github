@@ -544,6 +544,33 @@ def fetch_ref_commit(repository: str, ref: str, token: str | None = None) -> str
     return commit
 
 
+def fetch_tag_commit(repository: str, tag: str, token: str | None = None) -> str:
+    """Resolve an exact Git tag ref, dereferencing annotated tags fail-closed."""
+    quoted_repository = "/".join(
+        urllib.parse.quote(part, safe="") for part in repository.split("/")
+    )
+    quoted_tag = urllib.parse.quote(tag, safe="")
+    payload = fetch_json(
+        f"https://api.github.com/repos/{quoted_repository}/git/ref/tags/{quoted_tag}",
+        token,
+    )
+    obj = payload.get("object") if isinstance(payload, dict) else None
+    for _ in range(4):
+        if not isinstance(obj, dict):
+            break
+        sha = obj.get("sha")
+        if obj.get("type") == "commit" and isinstance(sha, str) and SHA_RE.fullmatch(sha):
+            return sha
+        if obj.get("type") != "tag" or not isinstance(sha, str) or SHA_RE.fullmatch(sha) is None:
+            break
+        tag_object = fetch_json(
+            f"https://api.github.com/repos/{quoted_repository}/git/tags/{sha}",
+            token,
+        )
+        obj = tag_object.get("object") if isinstance(tag_object, dict) else None
+    raise CompatibilityError("adapter tag does not resolve to a commit")
+
+
 def verify_receiver_at_ref(receiver_ref: str, token: str | None) -> None:
     receiver_commit = fetch_ref_commit("Young-Consultations/.github", receiver_ref, token)
     source = fetch_workflow(
@@ -700,6 +727,7 @@ def verify_conformance_report(
 def verify_registry(
     repositories: dict[str, dict[str, Any]], token: str | None,
     selected_repository: str | None = None, activation: dict[str, bool] | None = None,
+    *, enabled_only: bool = False,
 ) -> list[dict[str, str]]:
     if activation is None:
         activation = {repository: True for repository in repositories}
@@ -709,6 +737,8 @@ def verify_registry(
             continue
         workflow_repository, path, ref = parse_workflow_ref(entry["workflow_ref"])
         enabled = activation[repository]
+        if enabled_only and not enabled:
+            continue
         row = {"repository": repository, "workflow": path, "ref": ref,
                "contract_version": entry["contract_version"], "draft_pr_only": str(entry["draft_pr_only"]).lower(),
                "transport_interface": "not evaluated", "result": "not-evaluated"}
@@ -724,7 +754,7 @@ def verify_registry(
             evidence = validate_conformance_record(repository, entry, required=True)
             if evidence is None:  # Defensive: required=True must never return None.
                 raise CompatibilityError(f"{repository}: reviewed TC-MVP-CI-001 evidence is missing")
-            commit = fetch_ref_commit(repository, ref, token)
+            commit = fetch_tag_commit(repository, ref, token)
             if commit != evidence["adapter_commit_sha"]:
                 raise CompatibilityError("adapter tag does not resolve to the reviewed adapter commit")
             source = fetch_workflow(workflow_repository, path, ref, token)
@@ -763,6 +793,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--report", type=Path, default=ROOT / "reports/target-workflow-compatibility.json")
     parser.add_argument("--fixtures-only", action="store_true", help="validate the canonical local target fixture without network access")
     parser.add_argument("--repository", help="validate one registered repository, including when it is disabled")
+    parser.add_argument(
+        "--enabled-only",
+        action="store_true",
+        help="live-validate every currently enabled target and omit disabled targets",
+    )
     args = parser.parse_args(argv)
     try:
         repositories = load_registry(args.registry)
@@ -777,7 +812,15 @@ def main(argv: list[str] | None = None) -> int:
             token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
             if args.repository and args.repository not in repositories:
                 raise CompatibilityError(f"{args.repository}: repository is not registered")
-            report = verify_registry(repositories, token, args.repository, activation)
+            report = verify_registry(
+                repositories,
+                token,
+                args.repository,
+                activation,
+                enabled_only=args.enabled_only,
+            )
+            if args.enabled_only and not report:
+                raise CompatibilityError("activation selects no enabled target")
         write_outputs(report, args.report)
         failed = sum(row["result"] != "pass" for row in report)
         debug(f"wrote report to {args.report}; checked={len(report)}, nonpassing={failed}")

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import pytest
 
@@ -50,3 +51,38 @@ def test_non_missing_manifest_receiver_failure_still_fails_closed(monkeypatch: p
     monkeypatch.setattr(release_checker, "_REMOTE_VERIFY_RECEIVER", incompatible)
     with pytest.raises(release_checker.checker.CompatibilityError, match="inputs are incompatible"):
         release_checker.verify_release_receiver_at_ref(_manifest_tag(), "token")
+
+
+@pytest.mark.parametrize(
+    ("tag_published", "tag_commit_sha"),
+    [
+        (True, "4" * 40),
+        (False, "4" * 40),
+    ],
+)
+def test_local_receiver_fallback_requires_explicit_unpublished_candidate_state(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    tag_published: bool,
+    tag_commit_sha: str,
+) -> None:
+    def missing(receiver_ref: str, token: str | None) -> None:
+        raise release_checker.checker.CompatibilityError(
+            "GitHub evidence is unavailable (tag): HTTP 404: Not Found"
+        )
+
+    manifest = json.loads(
+        release_checker.checker.RELEASE_MANIFEST.read_text(encoding="utf-8")
+    )
+    manifest["tag_published"] = tag_published
+    manifest["tag_commit_sha"] = tag_commit_sha
+    release_dir = tmp_path / "release"
+    release_dir.mkdir()
+    (release_dir / "release-manifest.json").write_text(
+        json.dumps(manifest), encoding="utf-8"
+    )
+
+    monkeypatch.setattr(release_checker, "ROOT", tmp_path)
+    monkeypatch.setattr(release_checker, "_REMOTE_VERIFY_RECEIVER", missing)
+    with pytest.raises(release_checker.checker.CompatibilityError, match="HTTP 404"):
+        release_checker.verify_release_receiver_at_ref(manifest["tag"], "token")

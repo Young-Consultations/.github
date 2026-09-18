@@ -32,7 +32,15 @@ def verify_release_receiver_at_ref(receiver_ref: str, token: str | None) -> None
         return
     except checker.CompatibilityError as exc:
         manifest = json.loads((ROOT / "release/release-manifest.json").read_text(encoding="utf-8"))
-        if receiver_ref != manifest.get("tag") or not _missing_ref_error(exc):
+        candidate_state = (
+            manifest.get("tag_published") is False
+            and manifest.get("tag_commit_sha") is None
+        )
+        if (
+            receiver_ref != manifest.get("tag")
+            or not candidate_state
+            or not _missing_ref_error(exc)
+        ):
             raise
 
     workflow_path = ROOT / manifest["result_receiver_workflow"]

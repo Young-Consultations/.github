@@ -16,16 +16,10 @@ on:
           - Young-Consultations/slugger
   schedule:
     - cron: '17 6 * * *'
+  # This is intended to be a required release-evidence check. Run it on every
+  # pull request so changes to any local evidence input cannot bypass the gate
+  # and the required check never remains pending because of path filtering.
   pull_request:
-    paths:
-      - 'config/codex-repositories.json'
-      - 'config/codex-activation.json'
-      - 'scripts/verify_target_workflows.py'
-      - 'scripts/verify_release_target_workflows.py'
-      - 'tests/test_target_workflow_compatibility.py'
-      - 'tests/test_release_target_verifier.py'
-      - 'release/release-manifest.json'
-      - '.github/workflows/target-workflow-compatibility.yml'
 
 permissions:
   contents: read
@@ -52,6 +46,12 @@ jobs:
       - name: Verify canonical target fixture on pull requests
         if: ${{ github.event_name == 'pull_request' }}
         run: python scripts/verify_target_workflows.py --fixtures-only
+      - name: Enforce published release evidence for enabled targets
+        if: ${{ github.event_name == 'pull_request' }}
+        run: >-
+          python scripts/verify_release_target_workflows.py
+          --enabled-only
+          --report reports/enabled-target-release-prerequisites.json
       - name: Verify selected registered target workflows
         if: ${{ github.event_name != 'pull_request' }}
         env:

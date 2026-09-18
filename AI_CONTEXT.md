@@ -199,13 +199,14 @@ and fails closed.
 pre-repair `codex-adapter-v2.4.1` runtime. The 2.4.2 release-repair candidate
 keeps the closed v2 payload schemas and existing approval/state ownership, but
 self-pins the router and receiver bundles to `ai-sdlc-v2.4.2` and binds the
-reviewed repaired target candidate `codex-adapter-v2.4.2`. The source consumer
-in `portfolio-tasks` must remain on `ai-sdlc-v2.4.1` until both immutable 2.4.2
-tags are published and release-aware verification passes. `release/current-runtime.json`
+published repaired target `codex-adapter-v2.4.2` at
+`6ce0bf941c10c0c37b51c90d433d39f377ccad85`. The source consumer in
+`portfolio-tasks` must remain on `ai-sdlc-v2.4.1` until the immutable
+control-plane tag is published and release-aware verification passes. `release/current-runtime.json`
 is therefore a candidate composition record, and `docs/releases/2.4.2.md` is the
 current repair procedure. REAL work on the 2.4.2 path remains blocked until the
-target tag, control-plane tag, publication attestation, source-consumer repin,
-and deployed preflight are complete.
+control-plane tag, publication attestation, source-consumer repin, and deployed
+preflight are complete.
 
 Explicitly excluded are exactly-once transport, autonomous approval, automatic
 merge, release or deployment automation authority, production operation,
@@ -253,6 +254,7 @@ python -m pytest
 python scripts/validate_release.py
 python scripts/verify_target_workflows.py
 python scripts/verify_release_target_workflows.py --repository OWNER/REPOSITORY
+python scripts/verify_release_target_workflows.py --enabled-only
 git diff --check
 ```
 
