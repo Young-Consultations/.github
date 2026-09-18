@@ -52,6 +52,14 @@ jobs:
       - name: Verify canonical target fixture on pull requests
         if: ${{ github.event_name == 'pull_request' }}
         run: python scripts/verify_target_workflows.py --fixtures-only
+      - name: Enforce published release evidence for enabled targets
+        if: ${{ github.event_name == 'pull_request' }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: >-
+          python scripts/verify_release_target_workflows.py
+          --enabled-only
+          --report reports/enabled-target-release-prerequisites.json
       - name: Verify selected registered target workflows
         if: ${{ github.event_name != 'pull_request' }}
         env:

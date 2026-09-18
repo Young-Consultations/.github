@@ -246,6 +246,28 @@ def test_enabled_activation_requires_reviewed_shared_oracle_evidence(tmp_path):
         checker.load_activation(activation(tmp_path, {"org/repo": True}), entries)
 
 
+def test_enabled_only_verifies_enabled_targets_and_omits_disabled_targets(tmp_path):
+    entries = checker.load_registry(registry(tmp_path, {
+        "org/enabled": entry("org/enabled"),
+        "org/disabled": entry("org/disabled"),
+    }))
+    activation_state = {"org/enabled": True, "org/disabled": False}
+    with (
+        patch.object(checker, "fetch_ref_commit", return_value="2" * 40),
+        patch.object(checker, "fetch_workflow", return_value=CANONICAL),
+        patch.object(checker, "verify_receiver_at_ref"),
+        patch.object(checker, "verify_conformance_report"),
+    ):
+        report = checker.verify_registry(
+            entries,
+            "fake-token",
+            activation=activation_state,
+            enabled_only=True,
+        )
+    assert [row["repository"] for row in report] == ["org/enabled"]
+    assert report[0]["result"] == "pass"
+
+
 def test_contract_version_mismatch(tmp_path):
     path = registry(tmp_path, {"org/repo": entry(contract_version="ai-sdlc-contract/v1")})
     with pytest.raises(checker.CompatibilityError, match="contract-version mismatch"):
