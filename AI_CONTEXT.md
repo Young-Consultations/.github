@@ -193,18 +193,19 @@ non-identical transition as an idempotent no-op only when it represents the same
 stable managed-draft effect; every other non-identical result remains ambiguous
 and fails closed.
 
-`ai-sdlc-v2.4.0` is published at
-`42e8e0d3c888efbb3a21bd6762cb4fa416126529`; its tags and the published
-`consulting-playbook` `codex-adapter-v2.4.0` tag remain immutable. The current
-2.4.1 patch candidate keeps the closed v2 payload schemas and result projector,
-but self-pins the router bundle, consumes one activation snapshot, makes the
-approval label the sole human action, gives the router sole admission ownership,
-records release/activation identity, fixes journal pagination, serializes REAL
-work per enabled target, and adds a generated runtime record plus credential
-preflight. `release/current-runtime.json` is the current composition record and
-`docs/releases/2.4.1.md` is the current operator procedure. REAL remains blocked
-until the candidate is finalized, tagged, and the default deployed preflight
-passes.
+`ai-sdlc-v2.4.1` is the current published control-plane release at
+`34ec7dc1cf54f960757781851384e0f6b15f7b63` and remains immutable. The
+`consulting-playbook` production path is still bound through that release to the
+pre-repair `codex-adapter-v2.4.1` runtime. The 2.4.2 release-repair candidate
+keeps the closed v2 payload schemas and existing approval/state ownership, but
+self-pins the router and receiver bundles to `ai-sdlc-v2.4.2` and binds the
+reviewed repaired target candidate `codex-adapter-v2.4.2`. The source consumer
+in `portfolio-tasks` must remain on `ai-sdlc-v2.4.1` until both immutable 2.4.2
+tags are published and release-aware verification passes. `release/current-runtime.json`
+is therefore a candidate composition record, and `docs/releases/2.4.2.md` is the
+current repair procedure. REAL work on the 2.4.2 path remains blocked until the
+target tag, control-plane tag, publication attestation, source-consumer repin,
+and deployed preflight are complete.
 
 Explicitly excluded are exactly-once transport, autonomous approval, automatic
 merge, release or deployment automation authority, production operation,
