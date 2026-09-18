@@ -639,7 +639,7 @@ def test_migrated_target_entries_use_v2_and_expected_paths():
     assert entries["Young-Consultations/consulting-playbook"]["contract_version"] == checker.CANONICAL_VERSION
     expected_refs = {
         "Young-Consultations/.github": "codex-adapter-v2.3.1",
-        "Young-Consultations/consulting-playbook": "codex-adapter-v2.4.2",
+        "Young-Consultations/consulting-playbook": "codex-adapter-v9.9.9",
         "Young-Consultations/portfolio-tasks": "codex-adapter-v2.3.2",
         "Young-Consultations/slugger": "codex-adapter-v2.3.2",
     }
