@@ -544,6 +544,33 @@ def fetch_ref_commit(repository: str, ref: str, token: str | None = None) -> str
     return commit
 
 
+def fetch_tag_commit(repository: str, tag: str, token: str | None = None) -> str:
+    """Resolve an exact Git tag ref, dereferencing annotated tags fail-closed."""
+    quoted_repository = "/".join(
+        urllib.parse.quote(part, safe="") for part in repository.split("/")
+    )
+    quoted_tag = urllib.parse.quote(tag, safe="")
+    payload = fetch_json(
+        f"https://api.github.com/repos/{quoted_repository}/git/ref/tags/{quoted_tag}",
+        token,
+    )
+    obj = payload.get("object") if isinstance(payload, dict) else None
+    for _ in range(4):
+        if not isinstance(obj, dict):
+            break
+        sha = obj.get("sha")
+        if obj.get("type") == "commit" and isinstance(sha, str) and SHA_RE.fullmatch(sha):
+            return sha
+        if obj.get("type") != "tag" or not isinstance(sha, str) or SHA_RE.fullmatch(sha) is None:
+            break
+        tag_object = fetch_json(
+            f"https://api.github.com/repos/{quoted_repository}/git/tags/{sha}",
+            token,
+        )
+        obj = tag_object.get("object") if isinstance(tag_object, dict) else None
+    raise CompatibilityError("adapter tag does not resolve to a commit")
+
+
 def verify_receiver_at_ref(receiver_ref: str, token: str | None) -> None:
     receiver_commit = fetch_ref_commit("Young-Consultations/.github", receiver_ref, token)
     source = fetch_workflow(
@@ -727,7 +754,7 @@ def verify_registry(
             evidence = validate_conformance_record(repository, entry, required=True)
             if evidence is None:  # Defensive: required=True must never return None.
                 raise CompatibilityError(f"{repository}: reviewed TC-MVP-CI-001 evidence is missing")
-            commit = fetch_ref_commit(repository, ref, token)
+            commit = fetch_tag_commit(repository, ref, token)
             if commit != evidence["adapter_commit_sha"]:
                 raise CompatibilityError("adapter tag does not resolve to the reviewed adapter commit")
             source = fetch_workflow(workflow_repository, path, ref, token)

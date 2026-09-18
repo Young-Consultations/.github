@@ -227,7 +227,7 @@ def test_all_disabled_registry_cannot_report_organization_wide_pass(tmp_path):
 def test_disabled_target_can_be_explicitly_verified_before_activation(tmp_path):
     entries = checker.load_registry(registry(tmp_path, {"org/repo": entry()}))
     with (
-        patch.object(checker, "fetch_ref_commit", return_value="2" * 40),
+        patch.object(checker, "fetch_tag_commit", return_value="2" * 40),
         patch.object(checker, "fetch_workflow", return_value=CANONICAL),
         patch.object(checker, "verify_receiver_at_ref"),
         patch.object(checker, "verify_conformance_report"),
@@ -253,7 +253,7 @@ def test_enabled_only_verifies_enabled_targets_and_omits_disabled_targets(tmp_pa
     }))
     activation_state = {"org/enabled": True, "org/disabled": False}
     with (
-        patch.object(checker, "fetch_ref_commit", return_value="2" * 40),
+        patch.object(checker, "fetch_tag_commit", return_value="2" * 40),
         patch.object(checker, "fetch_workflow", return_value=CANONICAL),
         patch.object(checker, "verify_receiver_at_ref"),
         patch.object(checker, "verify_conformance_report"),
@@ -290,7 +290,7 @@ def test_enabled_activation_requires_governed_adapter_release_tag(tmp_path, revi
 def test_missing_workflow_is_reported_without_network(tmp_path):
     entries = checker.load_registry(registry(tmp_path, {"org/repo": entry()}))
     with (
-        patch.object(checker, "fetch_ref_commit", return_value="2" * 40),
+        patch.object(checker, "fetch_tag_commit", return_value="2" * 40),
         patch.object(checker, "fetch_workflow", side_effect=checker.CompatibilityError("workflow is unavailable at registered ref")),
     ):
         report = checker.verify_registry(entries, "fake-token")
@@ -300,7 +300,7 @@ def test_missing_workflow_is_reported_without_network(tmp_path):
 def test_network_fetch_is_mocked_for_success(tmp_path):
     entries = checker.load_registry(registry(tmp_path, {"org/repo": entry()}))
     with (
-        patch.object(checker, "fetch_ref_commit", return_value="2" * 40),
+        patch.object(checker, "fetch_tag_commit", return_value="2" * 40),
         patch.object(checker, "fetch_workflow", return_value=CANONICAL) as fetch,
         patch.object(checker, "verify_receiver_at_ref") as receiver_check,
         patch.object(checker, "verify_conformance_report") as report_check,
@@ -496,6 +496,37 @@ def test_fetch_json_uses_the_supplied_bearer_token():
     }
 
 
+def test_fetch_tag_commit_requires_an_exact_tag_ref():
+    with patch.object(
+        checker,
+        "fetch_json",
+        return_value={"object": {"type": "commit", "sha": "2" * 40}},
+    ) as fetch:
+        assert checker.fetch_tag_commit("org/repo", "codex-adapter-v2.0.0") == "2" * 40
+
+    fetch.assert_called_once_with(
+        "https://api.github.com/repos/org/repo/git/ref/tags/codex-adapter-v2.0.0",
+        None,
+    )
+
+
+def test_fetch_tag_commit_dereferences_annotated_tags():
+    with patch.object(
+        checker,
+        "fetch_json",
+        side_effect=[
+            {"object": {"type": "tag", "sha": "3" * 40}},
+            {"object": {"type": "commit", "sha": "2" * 40}},
+        ],
+    ) as fetch:
+        assert checker.fetch_tag_commit("org/repo", "codex-adapter-v2.0.0") == "2" * 40
+
+    assert fetch.call_args_list[1].args == (
+        "https://api.github.com/repos/org/repo/git/tags/" + "3" * 40,
+        None,
+    )
+
+
 def test_main_keeps_diagnostics_and_results_visible_with_actions_summary(tmp_path, capsys):
     summary = tmp_path / "summary.md"
     report = tmp_path / "report.json"
@@ -583,7 +614,7 @@ def test_one_incompatible_target_does_not_block_unrelated_target(tmp_path):
             return workflow("      execution_input_json: {required: true, type: string}\n")
         return CANONICAL
     with (
-        patch.object(checker, "fetch_ref_commit", return_value="2" * 40),
+        patch.object(checker, "fetch_tag_commit", return_value="2" * 40),
         patch.object(checker, "fetch_workflow", side_effect=fake_fetch),
         patch.object(checker, "verify_receiver_at_ref"),
         patch.object(checker, "verify_conformance_report"),
