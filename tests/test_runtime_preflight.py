@@ -48,7 +48,11 @@ def test_credential_roles_cover_only_the_enabled_runtime_path():
     }
     assert "CODEX_ROUTER_TOKEN" in roles["Young-Consultations/portfolio-tasks"]["secrets"]
     assert "PORTFOLIO_APPROVERS" in roles["Young-Consultations/portfolio-tasks"]["variables"]
-    assert "OPENAI_API_KEY" in roles["Young-Consultations/consulting-playbook"]["secrets"]
+    consulting = roles["Young-Consultations/consulting-playbook"]
+    assert "OPENAI_API_KEY" not in consulting["secrets"]
+    assert "OPENAI_API_KEY" in (
+        consulting["environments"]["consulting-playbook-codex"]["secrets"]
+    )
     assert "Young-Consultations/slugger" not in roles
 
 
@@ -75,6 +79,81 @@ def test_credential_metadata_uses_only_the_audit_token(monkeypatch):
         "endpoint": "repos/org/repo/actions/secrets?per_page=100",
         "token": "audit-token",
     }
+
+
+def test_environment_credential_metadata_uses_environment_endpoint(monkeypatch):
+    observed = {}
+
+    def fake_api(endpoint, *, token=None):
+        observed["endpoint"] = endpoint
+        observed["token"] = token
+        return [{"secrets": [{"name": "OPENAI_API_KEY"}]}]
+
+    monkeypatch.setattr(runtime_preflight, "api", fake_api)
+    assert runtime_preflight.named_values(
+        "org/repo",
+        "secrets",
+        "audit-token",
+        environment="consulting-playbook/codex",
+    ) == {"OPENAI_API_KEY"}
+    assert observed == {
+        "endpoint": (
+            "repos/org/repo/environments/consulting-playbook%2Fcodex/"
+            "secrets?per_page=100"
+        ),
+        "token": "audit-token",
+    }
+
+
+def test_credential_audit_keeps_repository_and_environment_scopes_separate(
+    monkeypatch,
+):
+    roles = {
+        "org/repo": {
+            "secrets": {"REPOSITORY_TOKEN": "repository role"},
+            "variables": {},
+            "environments": {
+                "production": {
+                    "secrets": {"OPENAI_API_KEY": "environment role"},
+                    "variables": {"MODEL": "environment configuration"},
+                }
+            },
+        }
+    }
+    values = {
+        (None, "secrets"): {"REPOSITORY_TOKEN"},
+        (None, "variables"): set(),
+        ("production", "secrets"): {"OPENAI_API_KEY"},
+        ("production", "variables"): {"MODEL"},
+    }
+
+    def fake_named_values(repository, kind, audit_token, *, environment=None):
+        assert repository == "org/repo"
+        assert audit_token == "audit-token"
+        return values[(environment, kind)]
+
+    monkeypatch.setattr(runtime_preflight, "named_values", fake_named_values)
+    assert runtime_preflight.audit_credentials(roles, "audit-token") == []
+
+
+def test_missing_environment_secret_identifies_exact_scope(monkeypatch):
+    roles = {
+        "org/repo": {
+            "secrets": {},
+            "variables": {},
+            "environments": {
+                "production": {
+                    "secrets": {"OPENAI_API_KEY": "environment role"},
+                    "variables": {},
+                }
+            },
+        }
+    }
+    monkeypatch.setattr(runtime_preflight, "named_values", lambda *args, **kwargs: set())
+    assert runtime_preflight.audit_credentials(roles, "audit-token") == [
+        "credentials: org/repo environment production secret "
+        "OPENAI_API_KEY is missing"
+    ]
 
 
 def test_missing_audit_token_reports_failed_credential_boundary(

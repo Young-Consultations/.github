@@ -205,7 +205,11 @@ the separate consumer repin, and deployed Runtime Preflight pass.
 `release/current-runtime.json` records the published control-plane composition,
 and `docs/releases/2.4.2.md` remains the repair procedure. REAL work on the 2.4.2
 path remains blocked until the source-consumer repin and deployed preflight are
-complete.
+complete. Deployed Runtime Preflight run `35399327896` passed activation,
+publication, and remote-tag identity but exposed that its credential audit
+checked only repository secrets. `OPENAI_API_KEY` remains intentionally isolated
+in the protected `consulting-playbook-codex` environment; the audit must inspect
+that declared scope rather than duplicate or weaken the credential boundary.
 
 Explicitly excluded are exactly-once transport, autonomous approval, automatic
 merge, release or deployment automation authority, production operation,

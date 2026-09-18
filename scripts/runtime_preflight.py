@@ -8,6 +8,7 @@ import os
 import subprocess
 from pathlib import Path
 from typing import Any
+from urllib.parse import quote
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -54,13 +55,63 @@ def remote_tag_commit(tag: str) -> str:
     raise ValueError("release tag does not resolve to a commit")
 
 
-def named_values(repository: str, kind: str, audit_token: str) -> set[str]:
+def named_values(
+    repository: str,
+    kind: str,
+    audit_token: str,
+    *,
+    environment: str | None = None,
+) -> set[str]:
+    scope = (
+        f"repos/{repository}/environments/{quote(environment, safe='')}"
+        if environment is not None
+        else f"repos/{repository}/actions"
+    )
     rows = api(
-        f"repos/{repository}/actions/{kind}?per_page=100", token=audit_token
+        f"{scope}/{kind}?per_page=100", token=audit_token
     )
     field = "secrets" if kind == "secrets" else "variables"
     values = [item for row in rows if isinstance(row, dict) for item in row.get(field, [])]
     return {str(item.get("name")) for item in values if isinstance(item, dict)}
+
+
+def audit_credentials(roles: dict[str, Any], audit_token: str) -> list[str]:
+    failures: list[str] = []
+    for repository, expected in roles.items():
+        scopes: list[tuple[str | None, dict[str, Any]]] = [(None, expected)]
+        scopes.extend(
+            (environment, values)
+            for environment, values in expected.get("environments", {}).items()
+        )
+        for environment, values in scopes:
+            label = (
+                repository
+                if environment is None
+                else f"{repository} environment {environment}"
+            )
+            try:
+                actual_secrets = named_values(
+                    repository,
+                    "secrets",
+                    audit_token,
+                    environment=environment,
+                )
+                actual_variables = named_values(
+                    repository,
+                    "variables",
+                    audit_token,
+                    environment=environment,
+                )
+            except (subprocess.CalledProcessError, json.JSONDecodeError) as exc:
+                failures.append(f"credentials: cannot inspect {label}: {exc}")
+                continue
+            for name in values.get("secrets", {}):
+                if name not in actual_secrets:
+                    failures.append(f"credentials: {label} secret {name} is missing")
+            for name in values.get("variables", {}):
+                if name not in actual_variables:
+                    failures.append(f"credentials: {label} variable {name} is missing")
+    return failures
 
 
 def main() -> int:
@@ -112,19 +163,7 @@ def main() -> int:
         if not audit_token:
             failures.append("credentials: PREFLIGHT_AUDIT_TOKEN is unavailable")
         else:
-            for repository, expected in roles.items():
-                try:
-                    actual_secrets = named_values(repository, "secrets", audit_token)
-                    actual_variables = named_values(repository, "variables", audit_token)
-                except (subprocess.CalledProcessError, json.JSONDecodeError) as exc:
-                    failures.append(f"credentials: cannot inspect {repository}: {exc}")
-                    continue
-                for name in expected["secrets"]:
-                    if name not in actual_secrets:
-                        failures.append(f"credentials: {repository} secret {name} is missing")
-                for name in expected["variables"]:
-                    if name not in actual_variables:
-                        failures.append(f"credentials: {repository} variable {name} is missing")
+            failures.extend(audit_credentials(roles, audit_token))
         checks.append({
             "boundary": "credential-metadata",
             "status": "PASS" if not any(
