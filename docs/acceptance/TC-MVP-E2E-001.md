@@ -2,14 +2,14 @@
 
 **Status:** Approved next-MVP acceptance design
 **Owner:** `Young-Consultations/.github`
-**Published baseline:** `ai-sdlc-v2.3.2` / `ai-sdlc-contract/v2`
-**Current stabilization candidate required for the next REAL run:** `ai-sdlc-v2.4.1`
+**Published baseline:** `ai-sdlc-v2.4.1` / `ai-sdlc-contract/v2`
+**Current release-repair candidate required for the next REAL run:** `ai-sdlc-v2.4.2`
 **Initial enabled target:** `Young-Consultations/consulting-playbook`
 
 ## Purpose
 
-> **2.4.1 operating addendum:** The 2.4.0 receiver correction described below
-> is now published historical evidence. The current REAL gate uses 2.4.1 and
+> **2.4.2 operating addendum:** The 2.4.1 stabilization release is now the
+> published rollback baseline. The next REAL gate requires 2.4.2 and
 > additionally requires one-action approval, the self-pinned router bundle, one
 > activation snapshot, router-owned admission, complete comment pagination,
 > the generated current-runtime record, and a passing deployed Runtime

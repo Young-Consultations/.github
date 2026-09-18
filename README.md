@@ -12,10 +12,12 @@ package are released as one immutable compatibility unit. Current activation in
 that consumer compatibility unit. See [release, upgrade,
 deprecation, and rollback procedures](docs/releases.md).
 
-The current implementation candidate is the focused
-[`ai-sdlc-v2.4.1` stabilization patch](docs/releases/2.4.1.md). Its generated
-[`release/current-runtime.json`](release/current-runtime.json) is the single
-current composition record; older recovery documents remain historical evidence.
+The current published production control plane is `ai-sdlc-v2.4.1`. The focused
+[`ai-sdlc-v2.4.2` release-repair candidate](docs/releases/2.4.2.md) repins the
+repaired `consulting-playbook` adapter and preserves the same closed v2 contract.
+Its generated [`release/current-runtime.json`](release/current-runtime.json)
+is the candidate composition record until publication; older releases remain
+immutable historical evidence.
 
 ## AI-SDLC contract validation
 

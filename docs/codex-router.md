@@ -57,9 +57,12 @@ tokens are supported without calling the user-only `GET /user` endpoint. On
 redelivery, only an identical marker written by that same author is reused;
 untrusted lookalike comments are never admission authority.
 
-The 2.4.1 reference is a release candidate and must not be used for REAL work
-until its governed immutable tag is published. See [the 2.4.1 release
-procedure](releases/2.4.1.md). Never replace the tag with a branch name.
+`ai-sdlc-v2.4.1` is the current published production control-plane release.
+The 2.4.2 repair is a release candidate and must not be used by the portfolio
+source consumer for REAL work until the governed `ai-sdlc-v2.4.2` tag is
+published and resolves to the reviewed control-plane commit. See [the 2.4.2
+release procedure](releases/2.4.2.md). Never replace an immutable tag with a
+branch name or assume a registry edit on `main` changes an older tagged router.
 
 ## Registry changes
 

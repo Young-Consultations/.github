@@ -25,9 +25,9 @@ def test_sim_passes_without_real_effects(tmp_path: Path) -> None:
     assert e2e.run_sim(report, target_root) == []
     payload = json.loads(report.read_text(encoding="utf-8"))
     assert payload["test_id"] == "TC-MVP-E2E-001-SIM"
-    assert payload["published_baseline"] == "2.4.0"
-    assert payload["candidate_release"] == "2.4.1"
-    assert payload["candidate_tag_published"] is True
+    assert payload["published_baseline"] == "2.4.1"
+    assert payload["candidate_release"] == "2.4.2"
+    assert payload["candidate_tag_published"] is False
     assert payload["execution_provider"] == "fake"
     assert payload["dispatch_provider"] == "fake-in-process-target"
     assert payload["target"] == e2e.REAL_TARGET
@@ -98,14 +98,15 @@ def test_target_identity_git_failure_is_actionable(monkeypatch: pytest.MonkeyPat
 def test_publication_identity_compares_tag_with_attested_commit(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    expected = "34ec7dc1cf54f960757781851384e0f6b15f7b63"
+    expected = "1" * 40
+    monkeypatch.setattr(e2e, "_load", lambda path: {"tag_commit_sha": expected})
     monkeypatch.setattr(e2e, "_git_output", lambda args, cwd=e2e.ROOT: (expected, None))
     assert e2e._control_plane_release_identity_errors() == []
 
     actual = "0" * 40
     monkeypatch.setattr(e2e, "_git_output", lambda args, cwd=e2e.ROOT: (actual, None))
     assert e2e._control_plane_release_identity_errors() == [
-        f"published tag ai-sdlc-v2.4.1 resolves to {actual}, not attested commit {expected}"
+        f"published tag ai-sdlc-v2.4.2 resolves to {actual}, not attested commit {expected}"
     ]
 
 
@@ -139,8 +140,19 @@ def test_real_preflight_passes_for_published_release_when_identity_is_valid(
     report = tmp_path / "sim.json"
     assert e2e.run_sim(report, target_root) == []
     payload = json.loads(report.read_text(encoding="utf-8"))
-    payload["control_plane_commit"] = "34ec7dc1cf54f960757781851384e0f6b15f7b63"
+    attested_commit = "1" * 40
+    payload["control_plane_commit"] = attested_commit
     report.write_text(json.dumps(payload), encoding="utf-8")
+    original_load = e2e._load
+
+    def published_manifest(path):
+        value = original_load(path)
+        if path == e2e.RELEASE_MANIFEST:
+            value = dict(value)
+            value["tag_commit_sha"] = attested_commit
+        return value
+
+    monkeypatch.setattr(e2e, "_load", published_manifest)
     assert e2e.run_real_preflight(report, target_root) == []
 
 
