@@ -479,6 +479,23 @@ def test_fetch_workflow_accepts_line_wrapped_contents_api_payload():
         ) == CANONICAL
 
 
+def test_fetch_json_uses_the_supplied_bearer_token():
+    observed = {}
+
+    def urlopen(request, timeout):
+        observed["authorization"] = request.get_header("Authorization")
+        observed["timeout"] = timeout
+        return io.BytesIO(b"{}")
+
+    with patch.object(checker.urllib.request, "urlopen", side_effect=urlopen):
+        assert checker.fetch_json("https://api.github.test/evidence", "actual-token") == {}
+
+    assert observed == {
+        "authorization": "Bearer actual-token",
+        "timeout": 30,
+    }
+
+
 def test_main_keeps_diagnostics_and_results_visible_with_actions_summary(tmp_path, capsys):
     summary = tmp_path / "summary.md"
     report = tmp_path / "report.json"

@@ -262,9 +262,10 @@ def test_router_self_pins_policy_and_loads_one_activation_snapshot():
     assert 'codex_router.py\" dispatch' in action
 
 
-def test_activation_changes_trigger_target_compatibility():
+def test_every_pull_request_triggers_target_compatibility():
     text = Path(".github/workflows/target-workflow-compatibility.yml").read_text(encoding="utf-8")
-    assert "- 'config/codex-activation.json'" in text
+    assert "\n  pull_request:\n" in text
+    assert "pull_request:\n    paths:" not in text
 
 
 def test_manual_target_compatibility_can_verify_disabled_targets():
