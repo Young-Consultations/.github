@@ -78,5 +78,6 @@ def test_manifest_paths_cannot_escape_the_repository(tmp_path):
 
 def test_patch_candidate_preserves_published_2_4_1_as_history():
     manifest = json.loads((ROOT / "release/release-manifest.json").read_text(encoding="utf-8"))
-    assert manifest["release_version"] == "2.4.1"
+    assert manifest["release_version"] == "2.4.2"
+    assert manifest["previous_known_good"]["release_version"] == "2.4.1"
     assert manifest["recovery_of"] is None
