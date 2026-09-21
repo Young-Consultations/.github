@@ -9,7 +9,7 @@ from tests.test_codex_router import BASE_TASK, output, run_router
 
 @pytest.fixture(autouse=True)
 def release_bound_route(monkeypatch):
-    monkeypatch.setenv("CONTROL_PLANE_RELEASE", "ai-sdlc-v2.4.2")
+    monkeypatch.setenv("CONTROL_PLANE_RELEASE", "ai-sdlc-v2.4.3")
     monkeypatch.setenv("CODEX_ACTIVATION_REVISION", "a" * 40)
     monkeypatch.setenv("CODEX_ACTIVATION_SHA256", "b" * 64)
 

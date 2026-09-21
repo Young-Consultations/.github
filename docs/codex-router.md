@@ -40,7 +40,7 @@ group. The target workflow applies the canonical group with
 ```yaml
 jobs:
   route:
-    uses: Young-Consultations/.github/.github/workflows/codex-router.yml@ai-sdlc-v2.4.1
+    uses: Young-Consultations/.github/.github/workflows/codex-router.yml@ai-sdlc-v2.4.2
     permissions:
       contents: read
       actions: read
@@ -58,13 +58,13 @@ redelivery, only an identical marker written by that same author is reused;
 untrusted lookalike comments are never admission authority.
 
 `ai-sdlc-v2.4.2` is the current published control-plane release and resolves to
-reviewed commit `1ea59832996dc398923c2d1516eb464546e30877`. The production
-`portfolio-tasks` source consumer remains pinned to `ai-sdlc-v2.4.1` until the
-2.4.2 publication attestation merges and deployed Runtime Preflight passes.
-Only then may the separate consumer repin merge and select 2.4.2 for REAL work.
-See [the 2.4.2 release procedure](releases/2.4.2.md). Never replace an immutable
-tag with a branch name or assume a registry edit on `main` changes an older
-tagged router.
+reviewed commit `1ea59832996dc398923c2d1516eb464546e30877`. The 2.4.3 candidate
+binds `codex-adapter-v2.4.3`; the production `portfolio-tasks` source consumer
+remains pinned to `ai-sdlc-v2.4.2` until the candidate is reviewed, published,
+and passes deployed Runtime Preflight. Only then may a separate consumer repin
+select 2.4.3 for REAL work. See [the 2.4.3 release
+procedure](releases/2.4.3.md). Never replace an immutable tag with a branch name
+or assume a registry edit on `main` changes an older tagged router.
 
 ## Registry changes
 

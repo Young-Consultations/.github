@@ -23,15 +23,14 @@ def test_remote_receiver_verification_takes_precedence(monkeypatch: pytest.Monke
     assert calls == [(_manifest_tag(), "token")]
 
 
-def test_missing_published_manifest_tag_fails_closed(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_exact_missing_manifest_tag_uses_reviewed_local_candidate(monkeypatch: pytest.MonkeyPatch) -> None:
     def missing(receiver_ref: str, token: str | None) -> None:
         raise release_checker.checker.CompatibilityError(
             "GitHub evidence is unavailable (tag): HTTP 422: Unprocessable Entity"
         )
 
     monkeypatch.setattr(release_checker, "_REMOTE_VERIFY_RECEIVER", missing)
-    with pytest.raises(release_checker.checker.CompatibilityError, match="HTTP 422"):
-        release_checker.verify_release_receiver_at_ref(_manifest_tag(), "token")
+    release_checker.verify_release_receiver_at_ref(_manifest_tag(), "token")
 
 
 def test_missing_non_manifest_receiver_tag_still_fails_closed(monkeypatch: pytest.MonkeyPatch) -> None:

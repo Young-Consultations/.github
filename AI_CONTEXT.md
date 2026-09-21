@@ -193,23 +193,21 @@ non-identical transition as an idempotent no-op only when it represents the same
 stable managed-draft effect; every other non-identical result remains ambiguous
 and fails closed.
 
-`ai-sdlc-v2.4.2` is the current published control-plane release, with its
-immutable tag resolving to reviewed commit
-`1ea59832996dc398923c2d1516eb464546e30877`. It keeps the closed v2 payload
-schemas and existing approval/state ownership, self-pins the router and receiver
-bundles to `ai-sdlc-v2.4.2`, and binds the published repaired target
-`codex-adapter-v2.4.2` at
-`6ce0bf941c10c0c37b51c90d433d39f377ccad85`. The source consumer in
-`portfolio-tasks` must remain on `ai-sdlc-v2.4.1` until release-aware verification,
-the separate consumer repin, and deployed Runtime Preflight pass.
-`release/current-runtime.json` records the published control-plane composition,
-and `docs/releases/2.4.2.md` remains the repair procedure. REAL work on the 2.4.2
-path remains blocked until the source-consumer repin and deployed preflight are
-complete. Deployed Runtime Preflight run `35399327896` passed activation,
-publication, and remote-tag identity but exposed that its credential audit
-checked only repository secrets. `OPENAI_API_KEY` remains intentionally isolated
-in the protected `consulting-playbook-codex` environment; the audit must inspect
-that declared scope rather than duplicate or weaken the credential boundary.
+`ai-sdlc-v2.4.2` is the current published control-plane release at reviewed
+commit `1ea59832996dc398923c2d1516eb464546e30877`. The 2.4.3 patch candidate
+keeps the closed v2 payload schemas and existing approval/state ownership,
+self-pins the router and receiver bundles to `ai-sdlc-v2.4.3`, and binds the
+published `codex-adapter-v2.4.3` target at
+`1a5da85a4e29b83ba72e1bf4354d7770035cd367` with report digest
+`25be867dfc891222cc6fb49b3d9c0c708fee95834176ee464f87ae191f3ba44b`.
+Protected probe run `35555329988` completed through the two-read provider
+authentication handoff. The source consumer in `portfolio-tasks` must remain on
+`ai-sdlc-v2.4.2` until the 2.4.3 control-plane tag is published, release-aware
+verification passes, and the separate consumer repin and deployed Runtime
+Preflight complete. `release/current-runtime.json` is therefore a candidate
+composition record, and `docs/releases/2.4.3.md` is the current repair
+procedure. The terminal delivery identity from portfolio issue #148 must not be
+reused for the later REAL verification.
 
 Explicitly excluded are exactly-once transport, autonomous approval, automatic
 merge, release or deployment automation authority, production operation,
@@ -262,15 +260,17 @@ git diff --check
 ```
 
 `python scripts/validate_release.py` verifies structural candidate coherence.
-The final 2.4.0 release review sets `tag_published: true` only after the target
-adapter, conformance evidence, and registry binding are reviewed. In this
-lifecycle that field is the publication-state marker used by the final release
-gate; actual immutable tag existence is a separate check after merge. Before
-tag creation, `verify_release_target_workflows.py` delegates to normal remote
-verification first and may use the current reviewed checkout only when a target
-pins the exact manifest tag and GitHub confirms that exact tag is absent. All
-other missing, substituted, or incompatible refs remain fail-closed. Once the
-tag exists, remote immutable verification takes precedence.
+The 2.4.3 candidate remains `tag_published: false` until its target adapter,
+conformance evidence, and registry binding are reviewed and the candidate is
+merged. The immutable tag is then created at that merge commit. A separate
+attestation change on `main` records the tag commit and sets
+`tag_published: true`; REAL preflight runs from that attested checkout while
+using the tag for immutable SIM evidence. Before tag creation,
+`verify_release_target_workflows.py` delegates to normal remote verification
+first and may use the current reviewed checkout only when a target pins the
+exact manifest tag and GitHub confirms that exact tag is absent. All other
+missing, substituted, or incompatible refs remain fail-closed. Once the tag
+exists, remote immutable verification takes precedence.
 
 Conformance reports identify a canonical non-recursive v2 pin of exact shared
 and target files. They never predict the SHA of the commit that contains them;
@@ -348,14 +348,15 @@ decided and justified during the relevant implementation task.
   preserve complete no-prohibited-effect evidence; the 2.3.2 control-plane
   registry records those tag/commit/report-digest tuples.
 - Subsequent governance review approved `consulting-playbook` as the sole
-  enabled target. Its `codex-adapter-v2.4.0` evidence is now immutable and
-  registered; `.github`, `portfolio-tasks`, and `slugger` remain disabled.
-- DEF-0032 is resolved in the 2.4.0 candidate architecture and implementation
-  but is not yet a live published correction. Remaining work is the final
-  release review, immutable control-plane tag creation, and REAL preflight.
-  Release-aware target verification may validate the reviewed checkout only for
-  the exact not-yet-created manifest tag; this is a release-gate rule, not a
-  second compatibility or execution path.
+  enabled target. Its `codex-adapter-v2.4.3` authentication repair is immutable,
+  registered in this candidate, and supported by protected provider-response
+  evidence; `.github`, `portfolio-tasks`, and `slugger` remain disabled.
+- DEF-0032 was published in 2.4.0. The current remaining work is the 2.4.3
+  control-plane candidate merge, immutable tag creation, publication
+  attestation, source-consumer repin, and REAL preflight. Release-aware target
+  verification may validate the reviewed checkout only for the exact
+  not-yet-created manifest tag; this is a release-gate rule, not a second
+  compatibility or execution path.
 - Repository-specific requirement IDs, credentials, retention duration, and
   reconciliation deadline remain pending their documented owner confirmation
   or human governance decisions. Further target enablement also requires an
@@ -374,7 +375,7 @@ decided and justified during the relevant implementation task.
   above: implementation is evidence, and compatibility/release changes follow
   the current approved release policy rather than accidental historical code.
 
-No unresolved architectural speculation is recorded here. The remaining 2.4.0
+No unresolved architectural speculation is recorded here. The remaining 2.4.3
 work is an implementation/release-governance sequence under the resolved
 TC-MVP-E2E-001, receiver semantics, and release-verification rule.
 
