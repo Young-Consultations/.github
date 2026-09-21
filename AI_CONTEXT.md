@@ -193,21 +193,20 @@ non-identical transition as an idempotent no-op only when it represents the same
 stable managed-draft effect; every other non-identical result remains ambiguous
 and fails closed.
 
-`ai-sdlc-v2.4.2` is the current published control-plane release at reviewed
-commit `1ea59832996dc398923c2d1516eb464546e30877`. The 2.4.3 patch candidate
-keeps the closed v2 payload schemas and existing approval/state ownership,
-self-pins the router and receiver bundles to `ai-sdlc-v2.4.3`, and binds the
-published `codex-adapter-v2.4.3` target at
+`ai-sdlc-v2.4.3` is the current published control-plane release at reviewed
+commit `9b240014d9fd5b5987cd8bfcde742d9b6079f501`. It keeps the closed v2
+payload schemas and existing approval/state ownership, self-pins the router and
+receiver bundles to `ai-sdlc-v2.4.3`, and binds the published
+`codex-adapter-v2.4.3` target at
 `1a5da85a4e29b83ba72e1bf4354d7770035cd367` with report digest
 `25be867dfc891222cc6fb49b3d9c0c708fee95834176ee464f87ae191f3ba44b`.
 Protected probe run `35555329988` completed through the two-read provider
 authentication handoff. The source consumer in `portfolio-tasks` must remain on
-`ai-sdlc-v2.4.2` until the 2.4.3 control-plane tag is published, release-aware
-verification passes, and the separate consumer repin and deployed Runtime
-Preflight complete. `release/current-runtime.json` is therefore a candidate
-composition record, and `docs/releases/2.4.3.md` is the current repair
-procedure. The terminal delivery identity from portfolio issue #148 must not be
-reused for the later REAL verification.
+`ai-sdlc-v2.4.2` until deployed Runtime Preflight passes and the separate
+consumer repin is reviewed and merged. `release/current-runtime.json` records
+the published control-plane composition, and `docs/releases/2.4.3.md` is the
+current repair procedure. The terminal delivery identity from portfolio issue
+#148 must not be reused for the later REAL verification.
 
 Explicitly excluded are exactly-once transport, autonomous approval, automatic
 merge, release or deployment automation authority, production operation,
@@ -259,18 +258,17 @@ python scripts/verify_release_target_workflows.py --enabled-only
 git diff --check
 ```
 
-`python scripts/validate_release.py` verifies structural candidate coherence.
-The 2.4.3 candidate remains `tag_published: false` until its target adapter,
-conformance evidence, and registry binding are reviewed and the candidate is
-merged. The immutable tag is then created at that merge commit. A separate
-attestation change on `main` records the tag commit and sets
-`tag_published: true`; REAL preflight runs from that attested checkout while
-using the tag for immutable SIM evidence. Before tag creation,
+`python scripts/validate_release.py` verifies structural release coherence.
+Release 2.4.3 is published and its manifest records `tag_published: true` plus
+the immutable candidate merge commit. Once this attestation is on `main`, REAL
+preflight runs from that attested checkout while using the tag for immutable
+SIM evidence. During a future pre-publication candidate window,
 `verify_release_target_workflows.py` delegates to normal remote verification
 first and may use the current reviewed checkout only when a target pins the
-exact manifest tag and GitHub confirms that exact tag is absent. All other
-missing, substituted, or incompatible refs remain fail-closed. Once the tag
-exists, remote immutable verification takes precedence.
+exact manifest tag, the manifest explicitly records `tag_published: false` and
+`tag_commit_sha: null`, and GitHub confirms that exact tag is absent. All other
+missing, substituted, or incompatible refs remain fail-closed. For published
+releases, remote immutable verification takes precedence.
 
 Conformance reports identify a canonical non-recursive v2 pin of exact shared
 and target files. They never predict the SHA of the commit that contains them;

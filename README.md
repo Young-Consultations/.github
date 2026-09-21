@@ -12,14 +12,14 @@ package are released as one immutable compatibility unit. Current activation in
 that consumer compatibility unit. See [release, upgrade,
 deprecation, and rollback procedures](docs/releases.md).
 
-The current published control plane is `ai-sdlc-v2.4.2`. The focused
-[`ai-sdlc-v2.4.3` release-repair candidate](docs/releases/2.4.3.md) repins the
-provider-verified `consulting-playbook` authentication repair and preserves the
-same closed v2 contract. Its generated
-[`release/current-runtime.json`](release/current-runtime.json) is the candidate
-composition record until publication; older releases remain immutable
-historical evidence. The production source consumer remains on
-`ai-sdlc-v2.4.2` until the new release is published and separately repinned.
+The current published control plane is
+[`ai-sdlc-v2.4.3`](docs/releases/2.4.3.md). It selects the provider-verified
+`consulting-playbook` authentication repair and preserves the same closed v2
+contract. Its generated
+[`release/current-runtime.json`](release/current-runtime.json) records the
+published composition; older releases remain immutable historical evidence.
+The production source consumer remains on `ai-sdlc-v2.4.2` until deployed
+Runtime Preflight passes and its separate repin is reviewed and merged.
 
 ## AI-SDLC contract validation
 

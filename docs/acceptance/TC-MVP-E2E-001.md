@@ -103,16 +103,14 @@ The preflight itself performs no Codex invocation, branch creation, commit, push
 ### Release/target coordination before REAL
 
 The target-side repair and immutable `codex-adapter-v2.4.3` publication are
-complete. The remaining sequence before REAL is:
+complete. The reviewed control-plane candidate was merged, immutable
+`ai-sdlc-v2.4.3` was created at that merge commit, and this publication
+attestation records the tag commit with `tag_published: true`. Once the
+attestation is merged, the remaining sequence before REAL is:
 
-1. merge the reviewed 2.4.3 control-plane candidate with `tag_published: false`;
-2. create immutable `ai-sdlc-v2.4.3` at that exact candidate merge commit;
-3. merge a separate publication attestation on `main` that records the tag
-   commit, sets `tag_published: true`, regenerates the runtime record, and passes
-   the publishable release gate;
-4. run REAL preflight from the attested `main` checkout, using the immutable
+1. run REAL preflight from the attested `main` checkout, using the immutable
    tag checkout only to generate SIM evidence and validate tag identity;
-5. repin the portfolio source consumer to 2.4.3, run deployed Runtime Preflight,
+2. repin the portfolio source consumer to 2.4.3, run deployed Runtime Preflight,
    and require both gates to pass before approving a fresh live test issue.
 
 ### REAL execution procedure
