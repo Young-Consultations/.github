@@ -54,9 +54,9 @@ jobs:
       activation_sha256: ${{ steps.router.outputs.activation_sha256 }}
     steps:
       - id: router
-        uses: Young-Consultations/.github/actions/codex-router@ai-sdlc-v2.4.2
+        uses: Young-Consultations/.github/actions/codex-router@ai-sdlc-v2.4.3
         with:
           router-token: ${{ secrets.CODEX_ROUTER_TOKEN }}
           task-payload: ${{ inputs.task_payload }}
           execution-mode: ${{ inputs.execution_mode }}
-          control-plane-release: ai-sdlc-v2.4.2
+          control-plane-release: ai-sdlc-v2.4.3
