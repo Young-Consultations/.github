@@ -32,7 +32,7 @@ ACTIVATION = ROOT / "config/codex-activation.json"
 REGISTRY = ROOT / "config/codex-repositories.json"
 RELEASE_MANIFEST = ROOT / "release/release-manifest.json"
 REAL_TARGET = "Young-Consultations/consulting-playbook"
-PUBLISHED_BASELINE = "2.4.1"
+PUBLISHED_BASELINE = "2.4.2"
 CANDIDATE_RELEASE = "2.4.3"
 TARGET_ROOT_ENV = "TC_MVP_E2E_TARGET_ROOT"
 COMMIT_SHA = re.compile(r"^[0-9a-f]{40}$")
@@ -155,7 +155,15 @@ def _load_target_adapter(target_root: Path) -> ModuleType:
         raise ImportError("target adapter could not be loaded")
     module = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
+    scripts_path = str(path.parent)
+    inserted = scripts_path not in sys.path
+    if inserted:
+        sys.path.insert(0, scripts_path)
+    try:
+        spec.loader.exec_module(module)
+    finally:
+        if inserted:
+            sys.path.remove(scripts_path)
     return module
 
 

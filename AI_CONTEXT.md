@@ -260,15 +260,17 @@ git diff --check
 ```
 
 `python scripts/validate_release.py` verifies structural candidate coherence.
-The final 2.4.0 release review sets `tag_published: true` only after the target
-adapter, conformance evidence, and registry binding are reviewed. In this
-lifecycle that field is the publication-state marker used by the final release
-gate; actual immutable tag existence is a separate check after merge. Before
-tag creation, `verify_release_target_workflows.py` delegates to normal remote
-verification first and may use the current reviewed checkout only when a target
-pins the exact manifest tag and GitHub confirms that exact tag is absent. All
-other missing, substituted, or incompatible refs remain fail-closed. Once the
-tag exists, remote immutable verification takes precedence.
+The 2.4.3 candidate remains `tag_published: false` until its target adapter,
+conformance evidence, and registry binding are reviewed and the candidate is
+merged. The immutable tag is then created at that merge commit. A separate
+attestation change on `main` records the tag commit and sets
+`tag_published: true`; REAL preflight runs from that attested checkout while
+using the tag for immutable SIM evidence. Before tag creation,
+`verify_release_target_workflows.py` delegates to normal remote verification
+first and may use the current reviewed checkout only when a target pins the
+exact manifest tag and GitHub confirms that exact tag is absent. All other
+missing, substituted, or incompatible refs remain fail-closed. Once the tag
+exists, remote immutable verification takes precedence.
 
 Conformance reports identify a canonical non-recursive v2 pin of exact shared
 and target files. They never predict the SHA of the commit that contains them;
@@ -346,14 +348,15 @@ decided and justified during the relevant implementation task.
   preserve complete no-prohibited-effect evidence; the 2.3.2 control-plane
   registry records those tag/commit/report-digest tuples.
 - Subsequent governance review approved `consulting-playbook` as the sole
-  enabled target. Its `codex-adapter-v2.4.0` evidence is now immutable and
-  registered; `.github`, `portfolio-tasks`, and `slugger` remain disabled.
-- DEF-0032 is resolved in the 2.4.0 candidate architecture and implementation
-  but is not yet a live published correction. Remaining work is the final
-  release review, immutable control-plane tag creation, and REAL preflight.
-  Release-aware target verification may validate the reviewed checkout only for
-  the exact not-yet-created manifest tag; this is a release-gate rule, not a
-  second compatibility or execution path.
+  enabled target. Its `codex-adapter-v2.4.3` authentication repair is immutable,
+  registered in this candidate, and supported by protected provider-response
+  evidence; `.github`, `portfolio-tasks`, and `slugger` remain disabled.
+- DEF-0032 was published in 2.4.0. The current remaining work is the 2.4.3
+  control-plane candidate merge, immutable tag creation, publication
+  attestation, source-consumer repin, and REAL preflight. Release-aware target
+  verification may validate the reviewed checkout only for the exact
+  not-yet-created manifest tag; this is a release-gate rule, not a second
+  compatibility or execution path.
 - Repository-specific requirement IDs, credentials, retention duration, and
   reconciliation deadline remain pending their documented owner confirmation
   or human governance decisions. Further target enablement also requires an
@@ -372,7 +375,7 @@ decided and justified during the relevant implementation task.
   above: implementation is evidence, and compatibility/release changes follow
   the current approved release policy rather than accidental historical code.
 
-No unresolved architectural speculation is recorded here. The remaining 2.4.0
+No unresolved architectural speculation is recorded here. The remaining 2.4.3
 work is an implementation/release-governance sequence under the resolved
 TC-MVP-E2E-001, receiver semantics, and release-verification rule.
 

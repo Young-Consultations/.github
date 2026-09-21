@@ -93,6 +93,7 @@ jobs:
       - name: Checkout current control plane verifier
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
+          ref: main
           persist-credentials: false
           fetch-depth: 0
       - name: Resolve current registered target adapter commit
@@ -151,6 +152,7 @@ jobs:
           mkdir -p "$GITHUB_WORKSPACE/reports"
           python scripts/run_tc_mvp_e2e_001.py --mode sim --report "$GITHUB_WORKSPACE/reports/tc-mvp-e2e-001-sim.json"
       - name: Verify current attestation against immutable release evidence
+        working-directory: ${{ github.workspace }}
         env:
           TC_MVP_E2E_TARGET_ROOT: ${{ github.workspace }}/.release-target/consulting-playbook
         run: python scripts/run_tc_mvp_e2e_001.py --mode real-preflight --sim-report "$GITHUB_WORKSPACE/reports/tc-mvp-e2e-001-sim.json"
