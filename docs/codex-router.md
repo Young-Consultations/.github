@@ -57,14 +57,14 @@ tokens are supported without calling the user-only `GET /user` endpoint. On
 redelivery, only an identical marker written by that same author is reused;
 untrusted lookalike comments are never admission authority.
 
-`ai-sdlc-v2.4.2` is the current published control-plane release and resolves to
-reviewed commit `1ea59832996dc398923c2d1516eb464546e30877`. The 2.4.3 candidate
-binds `codex-adapter-v2.4.3`; the production `portfolio-tasks` source consumer
-remains pinned to `ai-sdlc-v2.4.2` until the candidate is reviewed, published,
-and passes deployed Runtime Preflight. Only then may a separate consumer repin
-select 2.4.3 for REAL work. See [the 2.4.3 release
-procedure](releases/2.4.3.md). Never replace an immutable tag with a branch name
-or assume a registry edit on `main` changes an older tagged router.
+`ai-sdlc-v2.4.3` is the current published control-plane release and resolves to
+reviewed commit `9b240014d9fd5b5987cd8bfcde742d9b6079f501`. It binds
+`codex-adapter-v2.4.3`; the production `portfolio-tasks` source consumer remains
+pinned to `ai-sdlc-v2.4.2` until deployed Runtime Preflight passes. Only then
+may the separate consumer repin merge and select 2.4.3 for REAL work. See [the
+2.4.3 release procedure](releases/2.4.3.md). Never replace an immutable tag with
+a branch name or assume a registry edit on `main` changes an older tagged
+router.
 
 ## Registry changes
 

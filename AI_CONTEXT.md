@@ -193,21 +193,20 @@ non-identical transition as an idempotent no-op only when it represents the same
 stable managed-draft effect; every other non-identical result remains ambiguous
 and fails closed.
 
-`ai-sdlc-v2.4.2` is the current published control-plane release at reviewed
-commit `1ea59832996dc398923c2d1516eb464546e30877`. The 2.4.3 patch candidate
-keeps the closed v2 payload schemas and existing approval/state ownership,
-self-pins the router and receiver bundles to `ai-sdlc-v2.4.3`, and binds the
-published `codex-adapter-v2.4.3` target at
+`ai-sdlc-v2.4.3` is the current published control-plane release at reviewed
+commit `9b240014d9fd5b5987cd8bfcde742d9b6079f501`. It keeps the closed v2
+payload schemas and existing approval/state ownership, self-pins the router and
+receiver bundles to `ai-sdlc-v2.4.3`, and binds the published
+`codex-adapter-v2.4.3` target at
 `1a5da85a4e29b83ba72e1bf4354d7770035cd367` with report digest
 `25be867dfc891222cc6fb49b3d9c0c708fee95834176ee464f87ae191f3ba44b`.
 Protected probe run `35555329988` completed through the two-read provider
 authentication handoff. The source consumer in `portfolio-tasks` must remain on
-`ai-sdlc-v2.4.2` until the 2.4.3 control-plane tag is published, release-aware
-verification passes, and the separate consumer repin and deployed Runtime
-Preflight complete. `release/current-runtime.json` is therefore a candidate
-composition record, and `docs/releases/2.4.3.md` is the current repair
-procedure. The terminal delivery identity from portfolio issue #148 must not be
-reused for the later REAL verification.
+`ai-sdlc-v2.4.2` until deployed Runtime Preflight passes and the separate
+consumer repin is reviewed and merged. `release/current-runtime.json` records
+the published control-plane composition, and `docs/releases/2.4.3.md` is the
+current repair procedure. The terminal delivery identity from portfolio issue
+#148 must not be reused for the later REAL verification.
 
 Explicitly excluded are exactly-once transport, autonomous approval, automatic
 merge, release or deployment automation authority, production operation,
