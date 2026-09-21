@@ -258,18 +258,17 @@ python scripts/verify_release_target_workflows.py --enabled-only
 git diff --check
 ```
 
-`python scripts/validate_release.py` verifies structural candidate coherence.
-The 2.4.3 candidate remains `tag_published: false` until its target adapter,
-conformance evidence, and registry binding are reviewed and the candidate is
-merged. The immutable tag is then created at that merge commit. A separate
-attestation change on `main` records the tag commit and sets
-`tag_published: true`; REAL preflight runs from that attested checkout while
-using the tag for immutable SIM evidence. Before tag creation,
+`python scripts/validate_release.py` verifies structural release coherence.
+Release 2.4.3 is published and its manifest records `tag_published: true` plus
+the immutable candidate merge commit. Once this attestation is on `main`, REAL
+preflight runs from that attested checkout while using the tag for immutable
+SIM evidence. During a future pre-publication candidate window,
 `verify_release_target_workflows.py` delegates to normal remote verification
 first and may use the current reviewed checkout only when a target pins the
-exact manifest tag and GitHub confirms that exact tag is absent. All other
-missing, substituted, or incompatible refs remain fail-closed. Once the tag
-exists, remote immutable verification takes precedence.
+exact manifest tag, the manifest explicitly records `tag_published: false` and
+`tag_commit_sha: null`, and GitHub confirms that exact tag is absent. All other
+missing, substituted, or incompatible refs remain fail-closed. For published
+releases, remote immutable verification takes precedence.
 
 Conformance reports identify a canonical non-recursive v2 pin of exact shared
 and target files. They never predict the SHA of the commit that contains them;

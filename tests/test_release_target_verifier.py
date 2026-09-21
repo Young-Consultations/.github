@@ -34,6 +34,60 @@ def test_missing_published_manifest_tag_fails_closed(monkeypatch: pytest.MonkeyP
         release_checker.verify_release_receiver_at_ref(_manifest_tag(), "token")
 
 
+def test_exact_missing_manifest_tag_uses_reviewed_local_candidate(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def missing(receiver_ref: str, token: str | None) -> None:
+        raise release_checker.checker.CompatibilityError(
+            "GitHub evidence is unavailable (tag): HTTP 422: Unprocessable Entity"
+        )
+
+    manifest = json.loads(
+        release_checker.checker.RELEASE_MANIFEST.read_text(encoding="utf-8")
+    )
+    manifest["tag_published"] = False
+    manifest["tag_commit_sha"] = None
+
+    release_dir = tmp_path / "release"
+    release_dir.mkdir()
+    (release_dir / "release-manifest.json").write_text(
+        json.dumps(manifest), encoding="utf-8"
+    )
+    fixture_paths = {
+        Path(manifest["result_receiver_workflow"]): b"workflow",
+        Path(manifest["result_receiver_action"]): b"action",
+        Path(manifest["result_trust_policy"]): b"trust",
+        Path("scripts/codex_result_receiver.py"): b"receiver",
+        Path("contracts/execution-result.schema.json"): b"{}",
+    }
+    for relative_path, content in fixture_paths.items():
+        target = tmp_path / relative_path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(content)
+
+    checks: list[str] = []
+    monkeypatch.setattr(release_checker, "ROOT", tmp_path)
+    monkeypatch.setattr(release_checker, "_REMOTE_VERIFY_RECEIVER", missing)
+    monkeypatch.setattr(
+        release_checker.checker,
+        "verify_receiver_interface",
+        lambda source: checks.append(source) or manifest["tag"],
+    )
+    monkeypatch.setattr(
+        release_checker.checker,
+        "verify_receiver_action",
+        lambda source: checks.append(source),
+    )
+    monkeypatch.setattr(
+        release_checker.checker,
+        "verify_receiver_bundle_policy",
+        lambda source, trust: checks.extend((source, trust.decode())),
+    )
+    release_checker.verify_release_receiver_at_ref(manifest["tag"], "token")
+    assert checks == ["workflow", "action", "receiver", "trust"]
+
+
 def test_missing_non_manifest_receiver_tag_still_fails_closed(monkeypatch: pytest.MonkeyPatch) -> None:
     def missing(receiver_ref: str, token: str | None) -> None:
         raise release_checker.checker.CompatibilityError(
