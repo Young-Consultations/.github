@@ -12,14 +12,14 @@ package are released as one immutable compatibility unit. Current activation in
 that consumer compatibility unit. See [release, upgrade,
 deprecation, and rollback procedures](docs/releases.md).
 
-The 2.4.3 path is temporarily quarantined while the owner-authorized repair in
-[`docs/releases/2.4.3.md`](docs/releases/2.4.3.md) rebinds the control plane to
-the corrected `consulting-playbook` adapter. The generated
-[`release/current-runtime.json`](release/current-runtime.json) therefore records
-a candidate composition until the rewritten control-plane tag is attested.
-Published `ai-sdlc-v2.4.2` remains the rollback baseline. The production source
-consumer already selects 2.4.3, but no live issue may be approved until deployed
-Runtime Preflight and REAL preflight both pass.
+The repaired [`ai-sdlc-v2.4.3`](docs/releases/2.4.3.md) control plane is
+published and attested at reviewed commit `3da7ed9b7bf76d00ae35e4accc733ac8f95259c5`. It binds the
+corrected `consulting-playbook` adapter while preserving the closed v2 contract.
+The generated [`release/current-runtime.json`](release/current-runtime.json)
+records the published composition. Published `ai-sdlc-v2.4.2` remains the
+rollback baseline. The production source consumer already selects 2.4.3, but no
+live issue may be approved until deployed Runtime Preflight and REAL preflight
+both pass.
 
 ## AI-SDLC contract validation
 
