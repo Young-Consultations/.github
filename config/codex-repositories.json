@@ -83,9 +83,9 @@
         "fixture_version": "2.3.0",
         "compatibility_sha": "e27b8a541afbd27b4be5606a19ffa43637ad312a",
         "adapter_ref": "codex-adapter-v2.4.3",
-        "adapter_commit_sha": "1a5da85a4e29b83ba72e1bf4354d7770035cd367",
+        "adapter_commit_sha": "050dc7bb4832eab77fca3e070d2ea1917d82e26e",
         "report_path": ".ai-sdlc/conformance/tc-mvp-ci-001.json",
-        "report_sha256": "25be867dfc891222cc6fb49b3d9c0c708fee95834176ee464f87ae191f3ba44b",
+        "report_sha256": "9bb8927334741c80e61e54e722e5b07ef28476ad52108a32051183fe81416d38",
         "status": "pass",
         "activation_evidence_sufficient": true
       },

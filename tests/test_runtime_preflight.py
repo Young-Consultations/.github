@@ -9,19 +9,17 @@ def test_current_runtime_record_is_generated_from_authoritative_state():
     path = Path("release/current-runtime.json")
     assert path.read_text(encoding="utf-8") == generate_current_runtime.render()
     value = json.loads(path.read_text(encoding="utf-8"))
-    assert value["release_state"] == "published"
+    assert value["release_state"] == "candidate"
     assert value["control_plane"]["tag"] == "ai-sdlc-v2.4.3"
-    assert value["control_plane"]["tag_commit_sha"] == (
-        "9b240014d9fd5b5987cd8bfcde742d9b6079f501"
-    )
+    assert value["control_plane"]["tag_commit_sha"] is None
     assert value["activation"]["enabled_targets"] == [
         "Young-Consultations/consulting-playbook"
     ]
 
 
-def test_offline_published_preflight_is_safe_and_passes_for_sim():
+def test_offline_candidate_preflight_is_safe_and_passes_for_sim():
     result = subprocess.run(
-        ["python3", "scripts/runtime_preflight.py", "--offline"],
+        ["python3", "scripts/runtime_preflight.py", "--offline", "--candidate"],
         check=False,
         text=True,
         capture_output=True,
@@ -30,10 +28,10 @@ def test_offline_published_preflight_is_safe_and_passes_for_sim():
     report = json.loads(result.stdout)
     assert report["status"] == "PASS"
     assert report["next_action"] == "run SIM"
-    assert report["release_state"] == "published"
+    assert report["release_state"] == "candidate"
     assert report["checks"][1] == {
         "boundary": "release-publication",
-        "status": "PASS",
+        "status": "CANDIDATE",
     }
 
 
@@ -160,12 +158,7 @@ def test_missing_audit_token_reports_failed_credential_boundary(
     monkeypatch, capsys,
 ):
     monkeypatch.delenv("PREFLIGHT_AUDIT_TOKEN", raising=False)
-    monkeypatch.setattr(
-        runtime_preflight,
-        "remote_tag_commit",
-        lambda tag: "9b240014d9fd5b5987cd8bfcde742d9b6079f501",
-    )
-    monkeypatch.setattr("sys.argv", ["runtime_preflight.py"])
+    monkeypatch.setattr("sys.argv", ["runtime_preflight.py", "--candidate"])
 
     assert runtime_preflight.main() == 1
     report = json.loads(capsys.readouterr().out)
