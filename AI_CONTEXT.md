@@ -193,22 +193,21 @@ non-identical transition as an idempotent no-op only when it represents the same
 stable managed-draft effect; every other non-identical result remains ambiguous
 and fails closed.
 
-The 2.4.3 path is quarantined after REAL-preflight runs `35640134916` and
-`35654316863` proved that the originally published control-plane registry bound
-`codex-adapter-v2.4.3` to stale commit
-`1a5da85a4e29b83ba72e1bf4354d7770035cd367`, whose execution workflow called
-the 2.4.2 receiver. The owner authorized an exceptional replacement of the
-defective 2.4.3 identities rather than a 2.4.4 release. The corrected target tag
-now resolves to reviewed commit
+REAL-preflight runs `35640134916` and `35654316863` proved that the originally
+published 2.4.3 control-plane registry bound `codex-adapter-v2.4.3` to stale
+commit `1a5da85a4e29b83ba72e1bf4354d7770035cd367`, whose execution workflow
+called the 2.4.2 receiver. The owner authorized an exceptional replacement of
+the defective 2.4.3 identities rather than a 2.4.4 release. The corrected target
+tag resolves to reviewed commit
 `050dc7bb4832eab77fca3e070d2ea1917d82e26e`, with conformance report digest
 `9bb8927334741c80e61e54e722e5b07ef28476ad52108a32051183fe81416d38`.
-This candidate rebinds that target evidence and deliberately records
-`tag_published: false` and `tag_commit_sha: null` until `ai-sdlc-v2.4.3` is moved
-to the reviewed candidate merge and a separate attestation records that commit.
-Published `ai-sdlc-v2.4.2` remains the rollback baseline. The 2.4.3 source
-consumer is already merged but must not receive a live approval until Runtime
-Preflight and REAL preflight pass. The terminal delivery identity from portfolio
-issue #148 must not be reused for the later REAL verification.
+The repaired control-plane tag `ai-sdlc-v2.4.3` now resolves to reviewed PR #73
+merge commit `3da7ed9b7bf76d00ae35e4accc733ac8f95259c5`; the manifest records `tag_published: true` and
+that exact `tag_commit_sha`. Published `ai-sdlc-v2.4.2` remains the rollback
+baseline. The 2.4.3 source consumer is already merged but must not receive a live
+approval until Runtime Preflight and REAL preflight pass. The terminal delivery
+identity from portfolio issue #148 must not be reused for the later REAL
+verification.
 
 Explicitly excluded are exactly-once transport, autonomous approval, automatic
 merge, release or deployment automation authority, production operation,
@@ -261,13 +260,11 @@ git diff --check
 ```
 
 `python scripts/validate_release.py` verifies structural release coherence.
-Release 2.4.3 is in an exceptional repair-candidate state and its manifest
-records `tag_published: false` plus `tag_commit_sha: null`. After this candidate
-merges, the authorized tag replacement must resolve to that exact reviewed
-merge commit; a separate attestation then restores `tag_published: true` and
-records that commit. REAL preflight runs only from the later attested checkout
-while using the rewritten tag for SIM evidence. During a pre-publication
-candidate window,
+Release 2.4.3 is published and attested at reviewed commit
+`3da7ed9b7bf76d00ae35e4accc733ac8f95259c5`; its manifest records `tag_published: true` and that exact
+`tag_commit_sha`. REAL preflight runs only from an attested `main` checkout
+after deployed Runtime Preflight passes, while using the rewritten tag for
+immutable SIM evidence. During a future pre-publication candidate window,
 `verify_release_target_workflows.py` delegates to normal remote verification
 first and may use the current reviewed checkout only when a target pins the
 exact manifest tag, the manifest explicitly records `tag_published: false` and
@@ -359,10 +356,9 @@ decided and justified during the relevant implementation task.
   EI-07, IF-09, and `docs/releases.md`; that exception is explicit and limited
   to replacing the defective 2.4.3 target and control-plane identities. The
   prior 2.4.3 evidence is quarantined and cannot support REAL acceptance.
-- Remaining work is candidate review/merge, exact control-plane tag replacement,
-  publication attestation, deployed Runtime Preflight, and REAL preflight. The
-  source-consumer repin is already merged but is not authorization to approve a
-  live issue while either gate is red.
+- Remaining work is deployed Runtime Preflight and REAL preflight. The
+  source-consumer repin and repaired publication attestation are complete, but
+  neither authorizes a live issue while either deployed gate is red.
 - Repository-specific requirement IDs, credentials, retention duration, and
   reconciliation deadline remain pending their documented owner confirmation
   or human governance decisions. Further target enablement also requires an
@@ -382,8 +378,8 @@ decided and justified during the relevant implementation task.
   the current approved release policy rather than accidental historical code.
 
 No unresolved architectural speculation is recorded here. The remaining 2.4.3
-work is an explicitly risk-accepted release-governance exception under the
-resolved TC-MVP-E2E-001 and receiver semantics.
+work is deployed verification under the explicitly risk-accepted identity
+replacement and the resolved TC-MVP-E2E-001 and receiver semantics.
 
 ## Maintenance rule
 
