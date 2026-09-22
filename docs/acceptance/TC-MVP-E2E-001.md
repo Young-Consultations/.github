@@ -3,7 +3,7 @@
 **Status:** Approved next-MVP acceptance design
 **Owner:** `Young-Consultations/.github`
 **Published baseline:** `ai-sdlc-v2.4.2` / `ai-sdlc-contract/v2`
-**Current release-repair candidate required for the next REAL run:** `ai-sdlc-v2.4.3`
+**Current corrective release required for the next REAL run:** `ai-sdlc-v2.4.3`
 **Initial enabled target:** `Young-Consultations/consulting-playbook`
 
 ## Purpose
@@ -103,18 +103,14 @@ The preflight itself performs no Codex invocation, branch creation, commit, push
 ### Release/target coordination before REAL
 
 The target-side repair and owner-authorized replacement of
-`codex-adapter-v2.4.3` are complete. The source consumer already selects 2.4.3,
-but the path is quarantined because the control-plane tag still carries the old
-target binding. The remaining sequence before REAL is:
+`codex-adapter-v2.4.3` are complete. The source consumer already selects 2.4.3.
+The repaired control-plane tag `ai-sdlc-v2.4.3` resolves to reviewed commit
+`3da7ed9b7bf76d00ae35e4accc733ac8f95259c5`, and this publication attestation records that identity with
+published runtime state. The remaining sequence before REAL is:
 
-1. merge the control-plane candidate that binds target commit
-   `050dc7bb4832eab77fca3e070d2ea1917d82e26e` and its report digest;
-2. replace `ai-sdlc-v2.4.3` with that exact reviewed merge commit under the
-   owner's explicit exception;
-3. merge the separate publication attestation that records the replacement tag
-   commit and restores published runtime state;
-4. run deployed Runtime Preflight and REAL preflight and require both gates to
-   pass before approving a fresh live test issue.
+1. run deployed Runtime Preflight with `candidate_mode: false`;
+2. run REAL preflight from the attested `main` checkout;
+3. require both gates to pass before approving a fresh harmless live test issue.
 
 ### REAL execution procedure
 
