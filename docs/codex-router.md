@@ -57,14 +57,14 @@ tokens are supported without calling the user-only `GET /user` endpoint. On
 redelivery, only an identical marker written by that same author is reused;
 untrusted lookalike comments are never admission authority.
 
-The 2.4.3 path is quarantined while its owner-authorized repair rebinds
-`codex-adapter-v2.4.3` to corrected commit
-`050dc7bb4832eab77fca3e070d2ea1917d82e26e`. The production source consumer
-already selects 2.4.3, but no live approval is authorized until the rewritten
-control-plane tag is attested and both deployed gates pass. See [the 2.4.3
-release procedure](releases/2.4.3.md). This exceptional rewrite does not make a
-branch reference acceptable or allow a registry edit on `main` to redefine a
-tagged router silently.
+`ai-sdlc-v2.4.3` is the current published and attested control-plane release
+at reviewed commit `3da7ed9b7bf76d00ae35e4accc733ac8f95259c5`. It binds `codex-adapter-v2.4.3` to
+corrected commit `050dc7bb4832eab77fca3e070d2ea1917d82e26e`. The production
+source consumer already selects 2.4.3, but no live approval is authorized until
+deployed Runtime Preflight and REAL preflight both pass. See [the 2.4.3 release
+procedure](releases/2.4.3.md). The owner-authorized identity rewrite does not
+make a branch reference acceptable or allow a registry edit on `main` to
+redefine a tagged router silently.
 
 ## Registry changes
 
