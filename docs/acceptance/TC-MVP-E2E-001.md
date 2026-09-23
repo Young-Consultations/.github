@@ -10,8 +10,8 @@
 
 ## Purpose
 
-> **2.4.3 operating addendum:** The 2.4.2 repair release is now the published
-> rollback baseline. The next REAL gate requires 2.4.3 and
+> **Historical 2.4.3 operating addendum:** At that stage, the 2.4.2 repair release was the published
+> rollback baseline. The planned REAL gate required 2.4.3 and
 > additionally requires one-action approval, the self-pinned router bundle, one
 > activation snapshot, router-owned admission, complete comment pagination,
 > the generated current-runtime record, and a passing deployed Runtime
@@ -37,7 +37,7 @@ The approved correction preserves both intended rules by distinguishing canonica
 This correction was introduced through PR #54 and published in
 `ai-sdlc-v2.4.0`. The history explains why SIM exercises the receiver's
 redelivery behavior; it is not the current release gate. The active gate is the
-2.4.3 authentication-repair sequence defined below.
+2.4.4 target-repair sequence defined in the current addendum above.
 
 ## Shared architecture
 
