@@ -388,3 +388,7 @@ moves, its approval status changes, ownership boundaries change, or the current
 interface policy changes. Recheck every relative link and command whenever it
 is edited. Keep historical behavior in Git history, release records, or ADRs;
 do not maintain multiple active policies or compatibility paths in this index.
+
+## 2.4.4 candidate (pending publication)
+
+The target repair PR #63 merged at `70ea4342abf7115f6848ea32bb958bbf6be696c1`; immutable `codex-adapter-v2.4.4` resolves to that commit, with conformance report SHA256 `63052d48e113f9420bd3d9f5e74a070b48d67a07d5ca46a0841c842ebcc6c06e`. The control-plane 2.4.4 candidate binds this evidence, self-pins router and receiver to `ai-sdlc-v2.4.4`, and records publication as false with no tag commit. Published 2.4.3 is previous known good. Review and merge the candidate before creating the exact merge-commit tag, then attest publication separately. Deployed Runtime Preflight, REAL preflight, and a fresh human-approved REAL issue remain gated. See [2.4.4 release procedure](docs/releases/2.4.4.md).

@@ -67,7 +67,7 @@
       }
     },
     "Young-Consultations/consulting-playbook": {
-      "workflow_ref": "Young-Consultations/consulting-playbook/.github/workflows/codex-execute.yml@codex-adapter-v2.4.3",
+      "workflow_ref": "Young-Consultations/consulting-playbook/.github/workflows/codex-execute.yml@codex-adapter-v2.4.4",
       "allowed_task_types": [
         "automation",
         "documentation",
@@ -82,10 +82,10 @@
         "fixture_set": "TC-MVP-CI-001",
         "fixture_version": "2.3.0",
         "compatibility_sha": "e27b8a541afbd27b4be5606a19ffa43637ad312a",
-        "adapter_ref": "codex-adapter-v2.4.3",
-        "adapter_commit_sha": "050dc7bb4832eab77fca3e070d2ea1917d82e26e",
+        "adapter_ref": "codex-adapter-v2.4.4",
+        "adapter_commit_sha": "70ea4342abf7115f6848ea32bb958bbf6be696c1",
         "report_path": ".ai-sdlc/conformance/tc-mvp-ci-001.json",
-        "report_sha256": "9bb8927334741c80e61e54e722e5b07ef28476ad52108a32051183fe81416d38",
+        "report_sha256": "63052d48e113f9420bd3d9f5e74a070b48d67a07d5ca46a0841c842ebcc6c06e",
         "status": "pass",
         "activation_evidence_sufficient": true
       },

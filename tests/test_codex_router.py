@@ -41,7 +41,7 @@ def enabled_in_process_routing(monkeypatch):
         return repositories, {repository: True for repository in repositories}
 
     monkeypatch.setattr(codex_router, "routing_configuration", active_configuration)
-    monkeypatch.setenv("CONTROL_PLANE_RELEASE", "ai-sdlc-v2.4.3")
+    monkeypatch.setenv("CONTROL_PLANE_RELEASE", "ai-sdlc-v2.4.4")
     monkeypatch.setenv("CODEX_ACTIVATION_REVISION", "a" * 40)
     monkeypatch.setenv("CODEX_ACTIVATION_SHA256", "b" * 64)
 
@@ -354,7 +354,7 @@ def test_repository_specific_configuration_is_registry_only():
 def test_admission_lookup_reads_later_comment_pages(monkeypatch):
     binding = {
         "delivery_id": "delivery-42",
-        "control_plane_release": "ai-sdlc-v2.4.3",
+        "control_plane_release": "ai-sdlc-v2.4.4",
     }
     marker = "<!-- ai-sdlc-admission:v2 " + json.dumps(
         binding, separators=(",", ":"), sort_keys=True

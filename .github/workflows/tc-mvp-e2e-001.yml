@@ -124,7 +124,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: Young-Consultations/.github
-          ref: refs/tags/ai-sdlc-v2.4.3
+          ref: refs/tags/ai-sdlc-v2.4.4
           path: .release-control-plane
           persist-credentials: false
           fetch-depth: 0
@@ -158,4 +158,4 @@ jobs:
         run: python scripts/run_tc_mvp_e2e_001.py --mode real-preflight --sim-report "$GITHUB_WORKSPACE/reports/tc-mvp-e2e-001-sim.json"
       - name: State safety boundary
         run: |
-          echo 'REAL preflight passed. The current publication attestation matches immutable ai-sdlc-v2.4.3 evidence and the adapter registered by that release. This workflow intentionally performs no real Codex, branch, PR, receiver, or source mutation.'
+          echo 'REAL preflight passed. The current publication attestation matches immutable ai-sdlc-v2.4.4 evidence and the adapter registered by that release. This workflow intentionally performs no real Codex, branch, PR, receiver, or source mutation.'
