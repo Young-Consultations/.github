@@ -57,6 +57,8 @@ tokens are supported without calling the user-only `GET /user` endpoint. On
 redelivery, only an identical marker written by that same author is reused;
 untrusted lookalike comments are never admission authority.
 
+The [2.4.4 candidate](releases/2.4.4.md) selects the tagged target repair and remains unpublished. The source consumer continues to select the published 2.4.3 router until publication and deployed gates pass.
+
 `ai-sdlc-v2.4.3` is the current published and attested control-plane release
 at reviewed commit `3da7ed9b7bf76d00ae35e4accc733ac8f95259c5`. It binds `codex-adapter-v2.4.3` to
 corrected commit `050dc7bb4832eab77fca3e070d2ea1917d82e26e`. The production

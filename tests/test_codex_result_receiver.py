@@ -152,7 +152,7 @@ def test_receiver_requires_admission_from_its_exact_control_plane_release():
     with pytest.raises(ReceiverError, match="receiver release"):
         receive(
             json.dumps(RESULT), SOURCE, RESULT["target_repository"], journal,
-            "ai-sdlc-v2.4.3",
+            "ai-sdlc-v2.4.4",
         )
     binding = {
         "contract_version": RESULT["contract_version"],
@@ -160,14 +160,14 @@ def test_receiver_requires_admission_from_its_exact_control_plane_release():
         "correlation_id": RESULT["correlation_id"],
         "source_issue": SOURCE,
         "target_repository": RESULT["target_repository"],
-        "control_plane_release": "ai-sdlc-v2.4.3",
+        "control_plane_release": "ai-sdlc-v2.4.4",
         "activation_revision": "a" * 40,
         "activation_sha256": "b" * 64,
     }
     journal.entries[0] = JournalComment(marker(ADMISSION, binding), "router-bot")
     assert receive(
         json.dumps(RESULT), SOURCE, RESULT["target_repository"], journal,
-        "ai-sdlc-v2.4.3",
+        "ai-sdlc-v2.4.4",
     ).accepted
 
 

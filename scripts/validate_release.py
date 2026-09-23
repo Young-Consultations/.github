@@ -70,8 +70,14 @@ def conformance_errors(repository: str, entry: dict, fixture_version: object) ->
     return [] if valid else [f"{repository}: reviewed conformance evidence is invalid"]
 
 
-def validate(root: Path = ROOT, *, require_publishable: bool = False) -> list[str]:
+def validate(
+    root: Path = ROOT, *, require_publishable: bool = False,
+    require_candidate_ready: bool = False,
+) -> list[str]:
     errors: list[str] = []
+    if require_publishable and require_candidate_ready:
+        return ["publication and candidate readiness modes are mutually exclusive"]
+    require_release_binding = require_publishable or require_candidate_ready
     manifest = load_json(root / MANIFEST.relative_to(ROOT))
     version = manifest.get("release_version", "")
     if not SEMVER.fullmatch(version):
@@ -82,6 +88,11 @@ def validate(root: Path = ROOT, *, require_publishable: bool = False) -> list[st
         errors.append("tag_published must explicitly record publication state")
     if require_publishable and manifest.get("tag_published") is not True:
         errors.append("publishable release must declare tag_published true")
+    if require_candidate_ready and (
+        manifest.get("tag_published") is not False
+        or manifest.get("tag_commit_sha") is not None
+    ):
+        errors.append("candidate readiness requires an unpublished release without a tag commit")
     tag_commit_sha = manifest.get("tag_commit_sha")
     if manifest.get("tag_published") is True and (
         not isinstance(tag_commit_sha, str) or SHA.fullmatch(tag_commit_sha) is None
@@ -113,12 +124,12 @@ def validate(root: Path = ROOT, *, require_publishable: bool = False) -> list[st
             errors.append(f"{repository}: draft-only execution is required")
         if "conformance" not in entry:
             errors.append(f"{repository}: conformance evidence field is missing")
-        if entry.get("conformance") is not None or require_publishable:
+        if entry.get("conformance") is not None or require_release_binding:
             errors.extend(conformance_errors(repository, entry, manifest.get("fixture_version")))
-        if require_publishable:
+        if require_release_binding:
             ref = str(entry.get("workflow_ref", "")).rsplit("@", 1)[-1]
             if IMMUTABLE_ADAPTER_TAG.fullmatch(ref) is None:
-                errors.append(f"{repository}: publishable release requires an immutable codex-adapter-v* tag")
+                errors.append(f"{repository}: release readiness requires an immutable codex-adapter-v* tag")
     activation = load_json(root / "config/codex-activation.json")
     targets = activation.get("targets")
     if activation.get("activation_format_version") != 1 or not isinstance(targets, dict):
@@ -222,8 +233,8 @@ def validate(root: Path = ROOT, *, require_publishable: bool = False) -> list[st
             )
             if not valid_authors:
                 errors.append("release result trust policy is invalid")
-            elif require_publishable and not all(author_lists):
-                errors.append("publishable release must name trusted authors for every journal role")
+            elif require_release_binding and not all(author_lists):
+                errors.append("release readiness must name trusted authors for every journal role")
 
     paths = [*root.glob(".github/workflows/*.yml"), *root.glob("docs/*.md"), root / "README.md"]
     for path in paths:
@@ -238,8 +249,15 @@ def main(argv: list[str] | None = None) -> int:
         "--require-publishable", action="store_true",
         help="require immutable adapter tags, reviewed conformance, deployment trust authors, and a publishable tag state",
     )
+    parser.add_argument(
+        "--require-candidate-ready", action="store_true",
+        help="require publishable bindings and trust authors with unpublished candidate state",
+    )
     args = parser.parse_args(argv)
-    errors = validate(require_publishable=args.require_publishable)
+    errors = validate(
+        require_publishable=args.require_publishable,
+        require_candidate_ready=args.require_candidate_ready,
+    )
     if errors:
         print("release validation failed:\n- " + "\n- ".join(errors), file=sys.stderr)
         return 1

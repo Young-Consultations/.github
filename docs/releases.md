@@ -59,31 +59,36 @@ validated keys; changing their meaning is breaking.
    takes precedence. The unselected default report treats disabled targets as
    `not-evaluated` and exits nonzero. Run the Router smoke test in `verify` mode,
    confirming it invokes no Codex runtime and creates no branch or pull request.
-4. In the final release pull request, record the reviewed journal-author
-   identities, set `tag_published` to `true`, and run
-   `python scripts/validate_release.py --require-publishable`. In this lifecycle,
-   `tag_published: true` is the reviewed publication-state marker authorizing the
-   release to proceed to the immutable-tag step; it does not by itself prove the
-   Git tag already exists. Actual tag existence is checked separately after the
-   reviewed merge and before REAL acceptance. Obtain protected-branch checks and
-   maintainer/security approval. Never bypass existing approval controls. Merge
-   the reviewed change before tagging.
-5. From the reviewed merge commit, re-run the release-aware target verification,
-   release validation, complete test suite, and verify-mode Router smoke test.
-   Confirm the manifest tag is still unused, then create and push one annotated
-   `ai-sdlc-vX.Y.Z` tag. Never move, delete, or recreate a published tag. After
-   tag creation, re-run verification so the same checks resolve the immutable
-   tag remotely. This task prepares the lifecycle only; it creates no production
-   tag and publishes no Python distribution.
+4. In the candidate pull request, record the reviewed journal-author identities,
+   set `tag_published` to `false` and `tag_commit_sha` to `null`, generate the
+   candidate runtime record, and run structural release validation plus
+   `python scripts/validate_release.py --require-candidate-ready`, the
+   release-aware target verifier, complete tests, and verify-mode Router smoke
+   test. Obtain protected-branch checks and maintainer/security approval. The
+   candidate readiness gate checks all publishable bindings and trusted authors
+   while requiring the unpublished manifest state. `--require-publishable`
+   must fail for that candidate state.
+   Merge the reviewed candidate before tagging.
+5. From the reviewed candidate merge commit, re-run those checks and confirm
+   the manifest tag is unused. Create and push one annotated `ai-sdlc-vX.Y.Z`
+   tag at that exact merge commit. Never move, delete, or recreate a published
+   tag. Then submit a separate publication-attestation pull request that records
+   the tag's resolved commit as `tag_commit_sha`, sets `tag_published` to `true`,
+   regenerates the runtime record, and passes
+   `python scripts/validate_release.py --require-publishable`, remote immutable
+   target verification, complete tests, protected-branch checks, and review.
+   Merge the attestation before deployed Runtime Preflight or REAL acceptance.
+   Pre-tag candidate checks and approvals are the authorization to consume the
+   immutable version; post-tag attestation proves the resulting identity.
 6. Consumers pin the router/receiver to that exact tag or, before tag approval,
    the reviewed 40-character merge SHA where the consumer contract permits it.
    Package consumers pin exactly the manifest package version and schema
    consumers retrieve the same release unit.
 
 The candidate contents never name their own future merge SHA. Finalize and
-merge first, obtain the immutable commit identity second, and record the pin in
-each consumer's own configuration or documentation. This avoids a recursive
-release update. Target conformance follows the same rule: the report records the
+merge first, obtain the immutable commit identity second, and record it in the
+attestation as well as each consumer's own configuration or documentation. This
+avoids a recursive release update. Target conformance follows the same rule: the report records the
 non-recursive conformance-pin revision, while the later registry entry records
 the tag's resolved commit and report digest.
 

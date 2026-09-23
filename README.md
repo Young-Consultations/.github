@@ -12,14 +12,14 @@ package are released as one immutable compatibility unit. Current activation in
 that consumer compatibility unit. See [release, upgrade,
 deprecation, and rollback procedures](docs/releases.md).
 
-The repaired [`ai-sdlc-v2.4.3`](docs/releases/2.4.3.md) control plane is
-published and attested at reviewed commit `3da7ed9b7bf76d00ae35e4accc733ac8f95259c5`. It binds the
-corrected `consulting-playbook` adapter while preserving the closed v2 contract.
-The generated [`release/current-runtime.json`](release/current-runtime.json)
-records the published composition. Published `ai-sdlc-v2.4.2` remains the
-rollback baseline. The production source consumer already selects 2.4.3, but no
-live issue may be approved until deployed Runtime Preflight and REAL preflight
-both pass.
+The [2.4.4 release candidate](docs/releases/2.4.4.md) binds the immutable
+`consulting-playbook` adapter repair to the next router and receiver release.
+Its [generated runtime record](release/current-runtime.json) is a candidate:
+`ai-sdlc-v2.4.4` has not been published or attested. The repaired
+[`ai-sdlc-v2.4.3`](docs/releases/2.4.3.md) remains the published, attested
+previous known good release at `3da7ed9b7bf76d00ae35e4accc733ac8f95259c5`.
+The production source consumer still selects 2.4.3. Deployed Runtime Preflight
+and REAL preflight must pass before a fresh live issue is approved.
 
 ## AI-SDLC contract validation
 
