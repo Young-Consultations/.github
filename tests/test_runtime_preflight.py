@@ -63,6 +63,19 @@ def test_workflow_separates_release_and_audit_credential_roles():
     assert "GH_TOKEN: ${{ secrets.PREFLIGHT_AUDIT_TOKEN }}" not in workflow
 
 
+def test_deployed_workflow_rejects_non_main_dispatch_before_checkout():
+    import yaml
+
+    workflow = yaml.safe_load(Path(".github/workflows/runtime-preflight.yml").read_text())
+    steps = workflow["jobs"]["preflight"]["steps"]
+    guard = steps[0]
+    assert guard["if"] == "${{ !inputs.candidate_mode }}"
+    assert "refs/heads/main" in guard["run"]
+    assert "exit 1" in guard["run"]
+    assert "actions/checkout@" in steps[1]["uses"]
+    assert steps[1]["with"]["ref"] == "${{ inputs.candidate_mode && github.ref || 'main' }}"
+
+
 def test_credential_metadata_uses_only_the_audit_token(monkeypatch):
     observed = {}
 
