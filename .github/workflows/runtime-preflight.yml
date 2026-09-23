@@ -17,8 +17,17 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - name: Require main for deployed release preflight
+        if: ${{ !inputs.candidate_mode }}
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF" != 'refs/heads/main' ]]; then
+            echo '::error::Deployed Runtime Preflight requires main after publication attestation merges.'
+            exit 1
+          fi
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
+          ref: ${{ inputs.candidate_mode && github.ref || 'main' }}
           persist-credentials: false
       - name: Verify generated runtime composition
         run: python3 scripts/generate_current_runtime.py --check

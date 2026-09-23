@@ -12,14 +12,16 @@ package are released as one immutable compatibility unit. Current activation in
 that consumer compatibility unit. See [release, upgrade,
 deprecation, and rollback procedures](docs/releases.md).
 
-The [2.4.4 release candidate](docs/releases/2.4.4.md) binds the immutable
-`consulting-playbook` adapter repair to the next router and receiver release.
-Its [generated runtime record](release/current-runtime.json) is a candidate:
-`ai-sdlc-v2.4.4` has not been published or attested. The repaired
-[`ai-sdlc-v2.4.3`](docs/releases/2.4.3.md) remains the published, attested
-previous known good release at `3da7ed9b7bf76d00ae35e4accc733ac8f95259c5`.
-The production source consumer still selects 2.4.3. Deployed Runtime Preflight
-and REAL preflight must pass before a fresh live issue is approved.
+The [`ai-sdlc-v2.4.4` release](docs/releases/2.4.4.md) binds the immutable
+`consulting-playbook` adapter repair to the router and receiver. Its tag
+resolves to reviewed candidate merge commit `adb57508762168b3410f52e8a7b0151078c6e9b9`.
+The [generated runtime record](release/current-runtime.json) records that
+identity and publication state. The repaired
+[`ai-sdlc-v2.4.3`](docs/releases/2.4.3.md) remains the previous known good
+release at `3da7ed9b7bf76d00ae35e4accc733ac8f95259c5`. The production
+source consumer still selects 2.4.3. Publication attestation must merge and
+deployed Runtime Preflight and REAL preflight must pass before a fresh live
+issue is approved.
 
 ## AI-SDLC contract validation
 

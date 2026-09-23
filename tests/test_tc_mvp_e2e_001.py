@@ -27,7 +27,7 @@ def test_sim_passes_without_real_effects(tmp_path: Path) -> None:
     assert payload["test_id"] == "TC-MVP-E2E-001-SIM"
     assert payload["published_baseline"] == "2.4.3"
     assert payload["candidate_release"] == "2.4.4"
-    assert payload["candidate_tag_published"] is False
+    assert payload["candidate_tag_published"] is True
     assert payload["execution_provider"] == "fake"
     assert payload["dispatch_provider"] == "fake-in-process-target"
     assert payload["target"] == e2e.REAL_TARGET

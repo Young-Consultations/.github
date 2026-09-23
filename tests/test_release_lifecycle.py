@@ -7,19 +7,19 @@ from scripts import validate_release
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_current_candidate_release_is_structurally_coherent():
+def test_current_published_release_is_structurally_coherent():
     assert validate_release.validate() == []
 
 
-def test_candidate_requires_publication_attestation():
+def test_published_release_passes_publication_gate():
     assert validate_release.validate() == []
-    assert validate_release.validate(require_candidate_ready=True) == []
-    assert validate_release.validate(require_publishable=True) == [
-        "publishable release must declare tag_published true"
+    assert validate_release.validate(require_publishable=True) == []
+    assert validate_release.validate(require_candidate_ready=True) == [
+        "candidate readiness requires an unpublished release without a tag commit"
     ]
 
 
-def test_candidate_readiness_requires_trusted_journal_authors(monkeypatch):
+def test_published_release_requires_trusted_journal_authors(monkeypatch):
     original_load = validate_release.load_json
 
     def without_result_authors(path):
@@ -30,15 +30,15 @@ def test_candidate_readiness_requires_trusted_journal_authors(monkeypatch):
 
     monkeypatch.setattr(validate_release, "load_json", without_result_authors)
     assert "release readiness must name trusted authors for every journal role" in (
-        validate_release.validate(require_candidate_ready=True)
+        validate_release.validate(require_publishable=True)
     )
 
 
-def test_mvp_fixture_targets_match_candidate_manifest():
+def test_mvp_fixture_targets_match_published_manifest():
     manifest = json.loads((ROOT / "release/release-manifest.json").read_text(encoding="utf-8"))
     fixture = json.loads((ROOT / "tests/fixtures/mvp-v2/manifest.json").read_text(encoding="utf-8"))
     assert manifest["release_version"] == "2.4.4"
-    assert manifest["tag_published"] is False
+    assert manifest["tag_published"] is True
     assert "immutable_reference" not in fixture
     assert "immutable_reference" not in manifest
     assert sorted(fixture["targets"]) == manifest["supported_targets"]
@@ -78,10 +78,16 @@ def test_previous_known_good_is_published_2_4_3_commit():
     assert result.returncode == 0, result.stderr.decode()
 
 
-def test_candidate_does_not_claim_a_published_tag_commit():
+def test_published_tag_resolves_to_attested_merge_commit():
     manifest = json.loads((ROOT / "release/release-manifest.json").read_text(encoding="utf-8"))
     assert "immutable_reference" not in manifest
-    assert manifest["tag_commit_sha"] is None
+    assert manifest["tag_commit_sha"] == "adb57508762168b3410f52e8a7b0151078c6e9b9"
+    result = subprocess.run(
+        ["git", "rev-list", "-n", "1", manifest["tag"]],
+        cwd=ROOT, capture_output=True, text=True, check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.strip() == manifest["tag_commit_sha"]
 
 
 def test_manifest_paths_cannot_escape_the_repository(tmp_path):
