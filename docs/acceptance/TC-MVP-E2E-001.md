@@ -6,7 +6,7 @@
 **Current corrective release required for the next REAL run:** `ai-sdlc-v2.4.4`
 **Initial enabled target:** `Young-Consultations/consulting-playbook`
 
-> **2.4.4 candidate addendum:** The immutable target repair is tagged at `codex-adapter-v2.4.4` (`70ea4342abf7115f6848ea32bb958bbf6be696c1`). The control-plane 2.4.4 candidate is unpublished. The 2.4.3 release remains published and is the previous known good baseline. The next REAL gate requires 2.4.4 publication attestation, deployed Runtime Preflight, immutable REAL preflight, and a fresh human-approved issue. See [2.4.4 release procedure](../releases/2.4.4.md). The historical 2.4.3 sequence below records the prior repair.
+> **2.4.4 publication addendum:** The immutable target repair is tagged at `codex-adapter-v2.4.4` (`70ea4342abf7115f6848ea32bb958bbf6be696c1`). The control-plane tag `ai-sdlc-v2.4.4` resolves to reviewed candidate merge commit `adb57508762168b3410f52e8a7b0151078c6e9b9`; publication attestation is under review. The 2.4.3 release is previous known good. The next REAL gate requires merged 2.4.4 publication attestation, deployed Runtime Preflight, immutable REAL preflight, and a fresh human-approved issue. See [2.4.4 release procedure](../releases/2.4.4.md). The historical 2.4.3 sequence below records the prior repair.
 
 ## Purpose
 
@@ -104,12 +104,12 @@ The preflight itself performs no Codex invocation, branch creation, commit, push
 
 ### Release/target coordination before REAL
 
-The target repair is published as `codex-adapter-v2.4.4`, while the
-control-plane candidate remains unpublished. The source consumer still selects
-2.4.3. Before REAL:
+The target repair is tagged as `codex-adapter-v2.4.4`, and the control-plane
+tag resolves to reviewed commit `adb57508762168b3410f52e8a7b0151078c6e9b9`.
+The source consumer still selects 2.4.3. Before REAL:
 
-1. merge the reviewed 2.4.4 control-plane candidate, tag its exact merge commit,
-   and attest that identity in a separate merged PR;
+1. merge the publication attestation PR after its immutable tag-identity and
+   publishability checks pass;
 2. run deployed Runtime Preflight with `candidate_mode: false`;
 3. run REAL preflight from the attested `main` checkout;
 4. require both gates to pass before approving a fresh harmless live test issue;

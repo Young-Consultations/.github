@@ -9,17 +9,19 @@ def test_current_runtime_record_is_generated_from_authoritative_state():
     path = Path("release/current-runtime.json")
     assert path.read_text(encoding="utf-8") == generate_current_runtime.render()
     value = json.loads(path.read_text(encoding="utf-8"))
-    assert value["release_state"] == "candidate"
+    assert value["release_state"] == "published"
     assert value["control_plane"]["tag"] == "ai-sdlc-v2.4.4"
-    assert value["control_plane"]["tag_commit_sha"] is None
+    assert value["control_plane"]["tag_commit_sha"] == (
+        "adb57508762168b3410f52e8a7b0151078c6e9b9"
+    )
     assert value["activation"]["enabled_targets"] == [
         "Young-Consultations/consulting-playbook"
     ]
 
 
-def test_offline_candidate_preflight_is_safe_and_passes_for_sim():
+def test_offline_published_preflight_is_safe_and_passes_for_sim():
     result = subprocess.run(
-        ["python3", "scripts/runtime_preflight.py", "--offline", "--candidate"],
+        ["python3", "scripts/runtime_preflight.py", "--offline"],
         check=False,
         text=True,
         capture_output=True,
@@ -28,10 +30,10 @@ def test_offline_candidate_preflight_is_safe_and_passes_for_sim():
     report = json.loads(result.stdout)
     assert report["status"] == "PASS"
     assert report["next_action"] == "run SIM"
-    assert report["release_state"] == "candidate"
+    assert report["release_state"] == "published"
     assert report["checks"][1] == {
         "boundary": "release-publication",
-        "status": "CANDIDATE",
+        "status": "PASS",
     }
 
 
@@ -161,7 +163,7 @@ def test_missing_audit_token_reports_failed_credential_boundary(
     monkeypatch.setattr(
         runtime_preflight,
         "remote_tag_commit",
-        lambda tag: "3da7ed9b7bf76d00ae35e4accc733ac8f95259c5",
+        lambda tag: "adb57508762168b3410f52e8a7b0151078c6e9b9",
     )
     monkeypatch.setattr("sys.argv", ["runtime_preflight.py"])
 
@@ -171,10 +173,7 @@ def test_missing_audit_token_reports_failed_credential_boundary(
         "boundary": "credential-metadata",
         "status": "FAIL",
     }
-    assert report["failures"] == [
-        "release: ai-sdlc-v2.4.4 is not yet published",
-        "credentials: PREFLIGHT_AUDIT_TOKEN is unavailable",
-    ]
+    assert report["failures"] == ["credentials: PREFLIGHT_AUDIT_TOKEN is unavailable"]
 
 
 def test_remote_release_tag_resolves_lightweight_commit(monkeypatch):
