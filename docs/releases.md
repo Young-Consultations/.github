@@ -61,10 +61,13 @@ validated keys; changing their meaning is breaking.
    confirming it invokes no Codex runtime and creates no branch or pull request.
 4. In the candidate pull request, record the reviewed journal-author identities,
    set `tag_published` to `false` and `tag_commit_sha` to `null`, generate the
-   candidate runtime record, and run structural release validation, the
+   candidate runtime record, and run structural release validation plus
+   `python scripts/validate_release.py --require-candidate-ready`, the
    release-aware target verifier, complete tests, and verify-mode Router smoke
    test. Obtain protected-branch checks and maintainer/security approval. The
-   `--require-publishable` gate must fail while the immutable tag does not exist.
+   candidate readiness gate checks all publishable bindings and trusted authors
+   while requiring the unpublished manifest state. `--require-publishable`
+   must fail for that candidate state.
    Merge the reviewed candidate before tagging.
 5. From the reviewed candidate merge commit, re-run those checks and confirm
    the manifest tag is unused. Create and push one annotated `ai-sdlc-vX.Y.Z`

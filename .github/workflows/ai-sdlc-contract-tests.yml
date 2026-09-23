@@ -196,6 +196,14 @@ jobs:
         run: python -m pytest tests/test_static_contract.py tests/test_release_lifecycle.py --junitxml=reports/static.xml
       - name: Validate coherent release manifest
         run: python scripts/validate_release.py
+      - name: Enforce release readiness for candidate or published state
+        shell: bash
+        run: |
+          if python -c 'import json; assert json.load(open("release/release-manifest.json"))["tag_published"] is False'; then
+            python scripts/validate_release.py --require-candidate-ready
+          else
+            python scripts/validate_release.py --require-publishable
+          fi
       - name: Check patch whitespace
         run: |
           git diff --check

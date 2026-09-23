@@ -13,7 +13,25 @@ def test_current_candidate_release_is_structurally_coherent():
 
 def test_candidate_requires_publication_attestation():
     assert validate_release.validate() == []
-    assert validate_release.validate(require_publishable=True)
+    assert validate_release.validate(require_candidate_ready=True) == []
+    assert validate_release.validate(require_publishable=True) == [
+        "publishable release must declare tag_published true"
+    ]
+
+
+def test_candidate_readiness_requires_trusted_journal_authors(monkeypatch):
+    original_load = validate_release.load_json
+
+    def without_result_authors(path):
+        document = original_load(path)
+        if path.name == "codex-result-trust.json":
+            document["trusted_result_authors"] = []
+        return document
+
+    monkeypatch.setattr(validate_release, "load_json", without_result_authors)
+    assert "release readiness must name trusted authors for every journal role" in (
+        validate_release.validate(require_candidate_ready=True)
+    )
 
 
 def test_mvp_fixture_targets_match_candidate_manifest():
