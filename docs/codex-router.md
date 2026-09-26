@@ -40,7 +40,7 @@ group. The target workflow applies the canonical group with
 ```yaml
 jobs:
   route:
-    uses: Young-Consultations/.github/.github/workflows/codex-router.yml@ai-sdlc-v2.4.2
+    uses: Young-Consultations/.github/.github/workflows/codex-router.yml@ai-sdlc-v2.4.4
     permissions:
       contents: read
       actions: read
@@ -57,19 +57,19 @@ tokens are supported without calling the user-only `GET /user` endpoint. On
 redelivery, only an identical marker written by that same author is reused;
 untrusted lookalike comments are never admission authority.
 
-The [2.4.4 release](releases/2.4.4.md) selects the tagged target repair and is
-tagged at `adb57508762168b3410f52e8a7b0151078c6e9b9`. Its publication
-attestation is under review. The source consumer continues to select the
-published 2.4.3 router until attestation and deployed gates pass.
+The published [2.4.4 release](releases/2.4.4.md) is the current
+production control plane and is selected by the portfolio source consumer. Its
+immutable tag resolves to reviewed candidate commit
+`adb57508762168b3410f52e8a7b0151078c6e9b9`.
 
-`ai-sdlc-v2.4.3` is the current published and attested control-plane release
-at reviewed commit `3da7ed9b7bf76d00ae35e4accc733ac8f95259c5`. It binds `codex-adapter-v2.4.3` to
-corrected commit `050dc7bb4832eab77fca3e070d2ea1917d82e26e`. The production
-source consumer already selects 2.4.3, but no live approval is authorized until
-deployed Runtime Preflight and REAL preflight both pass. See [the 2.4.3 release
-procedure](releases/2.4.3.md). The owner-authorized identity rewrite does not
-make a branch reference acceptable or allow a registry edit on `main` to
-redefine a tagged router silently.
+The [2.4.5 candidate](releases/2.4.5.md) selects
+`codex-adapter-v2.4.5` at
+`4f062ca73acfc3458f0d690bf1c7687bafd0a8eb` to repair the publication
+transport defect exposed by REAL issue #151. The candidate router and receiver
+self-pin to `ai-sdlc-v2.4.5`, but that control-plane tag is not yet published.
+The source consumer must remain on 2.4.4 until candidate review, immutable tag
+creation, publication attestation, deployed Runtime Preflight, and REAL preflight
+have all passed.
 
 ## Registry changes
 

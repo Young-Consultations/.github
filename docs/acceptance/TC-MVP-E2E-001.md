@@ -2,11 +2,11 @@
 
 **Status:** Approved next-MVP acceptance design
 **Owner:** `Young-Consultations/.github`
-**Published baseline:** `ai-sdlc-v2.4.3` / `ai-sdlc-contract/v2`
-**Current corrective release required for the next REAL run:** `ai-sdlc-v2.4.4`
+**Published baseline:** `ai-sdlc-v2.4.4` / `ai-sdlc-contract/v2`
+**Current corrective release required for the next REAL run:** `ai-sdlc-v2.4.5`
 **Initial enabled target:** `Young-Consultations/consulting-playbook`
 
-> **2.4.4 publication addendum:** The immutable target repair is tagged at `codex-adapter-v2.4.4` (`70ea4342abf7115f6848ea32bb958bbf6be696c1`). The control-plane tag `ai-sdlc-v2.4.4` resolves to reviewed candidate merge commit `adb57508762168b3410f52e8a7b0151078c6e9b9`; publication attestation is under review. The 2.4.3 release is previous known good. The next REAL gate requires merged 2.4.4 publication attestation, deployed Runtime Preflight, immutable REAL preflight, and a fresh human-approved issue. See [2.4.4 release procedure](../releases/2.4.4.md). The historical 2.4.3 sequence below records the prior repair.
+> **2.4.5 corrective candidate addendum:** The current production baseline is published `ai-sdlc-v2.4.4`, and portfolio-tasks selects it. REAL issue #151 exercised that release and exposed a target publication-transport defect after successful Codex execution. The immutable target repair is tagged at `codex-adapter-v2.4.5` (`4f062ca73acfc3458f0d690bf1c7687bafd0a8eb`) with conformance report SHA256 `8a7e3479a8768050b7621cec4d7663d8ab60d266291cb2d1027886200799c2fc`. The 2.4.5 control-plane candidate is not yet published. The next REAL gate requires reviewed candidate merge, immutable 2.4.5 control-plane tag creation and attestation, deployed Runtime Preflight, immutable REAL preflight, and a fresh human-approved issue. See [2.4.5 release procedure](../releases/2.4.5.md).
 
 ## Purpose
 
@@ -37,7 +37,7 @@ The approved correction preserves both intended rules by distinguishing canonica
 This correction was introduced through PR #54 and published in
 `ai-sdlc-v2.4.0`. The history explains why SIM exercises the receiver's
 redelivery behavior; it is not the current release gate. The active gate is the
-2.4.4 target-repair sequence defined in the current addendum above.
+2.4.5 target-repair sequence defined in the current addendum above.
 
 ## Shared architecture
 
@@ -61,8 +61,8 @@ The SIM harness shall:
 6. pass target-produced results through the candidate organization receiver implementation with an in-memory journal/forwarding effect seam;
 7. exercise successful implement behavior, managed-draft reuse, equivalent `draft-pr-created -> duplicate-reused` receiver no-op behavior, and conflicting duplicate-result rejection;
 8. assert zero real Codex, branch, commit, push, PR, merge, release, deployment, production, or secret-output effects;
-9. emit machine-readable evidence that records published baseline 2.4.3,
-   corrective candidate 2.4.4, exact target adapter identity,
+9. emit machine-readable evidence that records published baseline 2.4.4,
+   corrective candidate 2.4.5, exact target adapter identity,
    `real_acceptance_satisfied: false`, and whether the candidate tag is
    published.
 
@@ -90,10 +90,10 @@ No alternate control-plane dispatch path is permitted.
 
 Before the human approval action, the acceptance workflow shall fail closed unless:
 
-- `ai-sdlc-v2.4.4` has been reviewed, published, and attested on `main`;
-- the published 2.4.3 tag remains unchanged as rollback evidence;
+- `ai-sdlc-v2.4.5` has been reviewed, published, and attested on `main`;
+- the published 2.4.4 tag remains unchanged as rollback evidence;
 - `consulting-playbook` is the sole enabled target;
-- the registry identifies exact immutable `codex-adapter-v2.4.4` commit and
+- the registry identifies exact immutable `codex-adapter-v2.4.5` commit and
   report-digest evidence, and the adapter remains receiver-compatible;
 - fresh `TC-MVP-E2E-001-SIM` evidence passes and explicitly does not claim REAL acceptance;
 - the selected task is harmless, deterministic, documentation-only where permitted, and within target policy;
@@ -104,16 +104,22 @@ The preflight itself performs no Codex invocation, branch creation, commit, push
 
 ### Release/target coordination before REAL
 
-The target repair is tagged as `codex-adapter-v2.4.4`, and the control-plane
-tag resolves to reviewed commit `adb57508762168b3410f52e8a7b0151078c6e9b9`.
-The source consumer still selects 2.4.3. Before REAL:
+The target repair is tagged as `codex-adapter-v2.4.5` at
+`4f062ca73acfc3458f0d690bf1c7687bafd0a8eb`. The 2.4.5 control-plane
+candidate is unpublished and the source consumer remains on published 2.4.4.
+Before REAL:
 
-1. merge the publication attestation PR after its immutable tag-identity and
-   publishability checks pass;
-2. run deployed Runtime Preflight with `candidate_mode: false`;
-3. run REAL preflight from the attested `main` checkout;
-4. require both gates to pass before approving a fresh harmless live test issue;
-5. update the source consumer to the published 2.4.4 router after review and gates.
+1. merge the reviewed 2.4.5 control-plane candidate after candidate-readiness,
+   immutable target compatibility, SIM, and protected checks pass;
+2. create `ai-sdlc-v2.4.5` at that exact reviewed merge commit without moving
+   any published tag;
+3. merge a separate publication-attestation PR recording the immutable tag
+   commit and published runtime state;
+4. run deployed Runtime Preflight with `candidate_mode: false` and immutable
+   REAL preflight from attested `main`;
+5. require both gates to pass before updating the source consumer to 2.4.5 and
+   approving a fresh harmless REAL issue. Issue #151's delivery identity remains
+   terminal failure evidence and must not be reused.
 
 ### REAL execution procedure
 
@@ -129,7 +135,7 @@ After the corrective release and target pin are published and REAL preflight is 
 8. Target validation/tests pass before publication.
 9. The target creates exactly one managed draft PR or reuses the existing owned draft for the delivery.
 10. The target returns one canonical `execution-result/v2` through the
-    published 2.4.4 organization receiver.
+    published 2.4.5 organization receiver.
 11. `portfolio-tasks` shows the correlated terminal result, validation status, and draft-PR link.
 12. Re-run/redelivery of the same approved delivery verifies that the target returns `duplicate-reused` for the same managed draft, the receiver accepts that equivalent visible effect as a no-op, and no second source projection or draft PR is created.
 
@@ -139,7 +145,7 @@ The acceptance record must preserve links or immutable identities for:
 
 - source issue and exact approved revision;
 - task ID, delivery ID, attempt identity where available, and correlation ID;
-- published `ai-sdlc-v2.4.4` release identity and its attested tag commit;
+- published `ai-sdlc-v2.4.5` release identity and its attested tag commit;
 - enabled target and registered immutable adapter commit;
 - portfolio admission/router workflow run;
 - target workflow run;

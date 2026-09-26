@@ -389,6 +389,26 @@ interface policy changes. Recheck every relative link and command whenever it
 is edited. Keep historical behavior in Git history, release records, or ADRs;
 do not maintain multiple active policies or compatibility paths in this index.
 
-## 2.4.4 publication attestation (under review)
+## 2.4.5 corrective release candidate
 
-The target repair PR #63 merged at `70ea4342abf7115f6848ea32bb958bbf6be696c1`; immutable `codex-adapter-v2.4.4` resolves to that commit, with conformance report SHA256 `63052d48e113f9420bd3d9f5e74a070b48d67a07d5ca46a0841c842ebcc6c06e`. The control-plane candidate PR #75 merged at `adb57508762168b3410f52e8a7b0151078c6e9b9`; `ai-sdlc-v2.4.4` resolves to this commit, and the attestation records it in the manifest and generated runtime. The tag is lightweight though the procedure specifies annotated, and PR #75 has no formal `APPROVED` review submission. On 2026-09-23 Joseph explicitly approved both variances. This accepts the deviations without claiming those missing records existed. Published 2.4.3 remains previous known good. The deployed Runtime Preflight workflow now rejects non-main release-gate dispatches. REAL preflight, consumer update, and a fresh human-approved REAL issue remain gated until attestation review and merge. See [2.4.4 release procedure](docs/releases/2.4.4.md).
+The published 2.4.4 control plane is the current production baseline.
+`ai-sdlc-v2.4.4` resolves to
+`adb57508762168b3410f52e8a7b0151078c6e9b9`, the portfolio source
+consumer selects it, and REAL issue #151 exercised that path. Issue #151
+completed cost-bearing Codex work but failed before a remote branch or managed
+draft PR survived, exposing target publication transport authentication and
+failure-classification defects.
+
+The reviewed target repair merged in consulting-playbook PR #64 at
+`4f062ca73acfc3458f0d690bf1c7687bafd0a8eb`. Immutable
+`codex-adapter-v2.4.5` resolves to that commit. Its conformance report SHA256 is
+`8a7e3479a8768050b7621cec4d7663d8ab60d266291cb2d1027886200799c2fc`.
+The 2.4.5 control-plane candidate binds that exact target, self-pins router and
+receiver to future `ai-sdlc-v2.4.5`, records `tag_published: false` and
+`tag_commit_sha: null`, and retains published 2.4.4 as previous known good.
+Do not move or rewrite 2.4.4 identities. Do not update the source consumer or
+authorize another REAL issue until the reviewed 2.4.5 candidate merges, the
+immutable control-plane tag is created and separately attested, and deployed
+Runtime Preflight plus REAL preflight pass. The broader organization-level
+cost-bearing prerequisite policy remains owned by issue #77 and is not part of
+this release composition. See [2.4.5 release procedure](docs/releases/2.4.5.md).
