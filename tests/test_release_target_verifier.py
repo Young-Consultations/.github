@@ -22,7 +22,6 @@ def test_remote_receiver_verification_takes_precedence(monkeypatch: pytest.Monke
     release_checker.verify_release_receiver_at_ref(_manifest_tag(), "token")
     assert calls == [(_manifest_tag(), "token")]
 
-
 def test_missing_published_manifest_tag_fails_closed(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

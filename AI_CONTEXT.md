@@ -389,7 +389,7 @@ interface policy changes. Recheck every relative link and command whenever it
 is edited. Keep historical behavior in Git history, release records, or ADRs;
 do not maintain multiple active policies or compatibility paths in this index.
 
-## 2.4.5 corrective release candidate
+## 2.4.5 publication attestation
 
 The published 2.4.4 control plane is the current production baseline.
 `ai-sdlc-v2.4.4` resolves to
@@ -403,12 +403,6 @@ The reviewed target repair merged in consulting-playbook PR #64 at
 `4f062ca73acfc3458f0d690bf1c7687bafd0a8eb`. Immutable
 `codex-adapter-v2.4.5` resolves to that commit. Its conformance report SHA256 is
 `8a7e3479a8768050b7621cec4d7663d8ab60d266291cb2d1027886200799c2fc`.
-The 2.4.5 control-plane candidate binds that exact target, self-pins router and
-receiver to future `ai-sdlc-v2.4.5`, records `tag_published: false` and
-`tag_commit_sha: null`, and retains published 2.4.4 as previous known good.
-Do not move or rewrite 2.4.4 identities. Do not update the source consumer or
-authorize another REAL issue until the reviewed 2.4.5 candidate merges, the
-immutable control-plane tag is created and separately attested, and deployed
-Runtime Preflight plus REAL preflight pass. The broader organization-level
+The 2.4.5 control-plane candidate merged in PR #78 at `afe09d320268581bc83021cbfc80bf2a0f0bff91`, and `ai-sdlc-v2.4.5` resolves to that exact commit. The approved release policy accepts lightweight or annotated Git tags; immutable release identity is the tag name plus its independently resolved commit SHA. The publication attestation records `tag_published: true` and that exact `tag_commit_sha`; published 2.4.4 remains previous known good. Do not update the source consumer or authorize another REAL issue until this attestation merges and deployed Runtime Preflight plus REAL preflight pass. The broader organization-level
 cost-bearing prerequisite policy remains owned by issue #77 and is not part of
 this release composition. See [2.4.5 release procedure](docs/releases/2.4.5.md).

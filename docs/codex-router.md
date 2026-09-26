@@ -62,14 +62,7 @@ production control plane and is selected by the portfolio source consumer. Its
 immutable tag resolves to reviewed candidate commit
 `adb57508762168b3410f52e8a7b0151078c6e9b9`.
 
-The [2.4.5 candidate](releases/2.4.5.md) selects
-`codex-adapter-v2.4.5` at
-`4f062ca73acfc3458f0d690bf1c7687bafd0a8eb` to repair the publication
-transport defect exposed by REAL issue #151. The candidate router and receiver
-self-pin to `ai-sdlc-v2.4.5`, but that control-plane tag is not yet published.
-The source consumer must remain on 2.4.4 until candidate review, immutable tag
-creation, publication attestation, deployed Runtime Preflight, and REAL preflight
-have all passed.
+The [2.4.5 release](releases/2.4.5.md) selects `codex-adapter-v2.4.5` at `4f062ca73acfc3458f0d690bf1c7687bafd0a8eb` to repair the publication transport defect exposed by REAL issue #151. `ai-sdlc-v2.4.5` now resolves to reviewed candidate merge commit `afe09d320268581bc83021cbfc80bf2a0f0bff91`; publication attestation is under review. The source consumer remains on 2.4.4 until attestation and deployed gates pass.
 
 ## Registry changes
 

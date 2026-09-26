@@ -18,15 +18,7 @@ the current production control-plane baseline at
 consumer selects that immutable release. REAL issue #151 exercised that path and
 exposed a post-Codex publication transport defect in the consulting target.
 
-The [2.4.5 candidate](docs/releases/2.4.5.md) binds the reviewed
-`codex-adapter-v2.4.5` repair at
-`4f062ca73acfc3458f0d690bf1c7687bafd0a8eb` with conformance report
-SHA256 `8a7e3479a8768050b7621cec4d7663d8ab60d266291cb2d1027886200799c2fc`.
-Its generated runtime record is deliberately `candidate`; the control-plane
-tag is not published or attested. Merge the reviewed candidate, create the
-immutable `ai-sdlc-v2.4.5` tag at that exact merge commit, attest it in a
-separate PR, and pass deployed Runtime Preflight plus immutable REAL preflight
-before changing the source consumer or approving another REAL execution.
+The [2.4.5 release](docs/releases/2.4.5.md) binds the reviewed `codex-adapter-v2.4.5` repair at `4f062ca73acfc3458f0d690bf1c7687bafd0a8eb`. The immutable control-plane tag `ai-sdlc-v2.4.5` resolves to `afe09d320268581bc83021cbfc80bf2a0f0bff91`; this publication attestation is under review. The source consumer must remain on 2.4.4 until attestation plus deployed Runtime Preflight and REAL preflight pass.
 
 ## AI-SDLC contract validation
 

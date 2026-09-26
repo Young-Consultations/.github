@@ -6,7 +6,7 @@
 **Current corrective release required for the next REAL run:** `ai-sdlc-v2.4.5`
 **Initial enabled target:** `Young-Consultations/consulting-playbook`
 
-> **2.4.5 corrective candidate addendum:** The current production baseline is published `ai-sdlc-v2.4.4`, and portfolio-tasks selects it. REAL issue #151 exercised that release and exposed a target publication-transport defect after successful Codex execution. The immutable target repair is tagged at `codex-adapter-v2.4.5` (`4f062ca73acfc3458f0d690bf1c7687bafd0a8eb`) with conformance report SHA256 `8a7e3479a8768050b7621cec4d7663d8ab60d266291cb2d1027886200799c2fc`. The 2.4.5 control-plane candidate is not yet published. The next REAL gate requires reviewed candidate merge, immutable 2.4.5 control-plane tag creation and attestation, deployed Runtime Preflight, immutable REAL preflight, and a fresh human-approved issue. See [2.4.5 release procedure](../releases/2.4.5.md).
+> **2.4.5 publication addendum:** The current production baseline remains published `ai-sdlc-v2.4.4`, and portfolio-tasks selects it. REAL issue #151 exercised that release and exposed a target publication-transport defect after successful Codex execution. The immutable target repair is tagged at `codex-adapter-v2.4.5` (`4f062ca73acfc3458f0d690bf1c7687bafd0a8eb`) with conformance report SHA256 `8a7e3479a8768050b7621cec4d7663d8ab60d266291cb2d1027886200799c2fc`. Control-plane candidate PR #78 merged at `afe09d320268581bc83021cbfc80bf2a0f0bff91`, and `ai-sdlc-v2.4.5` resolves to that exact commit; publication attestation is under review. The next REAL gate requires merged attestation, deployed Runtime Preflight, immutable REAL preflight, a reviewed source-consumer update, and a fresh human-approved issue. See [2.4.5 release procedure](../releases/2.4.5.md).
 
 ## Purpose
 
@@ -105,21 +105,19 @@ The preflight itself performs no Codex invocation, branch creation, commit, push
 ### Release/target coordination before REAL
 
 The target repair is tagged as `codex-adapter-v2.4.5` at
-`4f062ca73acfc3458f0d690bf1c7687bafd0a8eb`. The 2.4.5 control-plane
-candidate is unpublished and the source consumer remains on published 2.4.4.
-Before REAL:
+`4f062ca73acfc3458f0d690bf1c7687bafd0a8eb`. Control-plane candidate PR #78
+merged at `afe09d320268581bc83021cbfc80bf2a0f0bff91`, and immutable
+`ai-sdlc-v2.4.5` resolves to that exact commit. The source consumer remains on
+published 2.4.4. Before REAL:
 
-1. merge the reviewed 2.4.5 control-plane candidate after candidate-readiness,
-   immutable target compatibility, SIM, and protected checks pass;
-2. create `ai-sdlc-v2.4.5` at that exact reviewed merge commit without moving
-   any published tag;
-3. merge a separate publication-attestation PR recording the immutable tag
-   commit and published runtime state;
-4. run deployed Runtime Preflight with `candidate_mode: false` and immutable
+1. merge the publication-attestation PR after publishability, immutable target
+   compatibility, complete tests, and review pass;
+2. run deployed Runtime Preflight with `candidate_mode: false` and immutable
    REAL preflight from attested `main`;
-5. require both gates to pass before updating the source consumer to 2.4.5 and
-   approving a fresh harmless REAL issue. Issue #151's delivery identity remains
-   terminal failure evidence and must not be reused.
+3. require both gates to pass before updating the source consumer to 2.4.5;
+4. review that source-consumer update and approve only a fresh harmless REAL
+   issue. Issue #151's delivery identity remains terminal failure evidence and
+   must not be reused.
 
 ### REAL execution procedure
 
