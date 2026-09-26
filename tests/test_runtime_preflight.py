@@ -2,6 +2,8 @@ import json
 import subprocess
 from pathlib import Path
 
+import pytest
+
 from scripts import generate_current_runtime, runtime_preflight
 
 
@@ -189,13 +191,14 @@ def test_missing_audit_token_reports_failed_credential_boundary(
     assert report["failures"] == ["credentials: PREFLIGHT_AUDIT_TOKEN is unavailable"]
 
 
-def test_remote_release_tag_resolves_lightweight_commit(monkeypatch):
+def test_remote_release_tag_rejects_lightweight_commit(monkeypatch):
     monkeypatch.setattr(
         runtime_preflight,
         "api_one",
         lambda endpoint: {"object": {"type": "commit", "sha": "a" * 40}},
     )
-    assert runtime_preflight.remote_tag_commit("ai-sdlc-v2.4.3") == "a" * 40
+    with pytest.raises(ValueError, match="must be annotated"):
+        runtime_preflight.remote_tag_commit("ai-sdlc-v2.4.5")
 
 
 def test_remote_release_tag_resolves_annotated_tag(monkeypatch):
@@ -204,4 +207,4 @@ def test_remote_release_tag_resolves_annotated_tag(monkeypatch):
         {"object": {"type": "commit", "sha": "c" * 40}},
     ])
     monkeypatch.setattr(runtime_preflight, "api_one", lambda endpoint: next(values))
-    assert runtime_preflight.remote_tag_commit("ai-sdlc-v2.4.3") == "c" * 40
+    assert runtime_preflight.remote_tag_commit("ai-sdlc-v2.4.5") == "c" * 40
