@@ -26,12 +26,45 @@ def _missing_ref_error(exc: checker.CompatibilityError) -> bool:
     return "HTTP 404:" in message or "HTTP 422:" in message
 
 
+def verify_published_control_plane_tag(
+    tag: str, expected_commit: str, token: str | None
+) -> None:
+    payload = checker.fetch_json(
+        f"https://api.github.com/repos/Young-Consultations/.github/git/ref/tags/{tag}",
+        token,
+    )
+    obj = payload.get("object") if isinstance(payload, dict) else None
+    if not isinstance(obj, dict) or obj.get("type") != "tag":
+        raise checker.CompatibilityError(
+            "published control-plane release tag must be annotated"
+        )
+    actual_commit = checker.fetch_tag_commit(
+        "Young-Consultations/.github", tag, token
+    )
+    if actual_commit != expected_commit:
+        raise checker.CompatibilityError(
+            "published control-plane release tag does not match attested commit"
+        )
+
+
 def verify_release_receiver_at_ref(receiver_ref: str, token: str | None) -> None:
+    manifest = json.loads((ROOT / "release/release-manifest.json").read_text(encoding="utf-8"))
     try:
         _REMOTE_VERIFY_RECEIVER(receiver_ref, token)
+        if (
+            receiver_ref == manifest.get("tag")
+            and manifest.get("tag_published") is True
+        ):
+            expected_commit = manifest.get("tag_commit_sha")
+            if not isinstance(expected_commit, str):
+                raise checker.CompatibilityError(
+                    "published release is missing its attested tag commit"
+                )
+            verify_published_control_plane_tag(
+                receiver_ref, expected_commit, token
+            )
         return
     except checker.CompatibilityError as exc:
-        manifest = json.loads((ROOT / "release/release-manifest.json").read_text(encoding="utf-8"))
         candidate_state = (
             manifest.get("tag_published") is False
             and manifest.get("tag_commit_sha") is None
