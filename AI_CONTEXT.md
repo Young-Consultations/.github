@@ -389,7 +389,7 @@ interface policy changes. Recheck every relative link and command whenever it
 is edited. Keep historical behavior in Git history, release records, or ADRs;
 do not maintain multiple active policies or compatibility paths in this index.
 
-## 2.4.5 corrective release candidate
+## 2.4.5 publication attestation
 
 The published 2.4.4 control plane is the current production baseline.
 `ai-sdlc-v2.4.4` resolves to
