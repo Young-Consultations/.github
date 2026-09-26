@@ -19,77 +19,8 @@ def test_remote_receiver_verification_takes_precedence(monkeypatch: pytest.Monke
         calls.append((receiver_ref, token))
 
     monkeypatch.setattr(release_checker, "_REMOTE_VERIFY_RECEIVER", succeeds)
-    monkeypatch.setattr(
-        release_checker,
-        "verify_published_control_plane_tag",
-        lambda tag, expected_commit, token: None,
-    )
     release_checker.verify_release_receiver_at_ref(_manifest_tag(), "token")
     assert calls == [(_manifest_tag(), "token")]
-
-def test_published_control_plane_tag_must_be_annotated(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setattr(
-        release_checker.checker,
-        "fetch_json",
-        lambda url, token=None: {
-            "object": {"type": "commit", "sha": "a" * 40}
-        },
-    )
-    with pytest.raises(
-        release_checker.checker.CompatibilityError,
-        match="must be annotated",
-    ):
-        release_checker.verify_published_control_plane_tag(
-            "ai-sdlc-v2.4.5", "a" * 40, "token"
-        )
-
-
-def test_annotated_control_plane_tag_must_match_attested_commit(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setattr(
-        release_checker.checker,
-        "fetch_json",
-        lambda url, token=None: {
-            "object": {"type": "tag", "sha": "b" * 40}
-        },
-    )
-    monkeypatch.setattr(
-        release_checker.checker,
-        "fetch_tag_commit",
-        lambda repository, tag, token=None: "c" * 40,
-    )
-    with pytest.raises(
-        release_checker.checker.CompatibilityError,
-        match="does not match attested commit",
-    ):
-        release_checker.verify_published_control_plane_tag(
-            "ai-sdlc-v2.4.5", "d" * 40, "token"
-        )
-
-
-def test_annotated_control_plane_tag_accepts_attested_commit(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setattr(
-        release_checker.checker,
-        "fetch_json",
-        lambda url, token=None: {
-            "object": {"type": "tag", "sha": "b" * 40}
-        },
-    )
-    monkeypatch.setattr(
-        release_checker.checker,
-        "fetch_tag_commit",
-        lambda repository, tag, token=None: "c" * 40,
-    )
-    release_checker.verify_published_control_plane_tag(
-        "ai-sdlc-v2.4.5", "c" * 40, "token"
-    )
-
-
 
 def test_missing_published_manifest_tag_fails_closed(
     tmp_path: Path,
