@@ -41,19 +41,18 @@ def api_one(endpoint: str, *, token: str | None = None) -> Any:
 def remote_tag_commit(tag: str) -> str:
     value = api_one(f"repos/Young-Consultations/.github/git/ref/tags/{tag}")
     obj = value.get("object") if isinstance(value, dict) else None
-    if not isinstance(obj, dict) or obj.get("type") != "tag":
-        raise ValueError("release tag must be annotated")
     for _ in range(4):
-        sha = obj.get("sha") if isinstance(obj, dict) else None
-        if obj.get("type") == "commit" and isinstance(sha, str):
-            return sha
-        if obj.get("type") != "tag" or not isinstance(sha, str):
+        if not isinstance(obj, dict):
+            break
+        if obj.get("type") == "commit" and isinstance(obj.get("sha"), str):
+            return obj["sha"]
+        if obj.get("type") != "tag" or not isinstance(obj.get("sha"), str):
             break
         tag_object = api_one(
-            f"repos/Young-Consultations/.github/git/tags/{sha}"
+            f"repos/Young-Consultations/.github/git/tags/{obj['sha']}"
         )
         obj = tag_object.get("object") if isinstance(tag_object, dict) else None
-    raise ValueError("annotated release tag does not resolve to a commit")
+    raise ValueError("release tag does not resolve to a commit")
 
 
 def named_values(
