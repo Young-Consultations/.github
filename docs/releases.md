@@ -70,8 +70,10 @@ validated keys; changing their meaning is breaking.
    must fail for that candidate state.
    Merge the reviewed candidate before tagging.
 5. From the reviewed candidate merge commit, re-run those checks and confirm
-   the manifest tag is unused. Create and push one annotated `ai-sdlc-vX.Y.Z`
-   tag at that exact merge commit. Never move, delete, or recreate a published
+   the manifest tag is unused. Create and push one immutable `ai-sdlc-vX.Y.Z`
+   tag at that exact merge commit. Lightweight and annotated Git tags are both
+   acceptable; release identity is the tag name plus its independently resolved
+   commit SHA. Never move, delete, or recreate a published
    tag. Then submit a separate publication-attestation pull request that records
    the tag's resolved commit as `tag_commit_sha`, sets `tag_published` to `true`,
    regenerates the runtime record, and passes
