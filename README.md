@@ -12,16 +12,21 @@ package are released as one immutable compatibility unit. Current activation in
 that consumer compatibility unit. See [release, upgrade,
 deprecation, and rollback procedures](docs/releases.md).
 
-The [`ai-sdlc-v2.4.4` release](docs/releases/2.4.4.md) binds the immutable
-`consulting-playbook` adapter repair to the router and receiver. Its tag
-resolves to reviewed candidate merge commit `adb57508762168b3410f52e8a7b0151078c6e9b9`.
-The [generated runtime record](release/current-runtime.json) records that
-identity and publication state. The repaired
-[`ai-sdlc-v2.4.3`](docs/releases/2.4.3.md) remains the previous known good
-release at `3da7ed9b7bf76d00ae35e4accc733ac8f95259c5`. The production
-source consumer still selects 2.4.3. Publication attestation must merge and
-deployed Runtime Preflight and REAL preflight must pass before a fresh live
-issue is approved.
+The published [`ai-sdlc-v2.4.4` release](docs/releases/2.4.4.md) remains
+the current production control-plane baseline at
+`adb57508762168b3410f52e8a7b0151078c6e9b9`, and the portfolio source
+consumer selects that immutable release. REAL issue #151 exercised that path and
+exposed a post-Codex publication transport defect in the consulting target.
+
+The [2.4.5 candidate](docs/releases/2.4.5.md) binds the reviewed
+`codex-adapter-v2.4.5` repair at
+`4f062ca73acfc3458f0d690bf1c7687bafd0a8eb` with conformance report
+SHA256 `8a7e3479a8768050b7621cec4d7663d8ab60d266291cb2d1027886200799c2fc`.
+Its generated runtime record is deliberately `candidate`; the control-plane
+tag is not published or attested. Merge the reviewed candidate, create the
+immutable `ai-sdlc-v2.4.5` tag at that exact merge commit, attest it in a
+separate PR, and pass deployed Runtime Preflight plus immutable REAL preflight
+before changing the source consumer or approving another REAL execution.
 
 ## AI-SDLC contract validation
 
