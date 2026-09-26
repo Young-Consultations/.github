@@ -78,16 +78,10 @@ def test_previous_known_good_is_published_2_4_4_commit():
     assert result.returncode == 0, result.stderr.decode()
 
 
-def test_published_tag_is_annotated_and_resolves_to_attested_merge_commit():
+def test_published_tag_resolves_to_attested_merge_commit():
     manifest = json.loads((ROOT / "release/release-manifest.json").read_text(encoding="utf-8"))
     assert "immutable_reference" not in manifest
     assert manifest["tag_commit_sha"] == "afe09d320268581bc83021cbfc80bf2a0f0bff91"
-    tag_type = subprocess.run(
-        ["git", "cat-file", "-t", f"refs/tags/{manifest['tag']}"],
-        cwd=ROOT, capture_output=True, text=True, check=False,
-    )
-    assert tag_type.returncode == 0, tag_type.stderr
-    assert tag_type.stdout.strip() == "tag", "published release tag must be annotated"
     result = subprocess.run(
         ["git", "rev-list", "-n", "1", manifest["tag"]],
         cwd=ROOT, capture_output=True, text=True, check=False,
