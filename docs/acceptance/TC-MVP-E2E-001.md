@@ -2,11 +2,11 @@
 
 **Status:** Approved next-MVP acceptance design
 **Owner:** `Young-Consultations/.github`
-**Published baseline:** `ai-sdlc-v2.4.4` / `ai-sdlc-contract/v2`
-**Current corrective release required for the next REAL run:** `ai-sdlc-v2.4.5`
+**Published baseline:** `ai-sdlc-v2.4.5` / `ai-sdlc-contract/v2`
+**Current live acceptance state:** fresh REAL issue #154 completed successfully on 2.4.5; explicit redelivery/idempotency acceptance remains tracked separately
 **Initial enabled target:** `Young-Consultations/consulting-playbook`
 
-> **2.4.5 publication addendum:** The current production baseline remains published `ai-sdlc-v2.4.4`, and portfolio-tasks selects it. REAL issue #151 exercised that release and exposed a target publication-transport defect after successful Codex execution. The immutable target repair is tagged at `codex-adapter-v2.4.5` (`4f062ca73acfc3458f0d690bf1c7687bafd0a8eb`) with conformance report SHA256 `8a7e3479a8768050b7621cec4d7663d8ab60d266291cb2d1027886200799c2fc`. Control-plane candidate PR #78 merged at `afe09d320268581bc83021cbfc80bf2a0f0bff91`, and `ai-sdlc-v2.4.5` resolves to that exact commit; publication attestation is under review. The next REAL gate requires merged attestation, deployed Runtime Preflight, immutable REAL preflight, a reviewed source-consumer update, and a fresh human-approved issue. See [2.4.5 release procedure](../releases/2.4.5.md).
+> **2.4.5 completion addendum:** REAL issue #151 exposed the 2.4.4 target publication-transport defect after successful Codex execution. The immutable repair is `codex-adapter-v2.4.5` (`4f062ca73acfc3458f0d690bf1c7687bafd0a8eb`) with conformance report SHA256 `8a7e3479a8768050b7621cec4d7663d8ab60d266291cb2d1027886200799c2fc`. Control-plane release `ai-sdlc-v2.4.5` resolves to `afe09d320268581bc83021cbfc80bf2a0f0bff91`; publication attestation merged, deployed Runtime Preflight run 36277959203 and immutable REAL preflight run 36278028013 passed, portfolio-tasks advanced to 2.4.5, and fresh issue #154 completed the live path through target run 36279165335 and managed draft PR #66. See [2.4.5 release procedure](../releases/2.4.5.md).
 
 ## Purpose
 
