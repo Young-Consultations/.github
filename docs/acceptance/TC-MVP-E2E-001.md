@@ -61,10 +61,13 @@ The SIM harness shall:
 6. pass target-produced results through the candidate organization receiver implementation with an in-memory journal/forwarding effect seam;
 7. exercise successful implement behavior, managed-draft reuse, equivalent `draft-pr-created -> duplicate-reused` receiver no-op behavior, and conflicting duplicate-result rejection;
 8. assert zero real Codex, branch, commit, push, PR, merge, release, deployment, production, or secret-output effects;
-9. emit machine-readable evidence that records published baseline 2.4.4,
-   corrective candidate 2.4.5, exact target adapter identity,
-   `real_acceptance_satisfied: false`, and whether the candidate tag is
-   published.
+9. emit machine-readable release-comparison evidence for the 2.4.5 validation
+   harness. The current harness intentionally preserves `published_baseline:
+   2.4.4` and `candidate_release: 2.4.5` as historical comparison fields,
+   records the exact target adapter identity, keeps
+   `real_acceptance_satisfied: false`, and records whether the 2.4.5 tag is
+   published. Those field names do **not** mean 2.4.4 is the current runtime
+   release after publication.
 
 For retry evidence, `duplicate-reused` is accepted without another source projection only when it describes the same stable managed-draft effect as the prior successful result. A different branch, pull request, validation/test outcome, failure category, or any other non-approved result transition remains ambiguous and fails closed.
 
@@ -91,7 +94,7 @@ No alternate control-plane dispatch path is permitted.
 Before the human approval action, the acceptance workflow shall fail closed unless:
 
 - `ai-sdlc-v2.4.5` has been reviewed, published, and attested on `main`;
-- the published 2.4.4 tag remains unchanged as rollback evidence;
+- the published 2.4.4 tag remains unchanged as immutable historical evidence and is not treated as an execution-safe rollback for cost-bearing implementation;
 - `consulting-playbook` is the sole enabled target;
 - the registry identifies exact immutable `codex-adapter-v2.4.5` commit and
   report-digest evidence, and the adapter remains receiver-compatible;
@@ -102,22 +105,26 @@ Before the human approval action, the acceptance workflow shall fail closed unle
 
 The preflight itself performs no Codex invocation, branch creation, commit, push, PR creation, result forwarding, source mutation, merge, release, deployment, settings change, or production operation.
 
-### Release/target coordination before REAL
+### 2.4.5 release/target coordination status
 
-The target repair is tagged as `codex-adapter-v2.4.5` at
-`4f062ca73acfc3458f0d690bf1c7687bafd0a8eb`. Control-plane candidate PR #78
-merged at `afe09d320268581bc83021cbfc80bf2a0f0bff91`, and immutable
-`ai-sdlc-v2.4.5` resolves to that exact commit. The source consumer remains on
-published 2.4.4. Before REAL:
+The 2.4.5 coordination sequence is complete:
 
-1. merge the publication-attestation PR after publishability, immutable target
-   compatibility, complete tests, and review pass;
-2. run deployed Runtime Preflight with `candidate_mode: false` and immutable
-   REAL preflight from attested `main`;
-3. require both gates to pass before updating the source consumer to 2.4.5;
-4. review that source-consumer update and approve only a fresh harmless REAL
-   issue. Issue #151's delivery identity remains terminal failure evidence and
-   must not be reused.
+1. `codex-adapter-v2.4.5` is published at
+   `4f062ca73acfc3458f0d690bf1c7687bafd0a8eb`.
+2. Control-plane `ai-sdlc-v2.4.5` resolves to
+   `afe09d320268581bc83021cbfc80bf2a0f0bff91`, and publication-attestation
+   PR #79 merged.
+3. Deployed Runtime Preflight run 36277959203 passed.
+4. Immutable REAL preflight run 36278028013 passed.
+5. portfolio-tasks PR #153 advanced the source consumer to 2.4.5.
+6. Fresh issue #154 completed the initial live path through target run
+   36279165335 and managed draft PR #66. Issue #151's terminal delivery identity
+   was not reused.
+
+That evidence proves the initial production-shaped route, but it does not satisfy
+the explicit redelivery/idempotency step below. portfolio-tasks #121 owns that
+remaining acceptance exercise. Until it is completed, describe 2.4.5 as
+published and **initial-live-path verified**, not fully REAL-accepted.
 
 ### REAL execution procedure
 
@@ -136,6 +143,11 @@ After the corrective release and target pin are published and REAL preflight is 
     published 2.4.5 organization receiver.
 11. `portfolio-tasks` shows the correlated terminal result, validation status, and draft-PR link.
 12. Re-run/redelivery of the same approved delivery verifies that the target returns `duplicate-reused` for the same managed draft, the receiver accepts that equivalent visible effect as a no-op, and no second source projection or draft PR is created.
+
+For the current 2.4.5 evidence set, steps 1–11 were exercised by issue #154.
+Step 12 remains outstanding and is tracked by portfolio-tasks #121. Do not mark
+the full REAL acceptance decision PASS until equivalent redelivery/idempotency
+evidence is preserved.
 
 ### REAL evidence
 
