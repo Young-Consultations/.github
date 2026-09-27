@@ -302,7 +302,7 @@ class SimJournal:
         self.entries = [JournalComment(marker(ADMISSION, binding), "router-bot")]
         self.projections: list[dict[str, Any]] = []
 
-    def authenticate(self, repository: str) -> None:
+    def authenticate(self, repository: str, issue: int) -> None:
         return None
 
     def comments(self, repository: str, issue: int) -> list[JournalComment]:
