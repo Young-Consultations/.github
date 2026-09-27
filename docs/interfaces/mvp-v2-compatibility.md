@@ -2,22 +2,17 @@
 
 **Normative status:** organization-owned baseline for consumer alignment.
 **Payload version:** `ai-sdlc-contract/v2` (v3 is out of scope).
-**Published compatibility release:** `2.3.2`, fixture `2.3.0`.
-**Current corrective candidate:** `2.4.0`, unpublished until release gates pass.
+**Payload compatibility baseline:** `ai-sdlc-contract/v2`, fixture `2.3.0`.
+**Current published control-plane release:** `ai-sdlc-v2.4.5`.
 
-Published `ai-sdlc-v2.3.2` remains immutable at commit
-`5738ace3ee90dde11336f8f8099e64e5645f7139`. It preserves earlier tags as
-immutable history and remains the previous-known-good rollback point while the
-2.4.0 candidate is reviewed.
-
-The 2.4.0 candidate does not change the closed v2 payload schemas. It corrects
-DEF-0032 in receiver retry semantics: a target may legitimately return
-`draft-pr-created` on first successful delivery and `duplicate-reused` when the
-same managed draft is found on redelivery. The receiver therefore distinguishes
-canonical-result identity from stable visible-effect identity. Because this adds
-a backward-compatible accepted receiver outcome, the release policy classifies
-it as a MINOR change rather than a PATCH. This correction must be published as a
-new immutable compatibility unit; 2.3.2 is not moved or reinterpreted.
+Published `ai-sdlc-v2.3.2` remains immutable historical compatibility evidence
+at commit `5738ace3ee90dde11336f8f8099e64e5645f7139`; it is not the current
+control-plane release. The backward-compatible receiver retry correction first
+published in 2.4.0 remains part of the current 2.4.5 behavior: a target may
+return `draft-pr-created` on first successful delivery and `duplicate-reused`
+when the same managed draft is found on redelivery, subject to the stable-effect
+identity rules below. Later 2.4.x patch releases preserve the closed v2 schemas
+while repairing execution/publication boundaries.
 
 The four and only four MVP targets are `Young-Consultations/.github`,
 `Young-Consultations/portfolio-tasks`, `Young-Consultations/slugger`, and
