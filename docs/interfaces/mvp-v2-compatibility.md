@@ -100,6 +100,14 @@ bundle. The action loads `config/codex-result-trust.json` from that same bundle.
 The target cannot supply, override, or inherit trusted journal-author identities.
 An empty or malformed role allowlist denies all results.
 
+The principal resolved from `CODEX_RESULT_TOKEN` must be one of the immutable
+`trusted_result_authors` and must not also be an admission author. The same
+release bundle exposes `actions/codex-result-credential-preflight` so an
+implementation target can verify the result-writer principal and source
+repository access before invoking a cost-bearing execution provider. The
+receiver repeats that authentication before it writes receipt or forwarding
+journal state.
+
 The receiver shall:
 
 1. authenticate the caller;
