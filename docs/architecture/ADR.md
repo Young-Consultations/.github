@@ -124,13 +124,21 @@ tag. That composite action executes the receiver script and policy from one
 self-pinned control-plane commit; live verification requires the workflow and
 action refs to resolve to the same commit. Targets supply only
 `CODEX_RESULT_TOKEN`, the narrowly scoped result-delivery credential. An empty
-or malformed allowlist denies all results.
+or malformed allowlist denies all results. The runtime GitHub principal behind
+that credential must exactly match a reviewed result-author identity and remain
+distinct from every admission author. A self-pinned, non-mutating credential
+preflight verifies that principal and source-repository access before a
+cost-bearing execution provider is invoked, and the receiver repeats the
+principal check before journal mutation.
 **Alternatives:** caller-supplied allowlist; organization secret inherited by
-targets; trust every comment author. **Tradeoffs:** deployment identities require a
-reviewed control-plane change, eliminating target flexibility at this security
-boundary. **Consequences:** release validation blocks publication until at least
-one reviewed journal author is configured, and target verification rejects any
-attempt to supply the policy. **Trace:** GH-FR-018; GH-NFR-009; GH-OR-007;
+targets; trust every comment author; allow admission and result credentials to
+share one GitHub principal. **Tradeoffs:** deployment identities require a
+reviewed control-plane change and a distinct runtime principal, eliminating
+target flexibility at this security boundary. **Consequences:** release
+validation blocks publication until at least one reviewed journal author is
+configured, target verification rejects any attempt to supply the policy, and
+principal/policy mismatch fails closed before cost-bearing execution when the
+preflight is adopted by the target. **Trace:** GH-FR-018; GH-NFR-009; GH-OR-007;
 GH-SR-001/005; RI-MVP-01; TC-FR-018.
 
 ## ADR-014 — Preserve 2.3.0 and publish a fail-closed patch recovery
