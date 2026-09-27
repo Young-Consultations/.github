@@ -5,8 +5,8 @@ inputs:
   result-token:
     description: Result-only source-repository credential.
     required: true
-  source-repository:
-    description: Source repository that will receive the result journal and projection.
+  source-issue:
+    description: Source issue that will receive the result journal and projection.
     required: true
 
 runs:
@@ -19,5 +19,5 @@ runs:
       shell: bash
       env:
         GH_TOKEN: ${{ inputs.result-token }}
-        SOURCE_REPOSITORY: ${{ inputs.source-repository }}
+        SOURCE_ISSUE: ${{ inputs.source-issue }}
       run: python3 "$GITHUB_ACTION_PATH/../../scripts/codex_result_credential_preflight.py"
