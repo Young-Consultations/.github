@@ -263,6 +263,13 @@ class GitHubJournal:
         return json.loads(completed.stdout) if completed.stdout.strip() else None
 
     def authenticate(self, repository: str) -> None:
+        identity = self._api("user")
+        login = identity.get("login") if isinstance(identity, dict) else None
+        if not isinstance(login, str) or not self.trusted_author(login, "result"):
+            raise ReceiverError(
+                "authentication",
+                "result credential principal is not an approved result journal author",
+            )
         data = self._api(f"repos/{repository}")
         if not isinstance(data, dict) or data.get("full_name") != repository:
             raise ReceiverError("authentication", "result credential is not authorized for source repository")
