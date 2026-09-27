@@ -12,7 +12,10 @@ import os
 import re
 import sys
 
-from codex_result_receiver import GitHubJournal, ReceiverError
+try:
+    from codex_result_receiver import GitHubJournal, ReceiverError
+except ModuleNotFoundError:  # Imported as scripts.codex_result_credential_preflight in tests.
+    from scripts.codex_result_receiver import GitHubJournal, ReceiverError
 
 REPOSITORY = re.compile(
     r"^[A-Za-z0-9][A-Za-z0-9-]{0,38}/[A-Za-z0-9._-]{1,100}$"
