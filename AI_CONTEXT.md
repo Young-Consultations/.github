@@ -247,17 +247,20 @@ git diff --check
 ```
 
 `python scripts/validate_release.py` verifies structural release coherence.
-Release 2.4.3 is published and attested at reviewed commit
-`3da7ed9b7bf76d00ae35e4accc733ac8f95259c5`; its manifest records `tag_published: true` and that exact
-`tag_commit_sha`. REAL preflight runs only from an attested `main` checkout
-after deployed Runtime Preflight passes, while using the rewritten tag for
-immutable SIM evidence. During a future pre-publication candidate window,
+The current manifest records published `ai-sdlc-v2.4.5` at reviewed commit
+`afe09d320268581bc83021cbfc80bf2a0f0bff91`, with
+`tag_published: true` and that exact `tag_commit_sha`. Deployed Runtime
+Preflight and immutable REAL preflight have passed for this release, and
+portfolio-tasks selects 2.4.5.
+
+During any future pre-publication candidate window,
 `verify_release_target_workflows.py` delegates to normal remote verification
 first and may use the current reviewed checkout only when a target pins the
 exact manifest tag, the manifest explicitly records `tag_published: false` and
 `tag_commit_sha: null`, and GitHub confirms that exact tag is absent. All other
 missing, substituted, or incompatible refs remain fail-closed. For published
-releases, remote immutable verification takes precedence.
+releases, remote immutable verification takes precedence. Historical 2.4.3 tag
+replacement evidence must not be used as current release guidance.
 
 Conformance reports identify a canonical non-recursive v2 pin of exact shared
 and target files. They never predict the SHA of the commit that contains them;
