@@ -101,9 +101,10 @@ Before the human approval action, the acceptance workflow shall fail closed unle
 - fresh `TC-MVP-E2E-001-SIM` evidence passes and explicitly does not claim REAL acceptance;
 - the selected task is harmless, deterministic, documentation-only where permitted, and within target policy;
 - the intended publication boundary is draft-only;
-- required source, router, target, publication, and receiver credentials have been human-reviewed and are available through their existing owners.
+- required source, router, target, publication, and receiver credentials have been human-reviewed and are available through their existing owners;
+- the result-delivery credential is configured for a reviewed `trusted_result_authors` identity distinct from every admission author, and the source reserves the credential-probe dispatch event for no-op capability verification.
 
-The preflight itself performs no Codex invocation, branch creation, commit, push, PR creation, result forwarding, source mutation, merge, release, deployment, settings change, or production operation.
+The organization REAL preflight itself performs no Codex invocation, branch creation, commit, push, PR creation, result forwarding, source mutation, merge, release, deployment, settings change, or production operation. After dispatch and before any cost-bearing Codex invocation, the selected target must run the control-plane-owned result-credential capability preflight. That bounded preflight creates and deletes one marker comment on the source issue to prove issue-write/cleanup access and GitHub-authored identity, then emits the dedicated no-op repository-dispatch event to prove forwarding access. No probe comment may remain afterward.
 
 ### 2.4.5 release/target coordination status
 
@@ -123,8 +124,13 @@ The 2.4.5 coordination sequence is complete:
 
 That evidence proves the initial production-shaped route, but it does not satisfy
 the explicit redelivery/idempotency step below. portfolio-tasks #121 owns that
-remaining acceptance exercise. Until it is completed, describe 2.4.5 as
-published and **initial-live-path verified**, not fully REAL-accepted.
+remaining acceptance exercise. REAL issue #156 subsequently proved target-side
+managed-draft reuse but exposed .github defect #83: the deployed result
+credential principal did not match the immutable trusted result-writer policy,
+so equivalent redelivery was forwarded again and quarantined by the source.
+Therefore 2.4.5 remains published and **initial-live-path verified**, not fully
+REAL-accepted, and another REAL attempt is blocked until a corrective immutable
+patch and target adoption pass the gates in this design.
 
 ### REAL execution procedure
 
@@ -135,12 +141,12 @@ After the corrective release and target pin are published and REAL preflight is 
 3. An authorized human applies `status:approved`. This is the REAL execution trigger.
 4. The existing portfolio source workflow constructs the canonical approved task and invokes the published corrective router release.
 5. The router validates current registration and activation, constructs stable task/delivery/correlation identities, and dispatches the immutable registered target workflow.
-6. The `consulting-playbook` target independently validates caller, contract, target identity, task type, mode, deterministic branch ownership, and draft-only policy before Codex.
-7. Real Codex executes only inside the selected target repository.
+6. The `consulting-playbook` target independently validates caller, contract, target identity, task type, mode, deterministic branch ownership, draft-only policy, and runs the bounded result-credential identity/issue-write/cleanup/dispatch probes before Codex.
+7. Real Codex executes only inside the selected target repository after every required pre-execution check is green.
 8. Target validation/tests pass before publication.
 9. The target creates exactly one managed draft PR or reuses the existing owned draft for the delivery.
 10. The target returns one canonical `execution-result/v2` through the
-    published 2.4.5 organization receiver.
+    published corrective organization receiver.
 11. `portfolio-tasks` shows the correlated terminal result, validation status, and draft-PR link.
 12. Re-run/redelivery of the same approved delivery verifies that the target returns `duplicate-reused` for the same managed draft, the receiver accepts that equivalent visible effect as a no-op, and no second source projection or draft PR is created.
 

@@ -1,4 +1,5 @@
 import json
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -29,7 +30,7 @@ class FakeJournal:
         }.items()}), 'router-bot')]
         self.projections = []
         self.fail_forward = False
-    def authenticate(self, repository):
+    def authenticate(self, repository, issue):
         if not self.authorized: raise ReceiverError('authentication', 'denied')
     def comments(self, repository, issue): return list(self.entries)
     def trusted_author(self, author, role):
@@ -190,6 +191,118 @@ def test_github_journal_treats_a_null_user_as_untrusted(monkeypatch, tmp_path):
     )
     assert journal.comments("Young-Consultations/portfolio-tasks", 42) == [
         JournalComment("marker", "")
+    ]
+
+
+def test_github_journal_authenticate_rejects_untrusted_result_principal(monkeypatch, tmp_path):
+    repository = "Young-Consultations/portfolio-tasks"
+    journal = GitHubJournal(
+        write_trust_policy(tmp_path, ["router-bot"], ["receiver-app[bot]"])
+    )
+    calls = []
+
+    def fake_api(*args, **kwargs):
+        calls.append(args)
+        if args == (f"repos/{repository}",):
+            return {"full_name": repository}
+        if args[:3] == (f"repos/{repository}/issues/42/comments", "--method", "POST"):
+            return {"id": 77, "user": {"login": "unexpected-user"}}
+        if args == (f"repos/{repository}/issues/comments/77", "--method", "DELETE"):
+            return None
+        raise AssertionError(args)
+
+    monkeypatch.setattr(journal, "_api", fake_api)
+
+    with pytest.raises(ReceiverError, match="principal"):
+        journal.authenticate(repository, 42)
+
+    assert ("user",) not in calls
+    assert calls[-1] == (f"repos/{repository}/issues/comments/77", "--method", "DELETE")
+
+
+def test_github_journal_authenticate_accepts_installation_writer_and_source(monkeypatch, tmp_path):
+    repository = "Young-Consultations/portfolio-tasks"
+    journal = GitHubJournal(
+        write_trust_policy(tmp_path, ["router-bot"], ["receiver-app[bot]"])
+    )
+    calls = []
+
+    def fake_api(*args, **kwargs):
+        calls.append(args)
+        if args == (f"repos/{repository}",):
+            return {"full_name": repository}
+        if args[:3] == (f"repos/{repository}/issues/42/comments", "--method", "POST"):
+            return {"id": 78, "user": {"login": "RECEIVER-APP[BOT]"}}
+        if args == (f"repos/{repository}/issues/comments/78", "--method", "DELETE"):
+            return None
+        raise AssertionError(args)
+
+    monkeypatch.setattr(journal, "_api", fake_api)
+    journal.authenticate(repository, 42)
+
+    assert ("user",) not in calls
+    assert calls == [
+        (f"repos/{repository}",),
+        (
+            f"repos/{repository}/issues/42/comments",
+            "--method",
+            "POST",
+            "-f",
+            "body=<!-- ai-sdlc-result-credential-probe:v1 -->",
+        ),
+        (f"repos/{repository}/issues/comments/78", "--method", "DELETE"),
+    ]
+
+
+def test_github_journal_authenticate_rejects_read_only_result_credential(monkeypatch, tmp_path):
+    repository = "Young-Consultations/portfolio-tasks"
+    journal = GitHubJournal(
+        write_trust_policy(tmp_path, ["router-bot"], ["receiver-app[bot]"])
+    )
+
+    def fake_api(*args, **kwargs):
+        if args == (f"repos/{repository}",):
+            return {"full_name": repository}
+        if args[:3] == (f"repos/{repository}/issues/42/comments", "--method", "POST"):
+            raise subprocess.CalledProcessError(1, ["gh", "api"])
+        raise AssertionError(args)
+
+    monkeypatch.setattr(journal, "_api", fake_api)
+
+    with pytest.raises(subprocess.CalledProcessError):
+        journal.authenticate(repository, 42)
+
+
+def test_github_journal_forward_probe_uses_non_result_dispatch(monkeypatch, tmp_path):
+    repository = "Young-Consultations/portfolio-tasks"
+    journal = GitHubJournal(
+        write_trust_policy(tmp_path, ["router-bot"], ["receiver-app[bot]"])
+    )
+    calls = []
+
+    def fake_api(*args, **kwargs):
+        calls.append((args, kwargs))
+        return None
+
+    monkeypatch.setattr(journal, "_api", fake_api)
+    journal.probe_forward(repository)
+
+    assert calls == [
+        (
+            (
+                f"repos/{repository}/dispatches",
+                "--method",
+                "POST",
+                "--input",
+                "-",
+            ),
+            {
+                "input_value": {
+                    "event_type": "ai-sdlc-result-credential-preflight-v1",
+                    "client_payload": {"probe": True},
+                }
+            },
+        )
     ]
 
 
