@@ -40,7 +40,7 @@ group. The target workflow applies the canonical group with
 ```yaml
 jobs:
   route:
-    uses: Young-Consultations/.github/.github/workflows/codex-router.yml@ai-sdlc-v2.4.4
+    uses: Young-Consultations/.github/.github/workflows/codex-router.yml@ai-sdlc-v2.4.5
     permissions:
       contents: read
       actions: read
@@ -57,12 +57,19 @@ tokens are supported without calling the user-only `GET /user` endpoint. On
 redelivery, only an identical marker written by that same author is reused;
 untrusted lookalike comments are never admission authority.
 
-The published [2.4.4 release](releases/2.4.4.md) is the current
-production control plane and is selected by the portfolio source consumer. Its
-immutable tag resolves to reviewed candidate commit
-`adb57508762168b3410f52e8a7b0151078c6e9b9`.
+The published [2.4.5 release](releases/2.4.5.md) is the current
+control plane and is selected by the portfolio source consumer. Its immutable
+tag resolves to reviewed release commit
+`afe09d320268581bc83021cbfc80bf2a0f0bff91`.
 
-The [2.4.5 release](releases/2.4.5.md) selects `codex-adapter-v2.4.5` at `4f062ca73acfc3458f0d690bf1c7687bafd0a8eb` to repair the publication transport defect exposed by REAL issue #151. `ai-sdlc-v2.4.5` now resolves to reviewed candidate merge commit `afe09d320268581bc83021cbfc80bf2a0f0bff91`; publication attestation is under review. The source consumer remains on 2.4.4 until attestation and deployed gates pass.
+Release 2.4.5 selects `codex-adapter-v2.4.5` at
+`4f062ca73acfc3458f0d690bf1c7687bafd0a8eb` to repair the publication
+transport defect exposed by REAL issue #151. Publication attestation and both
+deployed preflight gates passed before the source consumer advanced. Fresh REAL
+issue #154 subsequently exercised the published path and produced one managed
+draft PR with receiver/source projection accepted. Published 2.4.4 remains
+immutable historical evidence, not an execution-safe rollback for cost-bearing
+implementation.
 
 ## Registry changes
 
