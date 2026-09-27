@@ -129,25 +129,29 @@ def test_result_receiver_owns_journal_author_policy():
     }
 
 
-def test_result_credential_preflight_is_control_plane_owned_and_non_mutating():
+def test_result_credential_preflight_is_control_plane_owned_and_bounded():
     action = Path("actions/codex-result-credential-preflight/action.yml").read_text(
         encoding="utf-8"
     )
     script = Path("scripts/codex_result_credential_preflight.py").read_text(
         encoding="utf-8"
     )
+    receiver = Path("scripts/codex_result_receiver.py").read_text(encoding="utf-8")
 
     assert "result-token:" in action
-    assert "source-repository:" in action
+    assert "source-issue:" in action
     assert "GH_TOKEN: ${{ inputs.result-token }}" in action
-    assert "SOURCE_REPOSITORY: ${{ inputs.source-repository }}" in action
+    assert "SOURCE_ISSUE: ${{ inputs.source-issue }}" in action
     assert (
         '$GITHUB_ACTION_PATH/../../scripts/codex_result_credential_preflight.py'
         in action
     )
-    assert "GitHubJournal().authenticate(repository)" in script
+    assert "journal.authenticate(repository, issue_number)" in script
+    assert "journal.probe_forward(repository)" in script
+    assert "ai-sdlc-result-credential-probe:v1" in receiver
+    assert "ai-sdlc-result-credential-preflight-v1" in receiver
+    assert '"--method",\n            "DELETE"' in receiver
     assert "gh api" not in action
-    assert "issues/" not in script
 
 
 def test_router_is_the_only_organization_dispatch_boundary():
