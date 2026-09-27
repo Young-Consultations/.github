@@ -1,0 +1,23 @@
+name: Codex result credential preflight
+description: Verify the result-delivery credential before cost-bearing execution.
+
+inputs:
+  result-token:
+    description: Result-only source-repository credential.
+    required: true
+  source-repository:
+    description: Source repository that will receive the result journal and projection.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Install receiver validator dependency
+      shell: bash
+      run: python -m pip install --disable-pip-version-check --no-input 'jsonschema[format]==4.26.0'
+    - name: Verify result credential identity and source access
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.result-token }}
+        SOURCE_REPOSITORY: ${{ inputs.source-repository }}
+      run: python3 "$GITHUB_ACTION_PATH/../../scripts/codex_result_credential_preflight.py"
