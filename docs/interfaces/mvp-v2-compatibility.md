@@ -213,4 +213,3 @@ release state.
 Merge, release publication, deployment, and production operation remain
 human-controlled; this MVP's automated publication boundary remains one managed
 draft PR and one correlated source projection.
-
