@@ -27,6 +27,8 @@ AUTHOR = re.compile(r"^[A-Za-z0-9][A-Za-z0-9-]*(?:\[bot\])?$")
 ADMISSION = "<!-- ai-sdlc-admission:v2 "
 RECEIPT = "<!-- ai-sdlc-result-receipt:v2 "
 FORWARDED = "<!-- ai-sdlc-result-forwarded:v2 "
+CREDENTIAL_PROBE = "<!-- ai-sdlc-result-credential-probe:v1 -->"
+PREFLIGHT_DISPATCH_EVENT = "ai-sdlc-result-credential-preflight-v1"
 
 
 class ReceiverError(ValueError):
@@ -36,7 +38,7 @@ class ReceiverError(ValueError):
 
 
 class Journal(Protocol):
-    def authenticate(self, repository: str) -> None: ...
+    def authenticate(self, repository: str, issue: int) -> None: ...
     def comments(self, repository: str, issue: int) -> list[JournalComment]: ...
     def trusted_author(self, author: str, role: str) -> bool: ...
     def append(self, repository: str, issue: int, body: str) -> None: ...
@@ -191,7 +193,7 @@ def receive(
     source_repository, issue_number = match.group(1), int(match.group(2))
     if caller != result["target_repository"]:
         raise ReceiverError("authentication", "caller does not match target identity")
-    journal.authenticate(source_repository)
+    journal.authenticate(source_repository, issue_number)
     comments = journal.comments(source_repository, issue_number)
     bindings = [item for item in parse_markers(comments, ADMISSION, "admission", journal) if item.get("delivery_id") == result["delivery_id"]]
     expected = {
@@ -262,17 +264,56 @@ class GitHubJournal:
         completed = subprocess.run(cmd, input=json.dumps(input_value) if input_value else None, text=True, capture_output=True, check=True)
         return json.loads(completed.stdout) if completed.stdout.strip() else None
 
-    def authenticate(self, repository: str) -> None:
-        identity = self._api("user")
-        login = identity.get("login") if isinstance(identity, dict) else None
-        if not isinstance(login, str) or not self.trusted_author(login, "result"):
+    def authenticate(self, repository: str, issue: int) -> None:
+        data = self._api(f"repos/{repository}")
+        if not isinstance(data, dict) or data.get("full_name") != repository:
+            raise ReceiverError(
+                "authentication",
+                "result credential is not authorized for source repository",
+            )
+        probe = self._api(
+            f"repos/{repository}/issues/{issue}/comments",
+            "--method",
+            "POST",
+            "-f",
+            f"body={CREDENTIAL_PROBE}",
+        )
+        if not isinstance(probe, dict):
+            raise ReceiverError(
+                "authentication",
+                "result credential write probe returned an invalid response",
+            )
+        comment_id = probe.get("id")
+        user = probe.get("user")
+        author = user.get("login") if isinstance(user, dict) else None
+        if not isinstance(comment_id, int):
+            raise ReceiverError(
+                "authentication",
+                "result credential write probe did not return a comment id",
+            )
+        self._api(
+            f"repos/{repository}/issues/comments/{comment_id}",
+            "--method",
+            "DELETE",
+        )
+        if not isinstance(author, str) or not self.trusted_author(author, "result"):
             raise ReceiverError(
                 "authentication",
                 "result credential principal is not an approved result journal author",
             )
-        data = self._api(f"repos/{repository}")
-        if not isinstance(data, dict) or data.get("full_name") != repository:
-            raise ReceiverError("authentication", "result credential is not authorized for source repository")
+
+    def probe_forward(self, repository: str) -> None:
+        self._api(
+            f"repos/{repository}/dispatches",
+            "--method",
+            "POST",
+            "--input",
+            "-",
+            input_value={
+                "event_type": PREFLIGHT_DISPATCH_EVENT,
+                "client_payload": {"probe": True},
+            },
+        )
 
     def comments(self, repository: str, issue: int) -> list[JournalComment]:
         pages = self._api(
