@@ -1,38 +1,37 @@
 #!/usr/bin/env python3
 """Fail-closed preflight for the result-delivery credential.
 
-This check is intended to run before a cost-bearing execution provider. It
-verifies that the configured credential resolves to an immutable trusted result
-journal author and can authenticate to the source repository. It performs no
-source mutation.
+This check runs before a cost-bearing execution provider. It uses bounded
+credential probes to verify the actual issue-comment author, issue write access,
+cleanup access, and repository-dispatch access required by the receiver.
 """
 from __future__ import annotations
 
 import os
-import re
+import subprocess
 import sys
 
 try:
-    from codex_result_receiver import GitHubJournal, ReceiverError
+    from codex_result_receiver import GitHubJournal, ISSUE, ReceiverError
 except ModuleNotFoundError:  # Imported as scripts.codex_result_credential_preflight in tests.
-    from scripts.codex_result_receiver import GitHubJournal, ReceiverError
-
-REPOSITORY = re.compile(
-    r"^[A-Za-z0-9][A-Za-z0-9-]{0,38}/[A-Za-z0-9._-]{1,100}$"
-)
+    from scripts.codex_result_receiver import GitHubJournal, ISSUE, ReceiverError
 
 
 def main() -> int:
-    repository = os.environ.get("SOURCE_REPOSITORY", "")
-    if REPOSITORY.fullmatch(repository) is None:
-        print("::error::source repository is malformed", file=sys.stderr)
+    source_issue = os.environ.get("SOURCE_ISSUE", "")
+    match = ISSUE.fullmatch(source_issue)
+    if match is None:
+        print("::error::source issue is malformed", file=sys.stderr)
         return 1
+    repository, issue_number = match.group(1), int(match.group(2))
     try:
-        GitHubJournal().authenticate(repository)
-    except (ReceiverError, OSError) as exc:
+        journal = GitHubJournal()
+        journal.authenticate(repository, issue_number)
+        journal.probe_forward(repository)
+    except (ReceiverError, OSError, subprocess.CalledProcessError) as exc:
         print(f"::error::{str(exc)[:300]}", file=sys.stderr)
         return 1
-    print("Result credential identity and source repository access verified.")
+    print("Result credential identity and required source write capabilities verified.")
     return 0
 
 
