@@ -193,6 +193,41 @@ def test_github_journal_treats_a_null_user_as_untrusted(monkeypatch, tmp_path):
     ]
 
 
+def test_github_journal_authenticate_rejects_untrusted_result_principal(monkeypatch, tmp_path):
+    journal = GitHubJournal(
+        write_trust_policy(tmp_path, ["router-bot"], ["receiver-bot"])
+    )
+    monkeypatch.setattr(
+        journal,
+        "_api",
+        lambda *args, **kwargs: {"login": "unexpected-user"} if args == ("user",) else {},
+    )
+
+    with pytest.raises(ReceiverError, match="principal"):
+        journal.authenticate("Young-Consultations/portfolio-tasks")
+
+
+def test_github_journal_authenticate_accepts_trusted_result_principal_and_source(monkeypatch, tmp_path):
+    repository = "Young-Consultations/portfolio-tasks"
+    journal = GitHubJournal(
+        write_trust_policy(tmp_path, ["router-bot"], ["receiver-bot"])
+    )
+    calls = []
+
+    def fake_api(*args, **kwargs):
+        calls.append(args)
+        if args == ("user",):
+            return {"login": "RECEIVER-BOT"}
+        if args == (f"repos/{repository}",):
+            return {"full_name": repository}
+        raise AssertionError(args)
+
+    monkeypatch.setattr(journal, "_api", fake_api)
+    journal.authenticate(repository)
+
+    assert calls == [("user",), (f"repos/{repository}",)]
+
+
 def write_trust_policy(tmp_path, admission_authors, result_authors=None):
     path = tmp_path / "codex-result-trust.json"
     path.write_text(json.dumps({
