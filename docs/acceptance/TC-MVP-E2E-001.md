@@ -102,9 +102,9 @@ Before the human approval action, the acceptance workflow shall fail closed unle
 - the selected task is harmless, deterministic, documentation-only where permitted, and within target policy;
 - the intended publication boundary is draft-only;
 - required source, router, target, publication, and receiver credentials have been human-reviewed and are available through their existing owners;
-- the result-delivery credential resolves to an immutable reviewed `trusted_result_authors` principal that is distinct from every admission author and can authenticate to the source repository.
+- the result-delivery credential is configured for a reviewed `trusted_result_authors` identity distinct from every admission author, and the source reserves the credential-probe dispatch event for no-op capability verification.
 
-The preflight itself performs no Codex invocation, branch creation, commit, push, PR creation, result forwarding, source mutation, merge, release, deployment, settings change, or production operation. The selected target must repeat the control-plane-owned result-credential identity/source-access check after dispatch and before any cost-bearing Codex invocation.
+The organization REAL preflight itself performs no Codex invocation, branch creation, commit, push, PR creation, result forwarding, source mutation, merge, release, deployment, settings change, or production operation. After dispatch and before any cost-bearing Codex invocation, the selected target must run the control-plane-owned result-credential capability preflight. That bounded preflight creates and deletes one marker comment on the source issue to prove issue-write/cleanup access and GitHub-authored identity, then emits the dedicated no-op repository-dispatch event to prove forwarding access. No probe comment may remain afterward.
 
 ### 2.4.5 release/target coordination status
 
@@ -141,7 +141,7 @@ After the corrective release and target pin are published and REAL preflight is 
 3. An authorized human applies `status:approved`. This is the REAL execution trigger.
 4. The existing portfolio source workflow constructs the canonical approved task and invokes the published corrective router release.
 5. The router validates current registration and activation, constructs stable task/delivery/correlation identities, and dispatches the immutable registered target workflow.
-6. The `consulting-playbook` target independently validates caller, contract, target identity, task type, mode, deterministic branch ownership, draft-only policy, and the result-delivery credential principal/source access before Codex.
+6. The `consulting-playbook` target independently validates caller, contract, target identity, task type, mode, deterministic branch ownership, draft-only policy, and runs the bounded result-credential identity/issue-write/cleanup/dispatch probes before Codex.
 7. Real Codex executes only inside the selected target repository after every required pre-execution check is green.
 8. Target validation/tests pass before publication.
 9. The target creates exactly one managed draft PR or reuses the existing owned draft for the delivery.
