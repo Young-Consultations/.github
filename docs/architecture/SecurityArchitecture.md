@@ -32,10 +32,14 @@ Every arrow requires identity, integrity, version, authorization and semantic va
 - The GitHub principal authenticated by the result-delivery credential must
   exactly match a reviewed `trusted_result_authors` identity and must remain
   distinct from every trusted admission author. A control-plane-owned
-  credential preflight verifies that principal and source-repository access
-  before cost-bearing execution; the receiver repeats the principal check
-  before any result-journal mutation. A principal/policy mismatch fails closed
-  and the credential identity is never emitted as secret material.
+  credential preflight verifies the runtime identity and required source write
+  capabilities before cost-bearing execution by creating and deleting one
+  marker comment and sending a dedicated no-consumer repository-dispatch
+  probe. The comment response supplies GitHub's authoritative author identity,
+  so both user-bound and GitHub App installation credentials are supported
+  without exposing token material. The receiver repeats the reversible
+  comment-author check before any result-journal mutation. Any identity,
+  issue-write, cleanup, or dispatch-capability mismatch fails closed.
 - Govern registry enablement, workflow permissions, security policy and releases with designated independent human review and verified identities where supported.
 - Protected default branches and environments enforce that automation cannot clear draft status, merge, deploy, or change settings.
 
