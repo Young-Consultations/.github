@@ -29,6 +29,13 @@ Every arrow requires identity, integrity, version, authorization and semantic va
   caller-associated workflow context to select policy. Targets supply only the
   result-delivery credential and cannot add, replace, or inherit the author
   allowlist. Empty or invalid policy denies all results.
+- The GitHub principal authenticated by the result-delivery credential must
+  exactly match a reviewed `trusted_result_authors` identity and must remain
+  distinct from every trusted admission author. A control-plane-owned
+  credential preflight verifies that principal and source-repository access
+  before cost-bearing execution; the receiver repeats the principal check
+  before any result-journal mutation. A principal/policy mismatch fails closed
+  and the credential identity is never emitted as secret material.
 - Govern registry enablement, workflow permissions, security policy and releases with designated independent human review and verified identities where supported.
 - Protected default branches and environments enforce that automation cannot clear draft status, merge, deploy, or change settings.
 
