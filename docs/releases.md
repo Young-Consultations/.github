@@ -123,45 +123,53 @@ required for a given registered repository.
 
 ## Current compatibility update
 
-Published `ai-sdlc-v2.3.2` remains the previous-known-good release at commit
-`5738ace3ee90dde11336f8f8099e64e5645f7139`.
+The current published control-plane release is `ai-sdlc-v2.4.5`. It preserves
+the closed `ai-sdlc-contract/v2` payloads and includes the backward-compatible
+receiver retry semantics first introduced in 2.4.0. Earlier 2.3.2 and 2.4.0
+release-candidate material remains immutable historical evidence, not current
+publication guidance.
 
-PR #54 prepared the `ai-sdlc-v2.4.0` candidate after
-`TC-MVP-E2E-001-SIM` exposed DEF-0032. The published receiver rejected every
-non-identical second result for one `delivery_id`, while a conforming target
-legitimately reports `draft-pr-created` on first success and
-`duplicate-reused` when the same managed draft is discovered on redelivery.
-The 2.4.0 candidate adds one backward-compatible receiver outcome: that specific
-transition is accepted as an idempotent no-op only when the stable managed-draft
-effect is unchanged. Every other non-identical result remains ambiguous and
-fails closed.
+Release 2.4.5 was published and attested, deployed Runtime Preflight and
+immutable REAL preflight passed, and portfolio-tasks advanced its consumer to
+2.4.5. Fresh issue #154 then proved the initial live path through human approval,
+router admission, target Codex execution, target validation/tests, one managed
+draft PR, receiver delivery, and source projection. The separate equivalent
+redelivery/idempotency acceptance step remains outstanding and is tracked by
+portfolio-tasks #121; initial live-path success does not by itself satisfy that
+remaining acceptance requirement.
 
-This is a MINOR candidate rather than PATCH because the receiver gains new
-observable accepted behavior even though the closed v2 payload schemas and
-existing successful calls remain compatible. The final release review sets the
-manifest publication-state marker only after target conformance and registry
-binding are complete; the immutable tag is still created only after that final
-review merges and all release gates pass.
-
-Before 2.4.0 publication, `consulting-playbook` must consume the corrected
-receiver through a separately reviewed immutable target adapter, publish fresh
-no-real-effects conformance evidence, and be rebound in the registry to that
-adapter tag/commit/report digest. Those target and registry steps are complete.
-The final release change must pass `python scripts/validate_release.py
---require-publishable`, release-aware registered-target verification, and the
-verify-mode Router smoke test. Until the immutable `ai-sdlc-v2.4.0` tag actually
-exists and REAL preflight passes, no real acceptance Codex run is authorized.
+REAL issue #151 proved that published 2.4.4 is not an execution-safe rollback
+for cost-bearing implementation. It may remain immutable historical predecessor
+evidence, but it must not be selected to resume REAL implementation merely
+because the 2.4.5 manifest records it as `previous_known_good`. Rollback-safety
+metadata correction is tracked in #82.
 
 ## Rollback
 
-Stop new dispatches through the normal approval control, then change each
-affected consumer pin back to `previous_known_good.commit_sha` from the manifest
-in reviewed, repository-local pull requests. Restore package and schema pins
-from that same unit; mixing versions is unsupported. Re-run contract tests,
-every registered target check, and the verify-mode smoke test before resuming.
-Do not move the failed tag and do not weaken the allowlist.
+Stop new dispatches through the normal approval control before changing release
+pins. A manifest `previous_known_good` entry is a rollback candidate, not
+automatic authority to resume cost-bearing execution.
 
-### 2.4.0 candidate rollback
+Before selecting a rollback release, review the failure class and verify that
+the candidate is not known to contain the same affected-path defect. If the
+recorded predecessor is known unsafe or rollback safety is indeterminate, keep
+REAL implementation disabled and select a separately reviewed safe release.
+Do not resume cost-bearing Codex work until that release passes the applicable
+contract, target-compatibility, publication, credential, and operational
+preflight gates.
+
+For 2.4.5 specifically, the manifest records 2.4.4 as
+`previous_known_good`, but REAL #151 proved that 2.4.4 can lose completed Codex
+work during publication. Therefore 2.4.4 must not be used to resume cost-bearing
+implementation. Issue #82 owns correction of the manifest/rollback-safety
+representation; this containment rule applies until that decision is resolved.
+
+When a reviewed safe rollback release is selected, update affected consumer pins
+through repository-local pull requests, restore package/schema pins from that
+same immutable unit, and rerun all required checks before resuming. Do not move
+published tags, mix release units, weaken allowlists, or erase audit evidence.
+
+### Historical 2.4.0 candidate rollback
 
 If the 2.4.0 candidate fails before publication, do not create its tag. Restore
 the control-plane manifest/receiver/package references to published 2.3.2 and
