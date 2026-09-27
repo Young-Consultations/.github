@@ -126,10 +126,14 @@ action refs to resolve to the same commit. Targets supply only
 `CODEX_RESULT_TOKEN`, the narrowly scoped result-delivery credential. An empty
 or malformed allowlist denies all results. The runtime GitHub principal behind
 that credential must exactly match a reviewed result-author identity and remain
-distinct from every admission author. A self-pinned, non-mutating credential
-preflight verifies that principal and source-repository access before a
-cost-bearing execution provider is invoked, and the receiver repeats the
-principal check before journal mutation.
+distinct from every admission author. A self-pinned credential preflight uses
+bounded GitHub operations before a cost-bearing execution provider is invoked:
+it creates and deletes one marker comment to prove issue-write/cleanup access
+and to observe GitHub's authoritative comment author, then emits a dedicated
+no-consumer repository-dispatch probe to prove forwarding access. This works
+for user-bound and GitHub App installation credentials without relying on
+`GET /user`. The receiver repeats the reversible comment-author probe before
+journal mutation.
 **Alternatives:** caller-supplied allowlist; organization secret inherited by
 targets; trust every comment author; allow admission and result credentials to
 share one GitHub principal. **Tradeoffs:** deployment identities require a
