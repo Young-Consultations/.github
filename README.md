@@ -12,13 +12,19 @@ package are released as one immutable compatibility unit. Current activation in
 that consumer compatibility unit. See [release, upgrade,
 deprecation, and rollback procedures](docs/releases.md).
 
-The published [`ai-sdlc-v2.4.4` release](docs/releases/2.4.4.md) remains
-the current production control-plane baseline at
-`adb57508762168b3410f52e8a7b0151078c6e9b9`, and the portfolio source
-consumer selects that immutable release. REAL issue #151 exercised that path and
-exposed a post-Codex publication transport defect in the consulting target.
+The published [`ai-sdlc-v2.4.5` release](docs/releases/2.4.5.md) is
+the current control-plane baseline. Its immutable tag resolves to reviewed release
+commit `afe09d320268581bc83021cbfc80bf2a0f0bff91`; publication attestation
+merged in PR #79, deployed Runtime Preflight run 36277959203 passed, immutable
+REAL preflight run 36278028013 passed, and portfolio-tasks now selects 2.4.5.
 
-The [2.4.5 release](docs/releases/2.4.5.md) binds the reviewed `codex-adapter-v2.4.5` repair at `4f062ca73acfc3458f0d690bf1c7687bafd0a8eb`. The immutable control-plane tag `ai-sdlc-v2.4.5` resolves to `afe09d320268581bc83021cbfc80bf2a0f0bff91`; this publication attestation is under review. The source consumer must remain on 2.4.4 until attestation plus deployed Runtime Preflight and REAL preflight pass.
+The release binds `codex-adapter-v2.4.5` at
+`4f062ca73acfc3458f0d690bf1c7687bafd0a8eb`. Fresh portfolio issue #154
+then exercised the published path end to end, producing one managed draft PR
+through target run 36279165335 and successful receiver/source projection.
+Published 2.4.4 remains immutable historical evidence, but REAL #151 proved it is
+not an execution-safe rollback for cost-bearing implementation because its
+publication transport can lose successful Codex work.
 
 ## AI-SDLC contract validation
 

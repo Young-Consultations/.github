@@ -2,22 +2,17 @@
 
 **Normative status:** organization-owned baseline for consumer alignment.
 **Payload version:** `ai-sdlc-contract/v2` (v3 is out of scope).
-**Published compatibility release:** `2.3.2`, fixture `2.3.0`.
-**Current corrective candidate:** `2.4.0`, unpublished until release gates pass.
+**Payload compatibility baseline:** `ai-sdlc-contract/v2`, fixture `2.3.0`.
+**Current published control-plane release:** `ai-sdlc-v2.4.5`.
 
-Published `ai-sdlc-v2.3.2` remains immutable at commit
-`5738ace3ee90dde11336f8f8099e64e5645f7139`. It preserves earlier tags as
-immutable history and remains the previous-known-good rollback point while the
-2.4.0 candidate is reviewed.
-
-The 2.4.0 candidate does not change the closed v2 payload schemas. It corrects
-DEF-0032 in receiver retry semantics: a target may legitimately return
-`draft-pr-created` on first successful delivery and `duplicate-reused` when the
-same managed draft is found on redelivery. The receiver therefore distinguishes
-canonical-result identity from stable visible-effect identity. Because this adds
-a backward-compatible accepted receiver outcome, the release policy classifies
-it as a MINOR change rather than a PATCH. This correction must be published as a
-new immutable compatibility unit; 2.3.2 is not moved or reinterpreted.
+Published `ai-sdlc-v2.3.2` remains immutable historical compatibility evidence
+at commit `5738ace3ee90dde11336f8f8099e64e5645f7139`; it is not the current
+control-plane release. The backward-compatible receiver retry correction first
+published in 2.4.0 remains part of the current 2.4.5 behavior: a target may
+return `draft-pr-created` on first successful delivery and `duplicate-reused`
+when the same managed draft is found on redelivery, subject to the stable-effect
+identity rules below. Later 2.4.x patch releases preserve the closed v2 schemas
+while repairing execution/publication boundaries.
 
 The four and only four MVP targets are `Young-Consultations/.github`,
 `Young-Consultations/portfolio-tasks`, `Young-Consultations/slugger`, and
@@ -187,16 +182,34 @@ receiver binding.
 
 ## Deployment/governance gates
 
-Before the 2.4.0 compatibility unit is published:
+### Current 2.4.5 state
 
-1. the control-plane candidate must pass structural validation and its no-real-effects tests;
-2. the affected target must consume the corrected receiver through a reviewed immutable adapter and publish complete passing conformance evidence;
-3. the registry must bind that adapter tag, commit, and report digest;
-4. reviewed journal-author identities and required credentials/settings must remain valid;
-5. `python scripts/validate_release.py --require-publishable` must pass on the final release candidate;
-6. a human merges the final release change and creates the immutable `ai-sdlc-v2.4.0` tag.
+The current published control-plane release is `ai-sdlc-v2.4.5`. Publication
+attestation, deployed Runtime Preflight, immutable REAL preflight, and the source
+consumer repin are complete. Fresh issue #154 verified the initial live route
+through human approval, routing, target execution, validation/tests, managed
+draft publication, receiver delivery, and source projection.
 
-Until those gates pass, `tag_published` remains false and
-`TC-MVP-E2E-001-REAL` must fail closed. Merge, tag/release publication,
-deployment, and production operation remain human-controlled; the MVP ends at
-one validated managed draft PR and one correlated source projection.
+The full REAL acceptance decision is **not yet complete** because the required
+equivalent redelivery/idempotency exercise remains outstanding under
+portfolio-tasks #121. A published release and successful initial live path do not
+substitute for that separate acceptance evidence.
+
+Published 2.4.4 is immutable historical evidence but is not an execution-safe
+rollback for cost-bearing implementation after REAL issue #151. Rollback
+handling must follow `docs/releases.md` and keep implementation dispatch
+disabled when no separately reviewed safe rollback is available.
+
+### Historical 2.4.0 publication gates
+
+The former 2.4.0 candidate sequence required structural validation, target
+conformance, registry binding, credentials/settings review, publishability, and
+creation of an immutable 2.4.0 tag. Those gates are retained as historical
+evidence of the compatibility correction that introduced the receiver's
+equivalent managed-draft retry semantics. They are not current publication
+instructions and `tag_published: false` does not describe the current 2.4.5
+release state.
+
+Merge, release publication, deployment, and production operation remain
+human-controlled; this MVP's automated publication boundary remains one managed
+draft PR and one correlated source projection.

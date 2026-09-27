@@ -184,30 +184,17 @@ plane must not fabricate source approval, impersonate a target, or introduce a
 second execution engine. Passing SIM is required before REAL and never counts
 as REAL acceptance.
 
-The published immutable compatibility baseline remains `ai-sdlc-v2.3.2` at
-commit `5738ace3ee90dde11336f8f8099e64e5645f7139`. DEF-0032 exposed that the
-published receiver rejects a correct target redelivery result when the first
-success is `draft-pr-created` and the same managed draft is later reported as
-`duplicate-reused`. The resolved interface rule accepts that single
-non-identical transition as an idempotent no-op only when it represents the same
-stable managed-draft effect; every other non-identical result remains ambiguous
-and fails closed.
+Historical compatibility evidence remains immutable. The 2.3.2 compatibility
+unit at commit `5738ace3ee90dde11336f8f8099e64e5645f7139` and the 2.4.0 receiver
+retry correction explain earlier contract evolution, but they are not the
+current control-plane release. The current published control-plane release is
+`ai-sdlc-v2.4.5`, which preserves `ai-sdlc-contract/v2` and the resolved
+idempotent `draft-pr-created -> duplicate-reused` receiver semantics.
 
-REAL-preflight runs `35640134916` and `35654316863` proved that the originally
-published 2.4.3 control-plane registry bound `codex-adapter-v2.4.3` to stale
-commit `1a5da85a4e29b83ba72e1bf4354d7770035cd367`, whose execution workflow
-called the 2.4.2 receiver. The owner authorized an exceptional replacement of
-the defective 2.4.3 identities rather than a 2.4.4 release. The corrected target
-tag resolves to reviewed commit
-`050dc7bb4832eab77fca3e070d2ea1917d82e26e`, with conformance report digest
-`9bb8927334741c80e61e54e722e5b07ef28476ad52108a32051183fe81416d38`.
-The repaired control-plane tag `ai-sdlc-v2.4.3` now resolves to reviewed PR #73
-merge commit `3da7ed9b7bf76d00ae35e4accc733ac8f95259c5`; the manifest records `tag_published: true` and
-that exact `tag_commit_sha`. Published `ai-sdlc-v2.4.2` remains the rollback
-baseline. The 2.4.3 source consumer is already merged but must not receive a live
-approval until Runtime Preflight and REAL preflight pass. The terminal delivery
-identity from portfolio issue #148 must not be reused for the later REAL
-verification.
+Historical 2.4.3 replacement evidence remains quarantined as incident history.
+Do not infer current readiness, rollback safety, or activation from those older
+tags. Current release and acceptance evidence is recorded in the 2.4.5 section
+below; terminal delivery identities from failed REAL issues remain non-reusable.
 
 Explicitly excluded are exactly-once transport, autonomous approval, automatic
 merge, release or deployment automation authority, production operation,
@@ -260,17 +247,20 @@ git diff --check
 ```
 
 `python scripts/validate_release.py` verifies structural release coherence.
-Release 2.4.3 is published and attested at reviewed commit
-`3da7ed9b7bf76d00ae35e4accc733ac8f95259c5`; its manifest records `tag_published: true` and that exact
-`tag_commit_sha`. REAL preflight runs only from an attested `main` checkout
-after deployed Runtime Preflight passes, while using the rewritten tag for
-immutable SIM evidence. During a future pre-publication candidate window,
+The current manifest records published `ai-sdlc-v2.4.5` at reviewed commit
+`afe09d320268581bc83021cbfc80bf2a0f0bff91`, with
+`tag_published: true` and that exact `tag_commit_sha`. Deployed Runtime
+Preflight and immutable REAL preflight have passed for this release, and
+portfolio-tasks selects 2.4.5.
+
+During any future pre-publication candidate window,
 `verify_release_target_workflows.py` delegates to normal remote verification
 first and may use the current reviewed checkout only when a target pins the
 exact manifest tag, the manifest explicitly records `tag_published: false` and
 `tag_commit_sha: null`, and GitHub confirms that exact tag is absent. All other
 missing, substituted, or incompatible refs remain fail-closed. For published
-releases, remote immutable verification takes precedence.
+releases, remote immutable verification takes precedence. Historical 2.4.3 tag
+replacement evidence must not be used as current release guidance.
 
 Conformance reports identify a canonical non-recursive v2 pin of exact shared
 and target files. They never predict the SHA of the commit that contains them;
@@ -356,9 +346,11 @@ decided and justified during the relevant implementation task.
   EI-07, IF-09, and `docs/releases.md`; that exception is explicit and limited
   to replacing the defective 2.4.3 target and control-plane identities. The
   prior 2.4.3 evidence is quarantined and cannot support REAL acceptance.
-- Remaining work is deployed Runtime Preflight and REAL preflight. The
-  source-consumer repin and repaired publication attestation are complete, but
-  neither authorizes a live issue while either deployed gate is red.
+- Deployed Runtime Preflight run 36277959203 and immutable REAL preflight run
+  36278028013 passed on the attested 2.4.5 control plane. The portfolio source
+  consumer then advanced to 2.4.5, and fresh REAL issue #154 completed the live
+  source -> router -> target -> managed draft -> receiver -> source projection
+  path successfully.
 - Repository-specific requirement IDs, credentials, retention duration, and
   reconciliation deadline remain pending their documented owner confirmation
   or human governance decisions. Further target enablement also requires an
@@ -377,9 +369,11 @@ decided and justified during the relevant implementation task.
   above: implementation is evidence, and compatibility/release changes follow
   the current approved release policy rather than accidental historical code.
 
-No unresolved architectural speculation is recorded here. The remaining 2.4.3
-work is deployed verification under the explicitly risk-accepted identity
-replacement and the resolved TC-MVP-E2E-001 and receiver semantics.
+No unresolved architectural speculation is recorded here. The 2.4.5 release
+path is the current verified control-plane state. Separate unresolved governance
+work, including organization issue #77 for broader cost-bearing prerequisite
+safety and any future target-enablement decisions, remains outside this release
+record and must not be inferred from implementation artifacts.
 
 ## Maintenance rule
 
@@ -389,20 +383,32 @@ interface policy changes. Recheck every relative link and command whenever it
 is edited. Keep historical behavior in Git history, release records, or ADRs;
 do not maintain multiple active policies or compatibility paths in this index.
 
-## 2.4.5 publication attestation
+## 2.4.5 current release and acceptance state
 
-The published 2.4.4 control plane is the current production baseline.
-`ai-sdlc-v2.4.4` resolves to
-`adb57508762168b3410f52e8a7b0151078c6e9b9`, the portfolio source
-consumer selects it, and REAL issue #151 exercised that path. Issue #151
-completed cost-bearing Codex work but failed before a remote branch or managed
-draft PR survived, exposing target publication transport authentication and
-failure-classification defects.
+The current published control-plane release is `ai-sdlc-v2.4.5`, resolving to
+reviewed release commit `afe09d320268581bc83021cbfc80bf2a0f0bff91`.
+Publication-attestation PR #79 merged at
+`75815fdc83ebd28f53e483b6de71e0107e74356f`. The approved release policy
+accepts lightweight or annotated Git tags; immutable release identity is the tag
+name plus its independently resolved commit SHA.
 
-The reviewed target repair merged in consulting-playbook PR #64 at
-`4f062ca73acfc3458f0d690bf1c7687bafd0a8eb`. Immutable
-`codex-adapter-v2.4.5` resolves to that commit. Its conformance report SHA256 is
+The reviewed target repair is `codex-adapter-v2.4.5` at
+`4f062ca73acfc3458f0d690bf1c7687bafd0a8eb`, with conformance report SHA256
 `8a7e3479a8768050b7621cec4d7663d8ab60d266291cb2d1027886200799c2fc`.
-The 2.4.5 control-plane candidate merged in PR #78 at `afe09d320268581bc83021cbfc80bf2a0f0bff91`, and `ai-sdlc-v2.4.5` resolves to that exact commit. The approved release policy accepts lightweight or annotated Git tags; immutable release identity is the tag name plus its independently resolved commit SHA. The publication attestation records `tag_published: true` and that exact `tag_commit_sha`; published 2.4.4 remains previous known good. Do not update the source consumer or authorize another REAL issue until this attestation merges and deployed Runtime Preflight plus REAL preflight pass. The broader organization-level
-cost-bearing prerequisite policy remains owned by issue #77 and is not part of
-this release composition. See [2.4.5 release procedure](docs/releases/2.4.5.md).
+Deployed Runtime Preflight run 36277959203 and immutable REAL preflight run
+36278028013 passed before portfolio-tasks advanced its router consumer to 2.4.5.
+Fresh human-approved portfolio issue #154 then exercised the published path:
+target run 36279165335 prepared the sandbox, invoked Codex, passed validation and
+tests, published one managed draft PR, delivered the canonical result through
+the 2.4.5 receiver, and projected it back to the source issue. Generated PR #66
+passed conformance and human review and merged.
+
+Published 2.4.4 remains immutable historical evidence but is not an
+execution-safe rollback for cost-bearing implementation because REAL issue #151
+proved its publication transport could lose successful Codex work. Any rollback
+that may invoke Codex requires a separately reviewed safe release or REAL
+execution must remain disabled.
+
+The broader organization-level cost-bearing prerequisite policy remains owned by
+issue #77 and is not silently expanded by this release. See
+[2.4.5 release procedure](docs/releases/2.4.5.md).
