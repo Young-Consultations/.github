@@ -3,13 +3,24 @@
 **Status:** Approved next-MVP acceptance design
 **Owner:** `Young-Consultations/.github`
 **Published baseline:** `ai-sdlc-v3.0.0` / `ai-sdlc-contract/v2`
-**Current live acceptance state:** fresh REAL issue #154 completed successfully on 2.4.5; REAL #156 exposed result-writer identity defect #83 during explicit redelivery/idempotency acceptance; corrective 3.0.0 acceptance remains pending
+**Current live acceptance state:** fresh REAL issue #154 completed successfully on 2.4.5; REAL #156 exposed result-writer identity defect #83 during explicit redelivery/idempotency acceptance; 3.0.0 published, but deployed preflight exposed organization-secret audit defect #93; corrective 3.0.1 acceptance is pending
 **Initial enabled target:** `Young-Consultations/consulting-playbook`
 
 > **2.4.5 completion addendum:** REAL issue #151 exposed the 2.4.4 target publication-transport defect after successful Codex execution. The immutable repair is `codex-adapter-v2.4.5` (`4f062ca73acfc3458f0d690bf1c7687bafd0a8eb`) with conformance report SHA256 `8a7e3479a8768050b7621cec4d7663d8ab60d266291cb2d1027886200799c2fc`. Control-plane release `ai-sdlc-v2.4.5` resolves to `afe09d320268581bc83021cbfc80bf2a0f0bff91`; publication attestation merged, deployed Runtime Preflight run 36277959203 and immutable REAL preflight run 36278028013 passed, portfolio-tasks advanced to 2.4.5, and fresh issue #154 completed the live path through target run 36279165335 and managed draft PR #66. See [2.4.5 release procedure](../releases/2.4.5.md).
 
 > **3.0.0 publication addendum:** REAL issue #156 reused the same managed draft without a second Codex execution but exposed #83: the deployed result writer could not authenticate its own durable receiver journal evidence. The corrected target is immutable `codex-adapter-v3.0.0` at `0fa11c078b248ea3201f0aa0f2912fce299a7766`, with conformance adapter revision `sha256:dc1c7706a6edfb430117999472c84defec27e498b91328c0090ea662b8209ab8` and report SHA256 `16333cad6ab38c0a799853a0ab32795525d026f98562982b697492f4b2f6ac91`. The published `ai-sdlc-v3.0.0` tag resolves to reviewed candidate merge commit `80889ca14b3bef4254d5212f7f801bf9877ddf72`. The 3.0.0 control plane binds result trust to `ai-sdlc-result-writer[bot]`, changes the required receiver secret from `CODEX_RESULT_TOKEN` to `RESULT_WRITER_PRIVATE_KEY`, and preserves payload `ai-sdlc-contract/v2`. Issue #85 established that this workflow-secret interface change is MAJOR. Publication does not yet mean live source adoption: portfolio-tasks remains on 2.4.5 until the sender allowlist, deployed preflights, and consumer pin are advanced. See [3.0.0 release procedure](../releases/3.0.0.md).
 
+> **3.0.1 preflight-repair addendum:** Deployed 3.0.0 Runtime Preflight run
+> 36370005352 passed activation, publication, and remote-tag boundaries and
+> reported no source-sender mismatch, but falsely reported
+> `AI_SDLC_RESULT_WRITER_PRIVATE_KEY` missing because the audit inspected only
+> repository/environment secret metadata. The key is intentionally an
+> organization Actions secret restricted to consulting-playbook. Candidate
+> `ai-sdlc-v3.0.1` repairs only that metadata scope check and reuses immutable
+> `codex-adapter-v3.0.0`. No new REAL execution is allowed until 3.0.1 is
+> published, attested, and its deployed Runtime Preflight passes. See
+> [3.0.1 release procedure](../releases/3.0.1.md).
+>
 ## Purpose
 
 > **Historical 2.4.3 operating addendum:** At that stage, the 2.4.2 repair release was the published
