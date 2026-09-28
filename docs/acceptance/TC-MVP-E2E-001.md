@@ -103,7 +103,7 @@ Before the human approval action, the acceptance workflow shall fail closed unle
 - the intended publication boundary is draft-only;
 - required source, router, target, publication, and receiver credentials have been human-reviewed and are available through their existing owners;
 - `AI_SDLC_RESULT_WRITER_PRIVATE_KEY` is restricted to the enabled consulting target, the App is installed only on `portfolio-tasks`, and the 3.0.0 receiver accepts only `RESULT_WRITER_PRIVATE_KEY` to mint a fresh short-lived installation token;
-- the result-delivery token authenticates as reviewed `ai-sdlc-result-writer[bot]`, distinct from every admission author, and the source reserves the credential-probe dispatch event for no-op capability verification.
+- the result-delivery token authenticates as reviewed `ai-sdlc-result-writer[bot]`, distinct from every admission author; `portfolio-tasks` repository variable `PORTFOLIO_RESULT_SENDERS` exactly equals that immutable result-author allowlist; and the source reserves the credential-probe dispatch event for no-op capability verification.
 
 The organization REAL preflight itself performs no Codex invocation, branch creation, commit, push, PR creation, result forwarding, source mutation, merge, release, deployment, settings change, or production operation. After dispatch and before any cost-bearing Codex invocation, the selected target must run the control-plane-owned result-credential capability preflight. That bounded preflight creates and deletes one marker comment on the source issue to prove issue-write/cleanup access and GitHub-authored identity, then emits the dedicated no-op repository-dispatch event to prove forwarding access. No probe comment may remain afterward.
 
