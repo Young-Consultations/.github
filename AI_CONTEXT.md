@@ -175,7 +175,7 @@ without implementation evidence.
 `TC-MVP-E2E-001` is one acceptance architecture with two modes, not two
 execution paths. `TC-MVP-E2E-001-SIM` resolves and executes the exact immutable
 adapter of the sole enabled target through deterministic fake Codex/publication
-effects and passes target-produced results through the actual candidate receiver
+effects and passes target-produced results through the published 3.0.0 receiver
 logic using in-memory journal/forwarding effects. `TC-MVP-E2E-001-REAL` uses the
 existing source, router, target, receiver, and source-projection path after a
 non-mutating preflight. The REAL execution trigger remains the existing
@@ -340,7 +340,7 @@ For the 3.0.0 cutover, Runtime Preflight must verify the source
 projector's operational sender allowlist, not only the existence of its
 repository variable. `portfolio-tasks` variable `PORTFOLIO_RESULT_SENDERS`
 must exactly match the immutable `trusted_result_authors` set
-(`ai-sdlc-result-writer[bot]` for this candidate) before cost-bearing REAL
+(`ai-sdlc-result-writer[bot]` for this release) before cost-bearing REAL
 execution. Because published 2.4.5 still uses the prior sender, perform this
 variable cutover only after new 2.4.5 implementation dispatch is stopped and
 before deployed 3.0.0 preflight/REAL acceptance. Organization issue #89 tracks
