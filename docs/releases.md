@@ -123,30 +123,34 @@ required for a given registered repository.
 
 ## Current compatibility update
 
-The current published control-plane release is `ai-sdlc-v2.4.5`. It preserves
-the closed `ai-sdlc-contract/v2` payloads and includes the backward-compatible
-receiver retry semantics first introduced in 2.4.0. Earlier 2.3.2 and 2.4.0
-release-candidate material remains immutable historical evidence, not current
-publication guidance.
+The current published control-plane compatibility release is
+`ai-sdlc-v3.0.0`, attested to reviewed candidate merge commit
+`80889ca14b3bef4254d5212f7f801bf9877ddf72`. It preserves the closed
+`ai-sdlc-contract/v2` payloads while changing the reusable result-receiver
+credential interface to the dedicated `ai-sdlc-result-writer` GitHub App.
+Because that required secret rename/meaning change is MAJOR under this policy,
+issue #85 correctly reclassified the repair from patch 2.4.6 to 3.0.0. No
+`ai-sdlc-v2.4.6` control-plane release is authorized.
 
-Release 2.4.5 was published and attested, deployed Runtime Preflight and
-immutable REAL preflight passed, and portfolio-tasks advanced its consumer to
-2.4.5. Fresh issue #154 then proved the initial live path through human approval,
-router admission, target Codex execution, target validation/tests, one managed
-draft PR, receiver delivery, and source projection. REAL issue #156 then proved
-target-side managed-draft reuse without a second Codex execution but exposed
-control-plane defect #83: the deployed result writer could not authenticate its
-own durable receiver journal evidence, so equivalent redelivery was forwarded
-again and quarantined by the source.
+Publication and live consumption are deliberately separate. `portfolio-tasks`
+remains pinned to published 2.4.5 until the controlled sender-allowlist cutover,
+deployed Runtime Preflight, immutable REAL preflight, and repository-local
+consumer update complete. Release 2.4.5 previously passed deployed Runtime
+Preflight and immutable REAL preflight, and fresh issue #154 proved the initial
+live path through human approval, router admission, target Codex execution,
+validation/tests, one managed draft PR, receiver delivery, and source
+projection. REAL issue #156 then proved target-side managed-draft reuse without
+a second Codex execution but exposed control-plane defect #83: the deployed
+result writer could not authenticate its own durable receiver journal evidence,
+so equivalent redelivery was forwarded again and quarantined by the source.
 
-The unpublished 3.0.0 candidate repairs that identity boundary using the
-dedicated `ai-sdlc-result-writer` GitHub App and changes the reusable receiver
-secret from `CODEX_RESULT_TOKEN` to `RESULT_WRITER_PRIVATE_KEY`. That required
-workflow-secret rename/meaning change is MAJOR under this policy, as captured by
-issue #85; no `ai-sdlc-v2.4.6` control-plane release is authorized. Payload
-`ai-sdlc-contract/v2` remains unchanged. Full REAL acceptance remains pending
-until 3.0.0 is tagged, attested, preflighted, adopted by the source consumer,
-and same-delivery redelivery produces one receiver/source projection.
+Release 3.0.0 repairs that identity boundary using the dedicated GitHub App and
+requires `PORTFOLIO_RESULT_SENDERS` to exactly match the immutable trusted
+result-author set before cost-bearing REAL execution. Issue #89 / consulting
+DEF-0069 remains open until deployed Runtime Preflight proves that live
+configuration. Full REAL acceptance remains pending until 3.0.0 is preflighted,
+adopted by the source consumer, and same-delivery redelivery produces one
+receiver/source projection.
 
 REAL issue #151 proved that published 2.4.4 is not an execution-safe rollback
 for cost-bearing implementation. It may remain immutable historical predecessor
