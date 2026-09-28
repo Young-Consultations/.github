@@ -123,6 +123,10 @@ def test_canonical_receiver_accepts_only_result_delivery_credential():
         (ROOT / "actions/codex-result-receiver/action.yml").read_text()
     )
 
+    assert "RESULT_WRITER_PRIVATE_KEY" in source
+    assert "CODEX_RESULT_TOKEN" not in source
+    assert "actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1" in source
+
     incompatible = source.replace(
         "    outputs:",
         "      CODEX_TRUSTED_JOURNAL_AUTHORS:\n"
@@ -130,7 +134,7 @@ def test_canonical_receiver_accepts_only_result_delivery_credential():
         "    outputs:",
         1,
     )
-    with pytest.raises(checker.CompatibilityError, match="only CODEX_RESULT_TOKEN"):
+    with pytest.raises(checker.CompatibilityError, match="exactly one delivery credential"):
         checker.verify_receiver_interface(incompatible)
 
 
@@ -639,7 +643,7 @@ def test_migrated_target_entries_use_v2_and_expected_paths():
     assert entries["Young-Consultations/consulting-playbook"]["contract_version"] == checker.CANONICAL_VERSION
     expected_refs = {
         "Young-Consultations/.github": "codex-adapter-v2.3.1",
-        "Young-Consultations/consulting-playbook": "codex-adapter-v2.4.5",
+        "Young-Consultations/consulting-playbook": "codex-adapter-v3.0.0",
         "Young-Consultations/portfolio-tasks": "codex-adapter-v2.3.2",
         "Young-Consultations/slugger": "codex-adapter-v2.3.2",
     }
