@@ -19,7 +19,7 @@
   "credential_role_manifest": {
     "path": "config/codex-credential-roles.json",
     "scope": "enabled-portfolio-to-consulting-path",
-    "sha256": "c734771a77c1920523f5686c9f5224e37b10876b630e71ec435a6347b2996ca5"
+    "sha256": "e4f78125c16e18466fb807bed177448f2612497d8130cbf5b9cbd89fd071ba77"
   },
   "release_state": "candidate",
   "runtime_record_format_version": 1,
