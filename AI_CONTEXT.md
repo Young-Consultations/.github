@@ -175,8 +175,7 @@ without implementation evidence.
 `TC-MVP-E2E-001` is one acceptance architecture with two modes, not two
 execution paths. `TC-MVP-E2E-001-SIM` resolves and executes the exact immutable
 adapter of the sole enabled target through deterministic fake Codex/publication
-effects and passes target-produced results through the published 3.0.0 receiver
-logic using in-memory journal/forwarding effects. `TC-MVP-E2E-001-REAL` uses the
+effects and passes target-produced results through the current control-plane receiver logic using in-memory journal/forwarding effects. The 3.0.1 control-plane patch deliberately reuses immutable `codex-adapter-v3.0.0`, whose target workflow retains the reviewed 3.0.0 receiver pin. `TC-MVP-E2E-001-REAL` uses the
 existing source, router, target, receiver, and source-projection path after a
 non-mutating preflight. The REAL execution trigger remains the existing
 authorized-human `status:approved` action in `portfolio-tasks`; the control
@@ -196,9 +195,7 @@ required result-writer credential interface to the dedicated GitHub App.
 
 Historical 2.4.3 replacement evidence remains quarantined as incident history.
 Do not infer current readiness, rollback safety, or activation from older tags.
-Publication and live consumption are separate: portfolio-tasks still consumes
-2.4.5 until the controlled 3.0.0 sender-allowlist, deployed-preflight, and
-consumer-pin cutover completes. Terminal delivery identities from failed REAL
+Publication and live consumption are separate: portfolio-tasks still consumes 2.4.5. The sender allowlist is already cut over to the App-bot identity; the remaining path is publish/attest 3.0.1, pass deployed and immutable REAL preflight, then advance the consumer pin. Terminal delivery identities from failed REAL
 issues remain non-reusable.
 
 Explicitly excluded are exactly-once transport, autonomous approval, automatic
@@ -336,14 +333,14 @@ must:
 Legacy-looking artifacts are not automatically deleted; each disposition is
 decided and justified during the relevant implementation task.
 
-For the 3.0.0 cutover, Runtime Preflight must verify the source
+For the 3.x cutover, Runtime Preflight must verify the source
 projector's operational sender allowlist, not only the existence of its
 repository variable. `portfolio-tasks` variable `PORTFOLIO_RESULT_SENDERS`
 must exactly match the immutable `trusted_result_authors` set
 (`ai-sdlc-result-writer[bot]` for this release) before cost-bearing REAL
 execution. Because published 2.4.5 still uses the prior sender, perform this
 variable cutover only after new 2.4.5 implementation dispatch is stopped and
-before deployed 3.0.0 preflight/REAL acceptance. Organization issue #89 tracks
+before deployed corrective-release preflight/REAL acceptance. Organization issue #89 tracks
 the pre-publication gap that led to this invariant.
 
 ## Known gaps or conflicts
