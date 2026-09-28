@@ -75,11 +75,13 @@ implementation.
 
 Release 3.0.0 binds the enabled consulting target to
 `codex-adapter-v3.0.0` and replaces the external receiver token secret with
-the dedicated App private-key interface. Publication is complete, but the
-current portfolio caller remains pinned to 2.4.5 until new 2.4.5 dispatch is
-stopped, `PORTFOLIO_RESULT_SENDERS` is changed exactly to
-`ai-sdlc-result-writer[bot]`, deployed Runtime Preflight and immutable REAL
-preflight pass, and the repository-local consumer pin advances to 3.0.0.
+the dedicated App private-key interface. Corrective control-plane patch 3.0.1
+repairs Runtime Preflight's organization-secret metadata audit without
+republishing that target. The current portfolio caller remains pinned to 2.4.5
+until 3.0.1 is published and attested, the App-bot sender binding remains exact,
+deployed Runtime Preflight and immutable REAL preflight pass, and the
+repository-local consumer pin advances to `ai-sdlc-v3.0.1`. The immutable
+target continues to use its reviewed `ai-sdlc-v3.0.0` receiver pin.
 
 ## Registry changes
 
