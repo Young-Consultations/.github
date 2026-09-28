@@ -391,19 +391,19 @@ def verify_receiver_interface(source: str) -> str:
     jobs = workflow.get("jobs")
     if not isinstance(jobs, dict):
         raise CompatibilityError("result receiver jobs are missing")
-    action_steps: list[tuple[dict[str, Any], str]] = []
+    action_steps: list[tuple[dict[str, Any], list[Any], int, dict[str, Any], str]] = []
     for job in jobs.values():
         steps = job.get("steps") if isinstance(job, dict) else None
         if not isinstance(steps, list):
             continue
-        for step in steps:
+        for index, step in enumerate(steps):
             if not isinstance(step, dict) or not isinstance(step.get("uses"), str):
                 continue
             if match := RECEIVER_ACTION_RE.fullmatch(step["uses"]):
-                action_steps.append((step, match.group(1)))
+                action_steps.append((job, steps, index, step, match.group(1)))
     if len(action_steps) != 1:
         raise CompatibilityError("result receiver must invoke exactly one canonical control-plane action bundle")
-    action_step, action_ref = action_steps[0]
+    _, action_job_steps, action_index, action_step, action_ref = action_steps[0]
     if not IMMUTABLE_RECEIVER_REF_RE.fullmatch(action_ref):
         raise CompatibilityError("result receiver action bundle must use an immutable ai-sdlc release or full commit SHA")
     result_token = (
@@ -421,20 +421,18 @@ def verify_receiver_interface(source: str) -> str:
     if action_step.get("with") != expected_with or "env" in action_step:
         raise CompatibilityError("result receiver action inputs are incompatible")
     if secret_name == "RESULT_WRITER_PRIVATE_KEY":
-        token_steps = [
-            step for job in jobs.values()
-            for step in (
-                job.get("steps")
-                if isinstance(job, dict) and isinstance(job.get("steps"), list)
-                else []
-            )
+        token_positions = [
+            index
+            for index, step in enumerate(action_job_steps[:action_index])
             if isinstance(step, dict) and step.get("id") == "result-writer-token"
         ]
-        if len(token_steps) != 1:
+        if len(token_positions) != 1:
             raise CompatibilityError(
-                "result receiver must mint exactly one result-writer installation token"
+                "result receiver must mint exactly one result-writer installation token "
+                "in the receiver action job before delivery"
             )
-        token_step = token_steps[0]
+        token_index = token_positions[0]
+        token_step = action_job_steps[token_index]
         if token_step.get("uses") != (
             "actions/create-github-app-token@"
             "bcd2ba49218906704ab6c1aa796996da409d3eb1"
@@ -449,8 +447,25 @@ def verify_receiver_interface(source: str) -> str:
             "permission-contents": "write",
         }:
             raise CompatibilityError("result-writer installation token scope is incompatible")
-        if '[[ "$APP_SLUG" == "ai-sdlc-result-writer" ]]' not in source:
-            raise CompatibilityError("result receiver does not bind the GitHub App slug")
+
+        identity_steps = []
+        for index, step in enumerate(action_job_steps[token_index + 1:action_index], start=token_index + 1):
+            if not isinstance(step, dict):
+                continue
+            env = step.get("env")
+            run = step.get("run")
+            if (
+                isinstance(env, dict)
+                and env.get("APP_SLUG") == "${{ steps.result-writer-token.outputs.app-slug }}"
+                and isinstance(run, str)
+                and '[[ "$APP_SLUG" == "ai-sdlc-result-writer" ]]' in run
+            ):
+                identity_steps.append(index)
+        if len(identity_steps) != 1:
+            raise CompatibilityError(
+                "result receiver must verify the minted GitHub App slug exactly once "
+                "in the receiver action job before delivery"
+            )
         if "CODEX_RESULT_TOKEN" in source:
             raise CompatibilityError("legacy result token interface remains in v3 receiver")
     if "actions/checkout@" in source:
