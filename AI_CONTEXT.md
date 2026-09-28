@@ -401,6 +401,30 @@ is edited. Keep historical behavior in Git history, release records, or ADRs;
 do not maintain multiple active policies or compatibility paths in this index.
 
 
+## 3.0.1 Runtime Preflight organization-secret repair candidate
+
+Deployed 3.0.0 Runtime Preflight run 36370005352 failed closed before Codex
+because the auditor checked `AI_SDLC_RESULT_WRITER_PRIVATE_KEY` only through
+repository-secret metadata even though the reviewed deployment stores it as an
+organization Actions secret restricted to consulting-playbook. Organization
+issue #93 tracks this false-negative prerequisite defect.
+
+The resolved audit rule is storage-scope aware: repository/environment secrets
+use their native metadata endpoints; an organization secret can satisfy a
+repository role only when it belongs to the repository owner, uses
+`selected` visibility, and explicitly selects the exact repository. Secret
+values are never read. `PREFLIGHT_AUDIT_TOKEN` therefore needs organization
+Actions Secrets read metadata access in addition to its prior repository-level
+audit access.
+
+The corrective control-plane candidate is `ai-sdlc-v3.0.1`; it reuses
+immutable `codex-adapter-v3.0.0` because no target code or interface changes.
+Published `ai-sdlc-v3.0.0` remains immutable. The failed deployed preflight
+reported no `PORTFOLIO_RESULT_SENDERS` mismatch, so the live sender binding
+has already been cut over to `ai-sdlc-result-writer[bot]`. Until 3.0.1 is
+published, preflighted, and adopted by portfolio-tasks, no new 2.4.5
+implementation approval may be issued.
+
 ## 3.0.0 published result-writer identity release
 
 REAL issue #156 proved target-side managed-draft reuse without a second Codex
