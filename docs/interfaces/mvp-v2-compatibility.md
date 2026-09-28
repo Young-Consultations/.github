@@ -252,10 +252,12 @@ App capability proof before Codex, and mints a fresh App installation token in
 the receiver after execution. The immutable `codex-adapter-v2.4.6` tag remains
 unused historical candidate evidence after issue #85 classified the required
 receiver-secret change as MAJOR. Full REAL acceptance remains blocked until new
-2.4.5 implementation dispatch is stopped, `PORTFOLIO_RESULT_SENDERS` is cut
-over exactly to the immutable result-author set, deployed Runtime Preflight and
-immutable REAL preflight pass, portfolio-tasks adopts 3.0.0, and the
-same-delivery redelivery step passes.
+2.4.5 implementation dispatch is stopped, `PORTFOLIO_RESULT_SENDERS` remains
+bound exactly to the immutable result-author set, corrective 3.0.1 is published
+and attested, deployed Runtime Preflight and immutable REAL preflight pass,
+portfolio-tasks adopts `ai-sdlc-v3.0.1`, and the same-delivery redelivery step
+passes. The immutable `codex-adapter-v3.0.0` target remains unchanged and
+retains its reviewed `ai-sdlc-v3.0.0` receiver pin.
 
 ### Historical 2.4.0 publication gates
 
