@@ -3,10 +3,10 @@
 **Normative status:** organization-owned baseline for consumer alignment.
 **Payload version:** `ai-sdlc-contract/v2` (v3 is out of scope).
 **Payload compatibility baseline:** `ai-sdlc-contract/v2`, fixture `2.3.0`.
-**Current published control-plane compatibility release:** `ai-sdlc-v3.0.0`.
+**Current published control-plane compatibility release:** `ai-sdlc-v3.0.1`.
 **Current source-consumer pin:** `ai-sdlc-v2.4.5` pending corrected 3.0.1 cutover.
 
-The unpublished `ai-sdlc-v3.0.1` PATCH candidate changes only deployed
+The published `ai-sdlc-v3.0.1` PATCH release changes only deployed
 Runtime Preflight credential-metadata auditing so the approved
 organization-scoped `AI_SDLC_RESULT_WRITER_PRIVATE_KEY` can be verified at its
 actual storage scope. It does not change the v3 reusable receiver interface,
@@ -222,11 +222,11 @@ receiver binding.
 
 ## Deployment/governance gates
 
-### Published 3.0.0 state and current 2.4.5 source-consumer path
+### Published 3.0.1 state and current 2.4.5 source-consumer path
 
-The current published control-plane compatibility release is `ai-sdlc-v3.0.0`,
-attested to reviewed candidate merge commit
-`80889ca14b3bef4254d5212f7f801bf9877ddf72`. Publication is complete, but
+The current published control-plane compatibility release is `ai-sdlc-v3.0.1`,
+attested to reviewed PR #94 merge commit
+`a98730deb729cc35dbd4d699395a87facb3ec78e`. Publication is complete, but
 portfolio-tasks still consumes `ai-sdlc-v2.4.5` until the controlled operational
 cutover is complete. The 2.4.5 path previously passed deployed Runtime
 Preflight and immutable REAL preflight, and fresh issue #154 verified the
