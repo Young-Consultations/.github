@@ -134,6 +134,31 @@ def test_selected_organization_secret_verifies_exact_repository(monkeypatch):
     ]
 
 
+def test_selected_organization_secret_rejects_different_repository(monkeypatch):
+    monkeypatch.setattr(
+        runtime_preflight,
+        "api_one",
+        lambda *args, **kwargs: {
+            "name": "AI_SDLC_RESULT_WRITER_PRIVATE_KEY",
+            "visibility": "selected",
+        },
+    )
+    monkeypatch.setattr(
+        runtime_preflight,
+        "api",
+        lambda *args, **kwargs: [{
+            "repositories": [
+                {"full_name": "Young-Consultations/another-repository"}
+            ]
+        }],
+    )
+    assert not runtime_preflight.organization_secret_selected_for_repository(
+        "Young-Consultations/consulting-playbook",
+        "AI_SDLC_RESULT_WRITER_PRIVATE_KEY",
+        "audit-token",
+    )
+
+
 def test_broad_organization_secret_visibility_is_not_accepted(monkeypatch):
     monkeypatch.setattr(
         runtime_preflight,
@@ -380,7 +405,7 @@ def test_missing_audit_token_reports_failed_credential_boundary(
         "remote_tag_commit",
         lambda tag: "80889ca14b3bef4254d5212f7f801bf9877ddf72",
     )
-    monkeypatch.setattr("sys.argv", ["runtime_preflight.py"])
+    monkeypatch.setattr("sys.argv", ["runtime_preflight.py", "--candidate"])
 
     assert runtime_preflight.main() == 1
     report = json.loads(capsys.readouterr().out)
