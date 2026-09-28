@@ -249,15 +249,43 @@ def test_receiver_action_bundle_pin_must_be_immutable():
 
 def test_live_receiver_bundle_requires_nonempty_control_plane_trust():
     script = (ROOT / "scripts/codex_result_receiver.py").read_text()
+    compatibility = (
+        ROOT / "config/codex-result-receiver-compatibility.json"
+    ).read_bytes()
+    release = current_receiver_release()
     with pytest.raises(checker.CompatibilityError, match="reviewed non-empty"):
         checker.verify_receiver_bundle_policy(
             script,
             b'{"policy_format_version":2,"trusted_admission_authors":[],"trusted_result_authors":["receiver[bot]"]}',
+            compatibility,
+            release,
         )
     checker.verify_receiver_bundle_policy(
         script,
         b'{"policy_format_version":2,"trusted_admission_authors":["router[bot]"],"trusted_result_authors":["receiver[bot]"]}',
+        compatibility,
+        release,
     )
+
+
+def test_live_receiver_bundle_rejects_unreviewed_release_compatibility():
+    script = (ROOT / "scripts/codex_result_receiver.py").read_text()
+    trust = (
+        b'{"policy_format_version":2,"trusted_admission_authors":["router[bot]"],'
+        b'"trusted_result_authors":["receiver[bot]"]}'
+    )
+    incompatible = json.dumps({
+        "policy_format_version": 1,
+        "receiver_release": current_receiver_release(),
+        "accepted_admission_releases": ["ai-sdlc-v9.9.9"],
+    }).encode()
+    with pytest.raises(
+        checker.CompatibilityError,
+        match="reviewed fail-closed allowlist",
+    ):
+        checker.verify_receiver_bundle_policy(
+            script, trust, incompatible, current_receiver_release()
+        )
 
 
 @pytest.mark.parametrize(
