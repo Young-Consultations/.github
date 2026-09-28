@@ -299,6 +299,19 @@ def test_every_pull_request_triggers_target_compatibility():
     assert "pull_request:\n    paths:" not in text
 
 
+def test_pr_target_compatibility_uses_builtin_read_only_token_for_remote_evidence():
+    text = Path(".github/workflows/target-workflow-compatibility.yml").read_text(
+        encoding="utf-8"
+    )
+    step = text.split(
+        "- name: Enforce published release evidence for enabled targets", 1
+    )[1].split("- name: Verify selected registered target workflows", 1)[0]
+    assert "GH_TOKEN: ${{ github.token }}" in step
+    assert "secrets." not in step
+    assert "contents: write" not in text
+    assert "actions: write" not in text
+
+
 def test_manual_target_compatibility_can_verify_disabled_targets():
     text = Path(".github/workflows/target-workflow-compatibility.yml").read_text(encoding="utf-8")
     assert "repository:" in text
