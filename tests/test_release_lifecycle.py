@@ -14,7 +14,7 @@ def test_current_candidate_release_is_structurally_coherent():
 def test_candidate_requires_publication_attestation():
     assert validate_release.validate() == []
     assert validate_release.validate(require_candidate_ready=True) == []
-    assert validate_release.validate(require_candidate_ready=True) == [
+    assert validate_release.validate(require_publishable=True) == [
         "publishable release must declare tag_published true"
     ]
 
@@ -30,7 +30,7 @@ def test_candidate_requires_trusted_journal_authors(monkeypatch):
 
     monkeypatch.setattr(validate_release, "load_json", without_result_authors)
     assert "release readiness must name trusted authors for every journal role" in (
-        validate_release.validate(require_publishable=True)
+        validate_release.validate(require_candidate_ready=True)
     )
 
 
