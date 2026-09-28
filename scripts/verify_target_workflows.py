@@ -48,6 +48,10 @@ IMMUTABLE_RECEIVER_REF_RE = re.compile(
     r"(?:[0-9a-f]{40}|ai-sdlc-v(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)"
     r"(?:-[0-9A-Za-z]+(?:[.-][0-9A-Za-z]+)*)?)"
 )
+CONTROL_PLANE_RELEASE_RE = re.compile(
+    r"ai-sdlc-v(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)"
+    r"(?:-[0-9A-Za-z]+(?:[.-][0-9A-Za-z]+)*)?"
+)
 SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 DIGEST_RE = re.compile(r"^[0-9a-f]{64}$")
 REPORT_PATH_RE = re.compile(r"^(?!/)(?!.*(?:^|/)\.\.(?:/|$))[A-Za-z0-9._/-]+\.json$")
@@ -579,7 +583,7 @@ def verify_receiver_bundle_policy(
         and bool(accepted)
         and all(
             isinstance(value, str)
-            and IMMUTABLE_RECEIVER_REF_RE.fullmatch(value) is not None
+            and CONTROL_PLANE_RELEASE_RE.fullmatch(value) is not None
             for value in accepted
         )
         and len(set(accepted)) == len(accepted)
