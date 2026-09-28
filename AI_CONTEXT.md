@@ -189,9 +189,10 @@ retry correction explain earlier contract evolution, but they are not the
 current control-plane release. The current published control-plane compatibility
 release is `ai-sdlc-v3.0.1` at reviewed PR #94 merge commit
 `a98730deb729cc35dbd4d699395a87facb3ec78e`. It preserves
-`ai-sdlc-contract/v2` and the resolved idempotent
-`draft-pr-created -> duplicate-reused` receiver semantics while changing the
-required result-writer credential interface to the dedicated GitHub App.
+`ai-sdlc-contract/v2`, the resolved idempotent
+`draft-pr-created -> duplicate-reused` receiver semantics, and the dedicated
+GitHub App result-writer credential interface introduced by 3.0.0. The 3.0.1
+PATCH changes only Runtime Preflight's organization-secret metadata auditing.
 
 Historical 2.4.3 replacement evidence remains quarantined as incident history.
 Do not infer current readiness, rollback safety, or activation from older tags.
