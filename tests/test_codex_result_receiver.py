@@ -9,6 +9,7 @@ from scripts.codex_result_receiver import (
     GitHubJournal,
     JournalComment,
     ReceiverError,
+    load_receiver_compatibility,
     load_trusted_authors,
     marker,
     receive,
@@ -148,13 +149,49 @@ def test_malformed_result_and_binding_fail_closed():
     assert not journal.projections
 
 
-def test_receiver_requires_admission_from_its_exact_control_plane_release():
+def write_receiver_compatibility_policy(
+    tmp_path, receiver_release, accepted_admission_releases,
+):
+    path = tmp_path / "codex-result-receiver-compatibility.json"
+    path.write_text(json.dumps({
+        "policy_format_version": 1,
+        "receiver_release": receiver_release,
+        "accepted_admission_releases": accepted_admission_releases,
+    }))
+    return path
+
+
+def test_receiver_accepts_reviewed_split_release_composition(tmp_path):
+    policy = write_receiver_compatibility_policy(
+        tmp_path,
+        "ai-sdlc-v3.0.0",
+        ["ai-sdlc-v3.0.0", "ai-sdlc-v3.0.1"],
+    )
     journal = FakeJournal()
-    with pytest.raises(ReceiverError, match="receiver release"):
-        receive(
-            json.dumps(RESULT), SOURCE, RESULT["target_repository"], journal,
-            "ai-sdlc-v3.0.0",
-        )
+    binding = {
+        "contract_version": RESULT["contract_version"],
+        "delivery_id": RESULT["delivery_id"],
+        "correlation_id": RESULT["correlation_id"],
+        "source_issue": SOURCE,
+        "target_repository": RESULT["target_repository"],
+        "control_plane_release": "ai-sdlc-v3.0.1",
+        "activation_revision": "a" * 40,
+        "activation_sha256": "b" * 64,
+    }
+    journal.entries[0] = JournalComment(marker(ADMISSION, binding), "router-bot")
+    assert receive(
+        json.dumps(RESULT), SOURCE, RESULT["target_repository"], journal,
+        "ai-sdlc-v3.0.0", policy,
+    ).accepted
+
+
+def test_receiver_rejects_unreviewed_admission_release(tmp_path):
+    policy = write_receiver_compatibility_policy(
+        tmp_path,
+        "ai-sdlc-v3.0.2",
+        ["ai-sdlc-v3.0.1", "ai-sdlc-v3.0.2"],
+    )
+    journal = FakeJournal()
     binding = {
         "contract_version": RESULT["contract_version"],
         "delivery_id": RESULT["delivery_id"],
@@ -166,10 +203,47 @@ def test_receiver_requires_admission_from_its_exact_control_plane_release():
         "activation_sha256": "b" * 64,
     }
     journal.entries[0] = JournalComment(marker(ADMISSION, binding), "router-bot")
-    assert receive(
-        json.dumps(RESULT), SOURCE, RESULT["target_repository"], journal,
-        "ai-sdlc-v3.0.0",
-    ).accepted
+    with pytest.raises(ReceiverError, match="not compatible"):
+        receive(
+            json.dumps(RESULT), SOURCE, RESULT["target_repository"], journal,
+            "ai-sdlc-v3.0.2", policy,
+        )
+    assert not journal.projections
+
+
+def test_receiver_rejects_runtime_release_outside_immutable_policy(tmp_path):
+    policy = write_receiver_compatibility_policy(
+        tmp_path,
+        "ai-sdlc-v3.0.2",
+        ["ai-sdlc-v3.0.1", "ai-sdlc-v3.0.2"],
+    )
+    journal = FakeJournal()
+    with pytest.raises(ReceiverError, match="immutable compatibility policy"):
+        receive(
+            json.dumps(RESULT), SOURCE, RESULT["target_repository"], journal,
+            "ai-sdlc-v3.0.1", policy,
+        )
+
+
+@pytest.mark.parametrize(
+    ("receiver_release", "accepted"),
+    [
+        ("bad", ["ai-sdlc-v3.0.2"]),
+        ("ai-sdlc-v3.0.2", []),
+        ("ai-sdlc-v3.0.2", ["bad"]),
+        ("ai-sdlc-v3.0.2", ["ai-sdlc-v3.0.1", "ai-sdlc-v3.0.1"]),
+        ("ai-sdlc-v3.0.2", ["ai-sdlc-v3.0.1"]),
+    ],
+)
+def test_receiver_compatibility_policy_fails_closed(
+    tmp_path, receiver_release, accepted,
+):
+    with pytest.raises(ReceiverError, match="compatibility policy"):
+        load_receiver_compatibility(
+            write_receiver_compatibility_policy(
+                tmp_path, receiver_release, accepted
+            )
+        )
 
 
 def test_github_journal_reads_every_slurped_comment_page(monkeypatch, tmp_path):
