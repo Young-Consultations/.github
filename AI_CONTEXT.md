@@ -330,6 +330,16 @@ must:
 Legacy-looking artifacts are not automatically deleted; each disposition is
 decided and justified during the relevant implementation task.
 
+For the 3.0.0 cutover, Runtime Preflight must verify the source
+projector's operational sender allowlist, not only the existence of its
+repository variable. `portfolio-tasks` variable `PORTFOLIO_RESULT_SENDERS`
+must exactly match the immutable `trusted_result_authors` set
+(`ai-sdlc-result-writer[bot]` for this candidate) before cost-bearing REAL
+execution. Because published 2.4.5 still uses the prior sender, perform this
+variable cutover only after new 2.4.5 implementation dispatch is stopped and
+before deployed 3.0.0 preflight/REAL acceptance. Organization issue #89 tracks
+the pre-publication gap that led to this invariant.
+
 ## Known gaps or conflicts
 
 - Live verification of the published 2.3.1 registry found that the
