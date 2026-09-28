@@ -118,7 +118,7 @@ Before the human approval action, the acceptance workflow shall fail closed unle
 
 The organization REAL preflight itself performs no Codex invocation, branch creation, commit, push, PR creation, result forwarding, source mutation, merge, release, deployment, settings change, or production operation. After dispatch and before any cost-bearing Codex invocation, the selected target must run the control-plane-owned result-credential capability preflight. That bounded preflight creates and deletes one marker comment on the source issue to prove issue-write/cleanup access and GitHub-authored identity, then emits the dedicated no-op repository-dispatch event to prove forwarding access. No probe comment may remain afterward.
 
-### 2.4.5 evidence and 3.0.0 release/target coordination
+### 2.4.5 evidence and 3.0.1 control-plane / 3.0.0 target coordination
 
 The 2.4.5 coordination sequence is complete:
 
