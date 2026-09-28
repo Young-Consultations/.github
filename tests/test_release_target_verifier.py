@@ -76,6 +76,7 @@ def test_exact_missing_manifest_tag_uses_reviewed_local_candidate(
         Path(manifest["result_receiver_workflow"]): b"workflow",
         Path(manifest["result_receiver_action"]): b"action",
         Path(manifest["result_trust_policy"]): b"trust",
+        Path(manifest["result_receiver_compatibility_policy"]): b"compatibility",
         Path("scripts/codex_result_receiver.py"): b"receiver",
         Path("contracts/execution-result.schema.json"): b"{}",
     }
@@ -105,13 +106,22 @@ def test_exact_missing_manifest_tag_uses_reviewed_local_candidate(
     monkeypatch.setattr(
         release_checker.checker,
         "verify_receiver_bundle_policy",
-        lambda source, trust: checks.extend((source, trust.decode())),
+        lambda source, trust, compatibility, receiver_release: checks.extend(
+            (source, trust.decode(), compatibility.decode(), receiver_release)
+        ),
     )
     assert (
         release_checker.verify_release_receiver_at_ref(manifest["tag"], "token")
         == "RESULT_WRITER_PRIVATE_KEY"
     )
-    assert checks == ["workflow", "action", "receiver", "trust"]
+    assert checks == [
+        "workflow",
+        "action",
+        "receiver",
+        "trust",
+        "compatibility",
+        manifest["tag"],
+    ]
 
 
 def test_missing_non_manifest_receiver_tag_still_fails_closed(monkeypatch: pytest.MonkeyPatch) -> None:
