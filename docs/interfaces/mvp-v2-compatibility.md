@@ -3,8 +3,8 @@
 **Normative status:** organization-owned baseline for consumer alignment.
 **Payload version:** `ai-sdlc-contract/v2` (v3 is out of scope).
 **Payload compatibility baseline:** `ai-sdlc-contract/v2`, fixture `2.3.0`.
-**Current published control-plane release:** `ai-sdlc-v2.4.5`.
-**Current corrective candidate:** `ai-sdlc-v3.0.0` (unpublished).
+**Current published control-plane compatibility release:** `ai-sdlc-v3.0.0`.
+**Current source-consumer pin:** `ai-sdlc-v2.4.5` pending controlled 3.0.0 cutover.
 
 Published `ai-sdlc-v2.3.2` remains immutable historical compatibility evidence
 at commit `5738ace3ee90dde11336f8f8099e64e5645f7139`; it is not the current
@@ -13,7 +13,7 @@ published in 2.4.0 remains part of the current 2.4.5 behavior: a target may
 return `draft-pr-created` on first successful delivery and `duplicate-reused`
 when the same managed draft is found on redelivery, subject to the stable-effect
 identity rules below. Later 2.4.x patch releases preserve the closed v2 schemas
-while repairing execution/publication boundaries. The 3.0.0 candidate also
+while repairing execution/publication boundaries. Release 3.0.0 also
 preserves payload `ai-sdlc-contract/v2`; its MAJOR classification is caused by
 the breaking reusable-workflow secret interface change from
 `CODEX_RESULT_TOKEN` to `RESULT_WRITER_PRIVATE_KEY`, not by a payload-schema
@@ -215,13 +215,17 @@ receiver binding.
 
 ## Deployment/governance gates
 
-### Current published 2.4.5 state and 3.0.0 corrective candidate
+### Published 3.0.0 state and current 2.4.5 source-consumer path
 
-The current published control-plane release is `ai-sdlc-v2.4.5`. Publication
-attestation, deployed Runtime Preflight, immutable REAL preflight, and the source
-consumer repin are complete. Fresh issue #154 verified the initial live route
-through human approval, routing, target execution, validation/tests, managed
-draft publication, receiver delivery, and source projection.
+The current published control-plane compatibility release is `ai-sdlc-v3.0.0`,
+attested to reviewed candidate merge commit
+`80889ca14b3bef4254d5212f7f801bf9877ddf72`. Publication is complete, but
+portfolio-tasks still consumes `ai-sdlc-v2.4.5` until the controlled operational
+cutover is complete. The 2.4.5 path previously passed deployed Runtime
+Preflight and immutable REAL preflight, and fresh issue #154 verified the
+initial live route through human approval, routing, target execution,
+validation/tests, managed draft publication, receiver delivery, and source
+projection.
 
 The full REAL acceptance decision is **not yet complete** because the required
 equivalent redelivery/idempotency exercise remains outstanding under
@@ -235,14 +239,16 @@ disabled when no separately reviewed safe rollback is available.
 
 REAL issue #156 proved target-side managed-draft reuse but exposed control-plane
 defect #83: receiver journal evidence was written by a principal outside the
-immutable result-author allowlist and was therefore invisible on redelivery. The
-unpublished 3.0.0 candidate binds the result path to
-`ai-sdlc-result-writer[bot]`, requires App capability proof before Codex, and
-mints a fresh App installation token in the receiver after execution. The
-immutable `codex-adapter-v2.4.6` tag remains unused historical candidate
-evidence after issue #85 classified the required receiver-secret change as
-MAJOR. Full REAL acceptance remains blocked until 3.0.0 is published, adopted,
-and the same-delivery redelivery step passes.
+immutable result-author allowlist and was therefore invisible on redelivery.
+Published 3.0.0 binds the result path to `ai-sdlc-result-writer[bot]`, requires
+App capability proof before Codex, and mints a fresh App installation token in
+the receiver after execution. The immutable `codex-adapter-v2.4.6` tag remains
+unused historical candidate evidence after issue #85 classified the required
+receiver-secret change as MAJOR. Full REAL acceptance remains blocked until new
+2.4.5 implementation dispatch is stopped, `PORTFOLIO_RESULT_SENDERS` is cut
+over exactly to the immutable result-author set, deployed Runtime Preflight and
+immutable REAL preflight pass, portfolio-tasks adopts 3.0.0, and the
+same-delivery redelivery step passes.
 
 ### Historical 2.4.0 publication gates
 
