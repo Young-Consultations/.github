@@ -25,8 +25,9 @@ def test_sim_passes_without_real_effects(tmp_path: Path) -> None:
     assert e2e.run_sim(report, target_root) == []
     payload = json.loads(report.read_text(encoding="utf-8"))
     assert payload["test_id"] == "TC-MVP-E2E-001-SIM"
-    assert payload["published_baseline"] == "2.4.5"
+    assert payload["published_baseline"] == "3.0.0"
     assert payload["candidate_release"] == "3.0.1"
+    assert e2e.TARGET_RECEIVER_RELEASE == "3.0.0"
     assert payload["candidate_tag_published"] is False
     assert payload["execution_provider"] == "fake"
     assert payload["dispatch_provider"] == "fake-in-process-target"
