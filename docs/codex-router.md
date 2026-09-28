@@ -57,10 +57,12 @@ tokens are supported without calling the user-only `GET /user` endpoint. On
 redelivery, only an identical marker written by that same author is reused;
 untrusted lookalike comments are never admission authority.
 
-The published [2.4.5 release](releases/2.4.5.md) is the current
-control plane and is selected by the portfolio source consumer. Its immutable
-tag resolves to reviewed release commit
-`afe09d320268581bc83021cbfc80bf2a0f0bff91`.
+The published [3.0.0 release](releases/3.0.0.md) is the current
+control-plane compatibility release. Its immutable tag resolves to reviewed
+candidate merge commit
+`80889ca14b3bef4254d5212f7f801bf9877ddf72`. The portfolio source consumer
+still invokes the 2.4.5 router until the controlled operational cutover is
+completed.
 
 Release 2.4.5 selects `codex-adapter-v2.4.5` at
 `4f062ca73acfc3458f0d690bf1c7687bafd0a8eb` to repair the publication
@@ -71,10 +73,13 @@ draft PR with receiver/source projection accepted. Published 2.4.4 remains
 immutable historical evidence, not an execution-safe rollback for cost-bearing
 implementation.
 
-The unpublished 3.0.0 candidate binds the enabled consulting target to
+Release 3.0.0 binds the enabled consulting target to
 `codex-adapter-v3.0.0` and replaces the external receiver token secret with
-the dedicated App private-key interface. The current portfolio caller remains
-pinned to 2.4.5 until 3.0.0 publication and deployed gates complete.
+the dedicated App private-key interface. Publication is complete, but the
+current portfolio caller remains pinned to 2.4.5 until new 2.4.5 dispatch is
+stopped, `PORTFOLIO_RESULT_SENDERS` is changed exactly to
+`ai-sdlc-result-writer[bot]`, deployed Runtime Preflight and immutable REAL
+preflight pass, and the repository-local consumer pin advances to 3.0.0.
 
 ## Registry changes
 

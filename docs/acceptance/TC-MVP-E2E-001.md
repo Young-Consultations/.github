@@ -2,13 +2,13 @@
 
 **Status:** Approved next-MVP acceptance design
 **Owner:** `Young-Consultations/.github`
-**Published baseline:** `ai-sdlc-v2.4.5` / `ai-sdlc-contract/v2`
+**Published baseline:** `ai-sdlc-v3.0.0` / `ai-sdlc-contract/v2`
 **Current live acceptance state:** fresh REAL issue #154 completed successfully on 2.4.5; REAL #156 exposed result-writer identity defect #83 during explicit redelivery/idempotency acceptance; corrective 3.0.0 acceptance remains pending
 **Initial enabled target:** `Young-Consultations/consulting-playbook`
 
 > **2.4.5 completion addendum:** REAL issue #151 exposed the 2.4.4 target publication-transport defect after successful Codex execution. The immutable repair is `codex-adapter-v2.4.5` (`4f062ca73acfc3458f0d690bf1c7687bafd0a8eb`) with conformance report SHA256 `8a7e3479a8768050b7621cec4d7663d8ab60d266291cb2d1027886200799c2fc`. Control-plane release `ai-sdlc-v2.4.5` resolves to `afe09d320268581bc83021cbfc80bf2a0f0bff91`; publication attestation merged, deployed Runtime Preflight run 36277959203 and immutable REAL preflight run 36278028013 passed, portfolio-tasks advanced to 2.4.5, and fresh issue #154 completed the live path through target run 36279165335 and managed draft PR #66. See [2.4.5 release procedure](../releases/2.4.5.md).
 
-> **3.0.0 corrective candidate addendum:** REAL issue #156 reused the same managed draft without a second Codex execution but exposed #83: the deployed result writer could not authenticate its own durable receiver journal evidence. The corrected target is immutable `codex-adapter-v3.0.0` at `0fa11c078b248ea3201f0aa0f2912fce299a7766`, with conformance adapter revision `sha256:dc1c7706a6edfb430117999472c84defec27e498b91328c0090ea662b8209ab8` and report SHA256 `16333cad6ab38c0a799853a0ab32795525d026f98562982b697492f4b2f6ac91`. The future 3.0.0 control plane binds result trust to `ai-sdlc-result-writer[bot]`, changes the required receiver secret from `CODEX_RESULT_TOKEN` to `RESULT_WRITER_PRIVATE_KEY`, and preserves payload `ai-sdlc-contract/v2`. Issue #85 established that this workflow-secret interface change is MAJOR. See [3.0.0 release procedure](../releases/3.0.0.md).
+> **3.0.0 publication addendum:** REAL issue #156 reused the same managed draft without a second Codex execution but exposed #83: the deployed result writer could not authenticate its own durable receiver journal evidence. The corrected target is immutable `codex-adapter-v3.0.0` at `0fa11c078b248ea3201f0aa0f2912fce299a7766`, with conformance adapter revision `sha256:dc1c7706a6edfb430117999472c84defec27e498b91328c0090ea662b8209ab8` and report SHA256 `16333cad6ab38c0a799853a0ab32795525d026f98562982b697492f4b2f6ac91`. The published `ai-sdlc-v3.0.0` tag resolves to reviewed candidate merge commit `80889ca14b3bef4254d5212f7f801bf9877ddf72`. The 3.0.0 control plane binds result trust to `ai-sdlc-result-writer[bot]`, changes the required receiver secret from `CODEX_RESULT_TOKEN` to `RESULT_WRITER_PRIVATE_KEY`, and preserves payload `ai-sdlc-contract/v2`. Issue #85 established that this workflow-secret interface change is MAJOR. Publication does not yet mean live source adoption: portfolio-tasks remains on 2.4.5 until the sender allowlist, deployed preflights, and consumer pin are advanced. See [3.0.0 release procedure](../releases/3.0.0.md).
 
 ## Purpose
 
@@ -60,18 +60,18 @@ The SIM harness shall:
 3. run the exact target-owned adapter from that immutable commit;
 4. inject deterministic fake Codex and publication effects at the target's existing effect/provider seam;
 5. preserve canonical `execution-input/v2` and `execution-result/v2` semantics;
-6. pass target-produced results through the candidate organization receiver implementation with an in-memory journal/forwarding effect seam;
+6. pass target-produced results through the published 3.0.0 organization receiver implementation with an in-memory journal/forwarding effect seam;
 7. exercise successful implement behavior, managed-draft reuse, equivalent `draft-pr-created -> duplicate-reused` receiver no-op behavior, and conflicting duplicate-result rejection;
 8. assert zero real Codex, branch, commit, push, PR, merge, release, deployment, production, or secret-output effects;
 9. emit machine-readable release-comparison evidence for the 3.0.0 validation
    harness with `published_baseline: 2.4.5` and
    `candidate_release: 3.0.0`, records the exact target adapter identity,
    keeps `real_acceptance_satisfied: false`, and records that the 3.0.0
-   control-plane tag is not yet published.
+   control-plane tag is published.
 
 For retry evidence, `duplicate-reused` is accepted without another source projection only when it describes the same stable managed-draft effect as the prior successful result. A different branch, pull request, validation/test outcome, failure category, or any other non-approved result transition remains ambiguous and fails closed.
 
-SIM may run on pull requests and by manual dispatch. It is candidate evidence, not production-readiness evidence, and cannot substitute for the live acceptance run.
+SIM may run on pull requests and by manual dispatch. It is deterministic compatibility evidence, not production-readiness evidence, and cannot substitute for the live acceptance run.
 
 ## TC-MVP-E2E-001-REAL
 
@@ -129,10 +129,7 @@ remaining acceptance exercise. REAL issue #156 subsequently proved target-side
 managed-draft reuse but exposed .github defect #83: the deployed result
 credential principal did not match the immutable trusted result-writer policy,
 so equivalent redelivery was forwarded again and quarantined by the source.
-Therefore 2.4.5 remains published and **initial-live-path verified**, not fully
-REAL-accepted. The next REAL attempt is blocked until the reviewed 3.0.0
-control-plane candidate is tagged and attested, deployed Runtime Preflight and
-immutable REAL preflight pass, and portfolio-tasks adopts 3.0.0.
+Therefore 2.4.5 remains the currently consumed source path and is **initial-live-path verified**, not fully REAL-accepted. The 3.0.0 control plane is now published and attested, but the next REAL attempt remains blocked until new 2.4.5 implementation dispatch is stopped, `PORTFOLIO_RESULT_SENDERS` is cut over exactly to `ai-sdlc-result-writer[bot]`, deployed Runtime Preflight and immutable REAL preflight pass, and portfolio-tasks adopts 3.0.0.
 
 ### REAL execution procedure
 
@@ -178,7 +175,7 @@ Sensitive values and issue content not required for audit must be omitted or red
 
 ## Acceptance decision
 
-`TC-MVP-E2E-001-SIM` passes only when its deterministic candidate evidence is green, the exact immutable target adapter and candidate receiver semantics were exercised, the equivalent retry produces no second visible effect, and every prohibited real-effect counter is zero.
+`TC-MVP-E2E-001-SIM` passes only when its deterministic compatibility evidence is green, the exact immutable target adapter and published receiver semantics were exercised, the equivalent retry produces no second visible effect, and every prohibited real-effect counter is zero.
 
 `TC-MVP-E2E-001-REAL` passes only after the corrective receiver is in a published immutable compatibility release, the selected target is immutably pinned to it, and the deliberate human-triggered live run completes with one correlated managed draft PR, one canonical source projection, and successful equivalent retry/idempotency evidence.
 
