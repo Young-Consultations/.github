@@ -25,10 +25,10 @@ def test_sim_passes_without_real_effects(tmp_path: Path) -> None:
     assert e2e.run_sim(report, target_root) == []
     payload = json.loads(report.read_text(encoding="utf-8"))
     assert payload["test_id"] == "TC-MVP-E2E-001-SIM"
-    assert payload["published_baseline"] == "3.0.0"
-    assert payload["candidate_release"] == "3.0.1"
-    assert e2e.TARGET_RECEIVER_RELEASE == "3.0.0"
-    assert payload["candidate_tag_published"] is True
+    assert payload["published_baseline"] == "3.0.1"
+    assert payload["candidate_release"] == "3.0.2"
+    assert e2e.TARGET_RECEIVER_RELEASE == "3.0.2"
+    assert payload["candidate_tag_published"] is False
     assert payload["execution_provider"] == "fake"
     assert payload["dispatch_provider"] == "fake-in-process-target"
     assert payload["target"] == e2e.REAL_TARGET
@@ -63,16 +63,16 @@ def test_sim_passes_without_real_effects(tmp_path: Path) -> None:
     assert payload["failures"] == []
 
 
-def test_control_plane_patch_reuses_reviewed_target_receiver_pin() -> None:
+def test_control_plane_patch_requires_matching_candidate_receiver_pin() -> None:
     target_root = _target_root()
-    assert e2e.TARGET_RECEIVER_RELEASE == "3.0.0"
+    assert e2e.TARGET_RECEIVER_RELEASE == "3.0.2"
     assert e2e._target_receiver_pin_errors(target_root) == []
 
 
 def test_real_preflight_workflow_uses_current_control_plane_release_tag() -> None:
     source = Path(".github/workflows/tc-mvp-e2e-001.yml").read_text(encoding="utf-8")
-    assert "ref: refs/tags/ai-sdlc-v3.0.1" in source
-    assert "immutable ai-sdlc-v3.0.1 evidence" in source
+    assert "ref: refs/tags/ai-sdlc-v3.0.2" in source
+    assert "immutable ai-sdlc-v3.0.2 evidence" in source
 
 
 def test_target_identity_mismatch_fails_before_adapter_import(
@@ -119,7 +119,7 @@ def test_publication_identity_compares_tag_with_attested_commit(
     actual = "0" * 40
     monkeypatch.setattr(e2e, "_git_output", lambda args, cwd=e2e.ROOT: (actual, None))
     assert e2e._control_plane_release_identity_errors() == [
-        f"published tag ai-sdlc-v3.0.1 resolves to {actual}, not attested commit {expected}"
+        f"published tag ai-sdlc-v3.0.2 resolves to {actual}, not attested commit {expected}"
     ]
 
 
