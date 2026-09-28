@@ -187,14 +187,19 @@ as REAL acceptance.
 Historical compatibility evidence remains immutable. The 2.3.2 compatibility
 unit at commit `5738ace3ee90dde11336f8f8099e64e5645f7139` and the 2.4.0 receiver
 retry correction explain earlier contract evolution, but they are not the
-current control-plane release. The current published control-plane release is
-`ai-sdlc-v2.4.5`, which preserves `ai-sdlc-contract/v2` and the resolved
-idempotent `draft-pr-created -> duplicate-reused` receiver semantics.
+current control-plane release. The current published control-plane compatibility
+release is `ai-sdlc-v3.0.0` at reviewed candidate commit
+`80889ca14b3bef4254d5212f7f801bf9877ddf72`. It preserves
+`ai-sdlc-contract/v2` and the resolved idempotent
+`draft-pr-created -> duplicate-reused` receiver semantics while changing the
+required result-writer credential interface to the dedicated GitHub App.
 
 Historical 2.4.3 replacement evidence remains quarantined as incident history.
-Do not infer current readiness, rollback safety, or activation from those older
-tags. Current release and acceptance evidence is recorded in the 2.4.5 section
-below; terminal delivery identities from failed REAL issues remain non-reusable.
+Do not infer current readiness, rollback safety, or activation from older tags.
+Publication and live consumption are separate: portfolio-tasks still consumes
+2.4.5 until the controlled 3.0.0 sender-allowlist, deployed-preflight, and
+consumer-pin cutover completes. Terminal delivery identities from failed REAL
+issues remain non-reusable.
 
 Explicitly excluded are exactly-once transport, autonomous approval, automatic
 merge, release or deployment automation authority, production operation,
@@ -247,12 +252,13 @@ git diff --check
 ```
 
 `python scripts/validate_release.py` verifies structural release coherence.
-Published production remains `ai-sdlc-v2.4.5` at reviewed commit
-`afe09d320268581bc83021cbfc80bf2a0f0bff91`, and portfolio-tasks still
-selects 2.4.5. On the current release-candidate branch, the manifest describes
-unpublished `ai-sdlc-v3.0.0` with `tag_published: false` and
-`tag_commit_sha: null`. Candidate state must not be described as deployed or
-accepted before the separate tag/attestation/preflight/consumer gates complete.
+Published control-plane compatibility state is `ai-sdlc-v3.0.0` at reviewed
+candidate commit `80889ca14b3bef4254d5212f7f801bf9877ddf72`; the manifest
+records `tag_published: true` with that exact `tag_commit_sha`. The source
+consumer still selects 2.4.5. Do not describe 3.0.0 as operationally deployed,
+source-adopted, or REAL-accepted until the separate sender-allowlist cutover,
+deployed Runtime Preflight, immutable REAL preflight, consumer PR, and live
+redelivery gates complete.
 
 During any future pre-publication candidate window,
 `verify_release_target_workflows.py` delegates to normal remote verification
@@ -395,7 +401,7 @@ is edited. Keep historical behavior in Git history, release records, or ADRs;
 do not maintain multiple active policies or compatibility paths in this index.
 
 
-## 3.0.0 result-writer identity candidate
+## 3.0.0 published result-writer identity release
 
 REAL issue #156 proved target-side managed-draft reuse without a second Codex
 execution but exposed control-plane defect #83: the deployed result credential
@@ -430,16 +436,22 @@ change under the approved release policy. The immutable
 and no matching `ai-sdlc-v2.4.6` control-plane release is authorized. The
 payload contract remains `ai-sdlc-contract/v2`.
 
-Do not close #83 or claim full REAL acceptance until 3.0.0 is published and
-attested, deployed Runtime Preflight and immutable REAL preflight pass,
-portfolio-tasks adopts the release, and controlled same-delivery redelivery
-proves one managed draft, no second Codex execution, one trusted receiver
-effect, and one source projection.
+The `ai-sdlc-v3.0.0` tag is now published at
+`80889ca14b3bef4254d5212f7f801bf9877ddf72`. Publication does not resolve
+#83. Before cost-bearing REAL execution, stop new 2.4.5 implementation
+dispatch, set portfolio-tasks `PORTFOLIO_RESULT_SENDERS` exactly to
+`ai-sdlc-result-writer[bot]`, and require deployed Runtime Preflight to close
+the operational gap tracked by #89. Then immutable REAL preflight,
+portfolio-tasks consumer adoption, and controlled same-delivery redelivery must
+prove one managed draft, no second Codex execution, one trusted receiver effect,
+and one source projection before #83 / DEF-0064 can close.
 
-## 2.4.5 current release and acceptance state
+## 2.4.5 current source-consumer and acceptance state
 
-The current published control-plane release is `ai-sdlc-v2.4.5`, resolving to
-reviewed release commit `afe09d320268581bc83021cbfc80bf2a0f0bff91`.
+The currently consumed portfolio source path remains `ai-sdlc-v2.4.5`,
+resolving to reviewed release commit
+`afe09d320268581bc83021cbfc80bf2a0f0bff91`. The newer 3.0.0 compatibility
+release is published but not yet adopted by portfolio-tasks.
 Publication-attestation PR #79 merged at
 `75815fdc83ebd28f53e483b6de71e0107e74356f`. The approved release policy
 accepts lightweight or annotated Git tags; immutable release identity is the tag
