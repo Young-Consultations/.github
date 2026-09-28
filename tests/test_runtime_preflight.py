@@ -402,10 +402,13 @@ def test_missing_audit_token_reports_failed_credential_boundary(
     monkeypatch, capsys,
 ):
     monkeypatch.delenv("PREFLIGHT_AUDIT_TOKEN", raising=False)
+    manifest = json.loads(
+        Path("release/release-manifest.json").read_text(encoding="utf-8")
+    )
     monkeypatch.setattr(
         runtime_preflight,
         "remote_tag_commit",
-        lambda tag: "80889ca14b3bef4254d5212f7f801bf9877ddf72",
+        lambda tag: manifest["tag_commit_sha"],
     )
     monkeypatch.setattr("sys.argv", ["runtime_preflight.py", "--candidate"])
 
