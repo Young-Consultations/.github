@@ -160,9 +160,7 @@ Release 3.0.0 repairs that identity boundary using the dedicated GitHub App and
 requires `PORTFOLIO_RESULT_SENDERS` to exactly match the immutable trusted
 result-author set before cost-bearing REAL execution. Issue #89 / consulting
 DEF-0069 remains open until deployed Runtime Preflight proves that live
-configuration. Full REAL acceptance remains pending until 3.0.0 is preflighted,
-adopted by the source consumer, and same-delivery redelivery produces one
-receiver/source projection.
+configuration. Full REAL acceptance remains pending until 3.0.1 is published and attested, deployed Runtime Preflight and immutable REAL preflight pass, the source consumer adopts 3.0.1, and same-delivery redelivery produces one receiver/source projection. The immutable `codex-adapter-v3.0.0` target remains unchanged and retains its reviewed 3.0.0 receiver pin.
 
 REAL issue #151 proved that published 2.4.4 is not an execution-safe rollback
 for cost-bearing implementation. It may remain immutable historical predecessor
