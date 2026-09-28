@@ -123,6 +123,17 @@ required for a given registered repository.
 
 ## Current compatibility update
 
+An unpublished `ai-sdlc-v3.0.2` PATCH candidate is in progress for organization
+issue #100 / consulting-playbook DEF-0073. It replaces accidental equality
+between the admission's control-plane release and the receiver bundle release
+with an immutable receiver-owned compatibility allowlist. The candidate
+explicitly accepts 3.0.1 admissions so the already-admitted #159 delivery can
+be recovered without inventing a new identity, while rejecting unreviewed
+release combinations. The candidate is not release-ready until
+consulting-playbook publishes a new immutable target adapter that pins the
+3.0.2 receiver and complete zero-effect conformance is rebound in the registry.
+See [3.0.2 candidate procedure](releases/3.0.2.md).
+
 Release 3.0.1 is the current published PATCH compatibility release for
 organization issue #93, attested to reviewed PR #94 merge commit
 `a98730deb729cc35dbd4d699395a87facb3ec78e`. Deployed 3.0.0 Runtime
