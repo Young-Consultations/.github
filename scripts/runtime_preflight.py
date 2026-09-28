@@ -75,6 +75,43 @@ def named_values(
     return {str(item.get("name")) for item in values if isinstance(item, dict)}
 
 
+def organization_secret_selected_for_repository(
+    repository: str,
+    name: str,
+    audit_token: str,
+) -> bool:
+    owner, separator, repository_name = repository.partition("/")
+    if not separator or not owner or not repository_name:
+        raise ValueError(f"invalid repository identity {repository!r}")
+    encoded_name = quote(name, safe="")
+    metadata = api_one(
+        f"orgs/{owner}/actions/secrets/{encoded_name}",
+        token=audit_token,
+    )
+    if (
+        not isinstance(metadata, dict)
+        or metadata.get("name") != name
+        or not isinstance(metadata.get("visibility"), str)
+    ):
+        raise ValueError(
+            f"organization secret {name} returned an invalid metadata response"
+        )
+    if metadata["visibility"] != "selected":
+        return False
+    rows = api(
+        f"orgs/{owner}/actions/secrets/{encoded_name}/repositories?per_page=100",
+        token=audit_token,
+    )
+    selected = {
+        str(item.get("full_name")).casefold()
+        for row in rows
+        if isinstance(row, dict)
+        for item in row.get("repositories", [])
+        if isinstance(item, dict) and isinstance(item.get("full_name"), str)
+    }
+    return repository.casefold() in selected
+
+
 def repository_variable_value(
     repository: str,
     name: str,
@@ -160,8 +197,32 @@ def audit_credentials(roles: dict[str, Any], audit_token: str) -> list[str]:
                 failures.append(f"credentials: cannot inspect {label}: {exc}")
                 continue
             for name in values.get("secrets", {}):
-                if name not in actual_secrets:
+                if name in actual_secrets:
+                    continue
+                if environment is not None:
                     failures.append(f"credentials: {label} secret {name} is missing")
+                    continue
+                try:
+                    selected_org_secret = organization_secret_selected_for_repository(
+                        repository,
+                        name,
+                        audit_token,
+                    )
+                except (
+                    subprocess.CalledProcessError,
+                    json.JSONDecodeError,
+                    ValueError,
+                ) as exc:
+                    failures.append(
+                        f"credentials: cannot verify {label} secret {name} "
+                        f"through organization scope: {exc}"
+                    )
+                    continue
+                if not selected_org_secret:
+                    failures.append(
+                        f"credentials: {label} secret {name} is missing or is not "
+                        "an organization secret restricted to this repository"
+                    )
             for name in values.get("variables", {}):
                 if name not in actual_variables:
                     failures.append(f"credentials: {label} variable {name} is missing")

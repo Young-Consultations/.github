@@ -3,13 +3,24 @@
 **Status:** Approved next-MVP acceptance design
 **Owner:** `Young-Consultations/.github`
 **Published baseline:** `ai-sdlc-v3.0.0` / `ai-sdlc-contract/v2`
-**Current live acceptance state:** fresh REAL issue #154 completed successfully on 2.4.5; REAL #156 exposed result-writer identity defect #83 during explicit redelivery/idempotency acceptance; corrective 3.0.0 acceptance remains pending
+**Current live acceptance state:** fresh REAL issue #154 completed successfully on 2.4.5; REAL #156 exposed result-writer identity defect #83 during explicit redelivery/idempotency acceptance; 3.0.0 published, but deployed preflight exposed organization-secret audit defect #93; corrective 3.0.1 acceptance is pending
 **Initial enabled target:** `Young-Consultations/consulting-playbook`
 
 > **2.4.5 completion addendum:** REAL issue #151 exposed the 2.4.4 target publication-transport defect after successful Codex execution. The immutable repair is `codex-adapter-v2.4.5` (`4f062ca73acfc3458f0d690bf1c7687bafd0a8eb`) with conformance report SHA256 `8a7e3479a8768050b7621cec4d7663d8ab60d266291cb2d1027886200799c2fc`. Control-plane release `ai-sdlc-v2.4.5` resolves to `afe09d320268581bc83021cbfc80bf2a0f0bff91`; publication attestation merged, deployed Runtime Preflight run 36277959203 and immutable REAL preflight run 36278028013 passed, portfolio-tasks advanced to 2.4.5, and fresh issue #154 completed the live path through target run 36279165335 and managed draft PR #66. See [2.4.5 release procedure](../releases/2.4.5.md).
 
 > **3.0.0 publication addendum:** REAL issue #156 reused the same managed draft without a second Codex execution but exposed #83: the deployed result writer could not authenticate its own durable receiver journal evidence. The corrected target is immutable `codex-adapter-v3.0.0` at `0fa11c078b248ea3201f0aa0f2912fce299a7766`, with conformance adapter revision `sha256:dc1c7706a6edfb430117999472c84defec27e498b91328c0090ea662b8209ab8` and report SHA256 `16333cad6ab38c0a799853a0ab32795525d026f98562982b697492f4b2f6ac91`. The published `ai-sdlc-v3.0.0` tag resolves to reviewed candidate merge commit `80889ca14b3bef4254d5212f7f801bf9877ddf72`. The 3.0.0 control plane binds result trust to `ai-sdlc-result-writer[bot]`, changes the required receiver secret from `CODEX_RESULT_TOKEN` to `RESULT_WRITER_PRIVATE_KEY`, and preserves payload `ai-sdlc-contract/v2`. Issue #85 established that this workflow-secret interface change is MAJOR. Publication does not yet mean live source adoption: portfolio-tasks remains on 2.4.5 until the sender allowlist, deployed preflights, and consumer pin are advanced. See [3.0.0 release procedure](../releases/3.0.0.md).
 
+> **3.0.1 preflight-repair addendum:** Deployed 3.0.0 Runtime Preflight run
+> 36370005352 passed activation, publication, and remote-tag boundaries and
+> reported no source-sender mismatch, but falsely reported
+> `AI_SDLC_RESULT_WRITER_PRIVATE_KEY` missing because the audit inspected only
+> repository/environment secret metadata. The key is intentionally an
+> organization Actions secret restricted to consulting-playbook. Candidate
+> `ai-sdlc-v3.0.1` repairs only that metadata scope check and reuses immutable
+> `codex-adapter-v3.0.0`. No new REAL execution is allowed until 3.0.1 is
+> published, attested, and its deployed Runtime Preflight passes. See
+> [3.0.1 release procedure](../releases/3.0.1.md).
+>
 ## Purpose
 
 > **Historical 2.4.3 operating addendum:** At that stage, the 2.4.2 repair release was the published
@@ -60,14 +71,14 @@ The SIM harness shall:
 3. run the exact target-owned adapter from that immutable commit;
 4. inject deterministic fake Codex and publication effects at the target's existing effect/provider seam;
 5. preserve canonical `execution-input/v2` and `execution-result/v2` semantics;
-6. pass target-produced results through the published 3.0.0 organization receiver implementation with an in-memory journal/forwarding effect seam;
+6. pass target-produced results through the 3.0.1 control-plane receiver implementation with an in-memory journal/forwarding effect seam while preserving the immutable target adapter's reviewed 3.0.0 receiver pin;
 7. exercise successful implement behavior, managed-draft reuse, equivalent `draft-pr-created -> duplicate-reused` receiver no-op behavior, and conflicting duplicate-result rejection;
 8. assert zero real Codex, branch, commit, push, PR, merge, release, deployment, production, or secret-output effects;
-9. emit machine-readable release-comparison evidence for the 3.0.0 validation
-   harness with `published_baseline: 2.4.5` and
-   `candidate_release: 3.0.0`, records the exact target adapter identity,
-   keeps `real_acceptance_satisfied: false`, and records that the 3.0.0
-   control-plane tag is published.
+9. emit machine-readable release-comparison evidence for the 3.0.1 validation
+   harness with `published_baseline: 3.0.0` and
+   `candidate_release: 3.0.1`, record the exact target adapter identity,
+   keep `real_acceptance_satisfied: false`, and record that the 3.0.1
+   control-plane tag remains unpublished until attestation.
 
 For retry evidence, `duplicate-reused` is accepted without another source projection only when it describes the same stable managed-draft effect as the prior successful result. A different branch, pull request, validation/test outcome, failure category, or any other non-approved result transition remains ambiguous and fails closed.
 
@@ -93,7 +104,7 @@ No alternate control-plane dispatch path is permitted.
 
 Before the human approval action, the acceptance workflow shall fail closed unless:
 
-- `ai-sdlc-v3.0.0` has been reviewed, published, and attested on `main`;
+- `ai-sdlc-v3.0.1` has been reviewed, published, and attested on `main`;
 - the published 2.4.4 tag remains unchanged as immutable historical evidence and is not treated as an execution-safe rollback for cost-bearing implementation;
 - `consulting-playbook` is the sole enabled target;
 - the registry identifies exact immutable `codex-adapter-v3.0.0` commit and
@@ -102,12 +113,12 @@ Before the human approval action, the acceptance workflow shall fail closed unle
 - the selected task is harmless, deterministic, documentation-only where permitted, and within target policy;
 - the intended publication boundary is draft-only;
 - required source, router, target, publication, and receiver credentials have been human-reviewed and are available through their existing owners;
-- `AI_SDLC_RESULT_WRITER_PRIVATE_KEY` is restricted to the enabled consulting target, the App is installed only on `portfolio-tasks`, and the 3.0.0 receiver accepts only `RESULT_WRITER_PRIVATE_KEY` to mint a fresh short-lived installation token;
+- `AI_SDLC_RESULT_WRITER_PRIVATE_KEY` is an organization Actions secret with `selected` visibility restricted to the enabled consulting target; Runtime Preflight proves that exact storage-scope binding without reading the value; the App is installed only on `portfolio-tasks`; and the immutable target continues to invoke the reviewed 3.0.0 receiver interface, which accepts only `RESULT_WRITER_PRIVATE_KEY` to mint a fresh short-lived installation token;
 - the result-delivery token authenticates as reviewed `ai-sdlc-result-writer[bot]`, distinct from every admission author; `portfolio-tasks` repository variable `PORTFOLIO_RESULT_SENDERS` exactly equals that immutable result-author allowlist; and the source reserves the credential-probe dispatch event for no-op capability verification.
 
 The organization REAL preflight itself performs no Codex invocation, branch creation, commit, push, PR creation, result forwarding, source mutation, merge, release, deployment, settings change, or production operation. After dispatch and before any cost-bearing Codex invocation, the selected target must run the control-plane-owned result-credential capability preflight. That bounded preflight creates and deletes one marker comment on the source issue to prove issue-write/cleanup access and GitHub-authored identity, then emits the dedicated no-op repository-dispatch event to prove forwarding access. No probe comment may remain afterward.
 
-### 2.4.5 evidence and 3.0.0 release/target coordination
+### 2.4.5 evidence and 3.0.1 control-plane / 3.0.0 target coordination
 
 The 2.4.5 coordination sequence is complete:
 
@@ -129,7 +140,7 @@ remaining acceptance exercise. REAL issue #156 subsequently proved target-side
 managed-draft reuse but exposed .github defect #83: the deployed result
 credential principal did not match the immutable trusted result-writer policy,
 so equivalent redelivery was forwarded again and quarantined by the source.
-Therefore 2.4.5 remains the currently consumed source path and is **initial-live-path verified**, not fully REAL-accepted. The 3.0.0 control plane is now published and attested, but the next REAL attempt remains blocked until new 2.4.5 implementation dispatch is stopped, `PORTFOLIO_RESULT_SENDERS` is cut over exactly to `ai-sdlc-result-writer[bot]`, deployed Runtime Preflight and immutable REAL preflight pass, and portfolio-tasks adopts 3.0.0.
+Therefore 2.4.5 remains the currently consumed source path and is **initial-live-path verified**, not fully REAL-accepted. The 3.0.0 control plane is published and attested, and the live sender allowlist is already cut over to `ai-sdlc-result-writer[bot]`. The next REAL attempt remains blocked until 3.0.1 is published and attested, deployed Runtime Preflight and immutable REAL preflight pass, and portfolio-tasks adopts 3.0.1. The immutable `codex-adapter-v3.0.0` target remains unchanged and retains its reviewed 3.0.0 receiver pin.
 
 ### REAL execution procedure
 
@@ -160,7 +171,7 @@ The acceptance record must preserve links or immutable identities for:
 
 - source issue and exact approved revision;
 - task ID, delivery ID, attempt identity where available, and correlation ID;
-- published corrective `ai-sdlc-v3.0.0` release identity and its attested tag commit;
+- published corrective `ai-sdlc-v3.0.1` control-plane identity and its attested tag commit, plus the immutable target's reviewed `ai-sdlc-v3.0.0` receiver pin;
 - enabled target and registered immutable adapter commit;
 - portfolio admission/router workflow run;
 - target workflow run;
@@ -177,6 +188,6 @@ Sensitive values and issue content not required for audit must be omitted or red
 
 `TC-MVP-E2E-001-SIM` passes only when its deterministic compatibility evidence is green, the exact immutable target adapter and published receiver semantics were exercised, the equivalent retry produces no second visible effect, and every prohibited real-effect counter is zero.
 
-`TC-MVP-E2E-001-REAL` passes only after the corrective receiver is in a published immutable compatibility release, the selected target is immutably pinned to it, and the deliberate human-triggered live run completes with one correlated managed draft PR, one canonical source projection, and successful equivalent retry/idempotency evidence.
+`TC-MVP-E2E-001-REAL` passes only after the corrective control-plane release is published and attested, the selected immutable target's reviewed receiver pin is proven compatible with that release, and the deliberate human-triggered live run completes with one correlated managed draft PR, one canonical source projection, and successful equivalent retry/idempotency evidence.
 
 The MVP must not be reported accepted based on SIM, an unpublished candidate, REAL preflight, dispatch acknowledgement, or draft-PR creation alone.

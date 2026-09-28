@@ -28,13 +28,15 @@ authorized.
 
 Publication is not the operational cutover. `portfolio-tasks` still selects
 2.4.5, whose initial live path was proven by issue #154. REAL #156 exposed the
-separate result-journal identity defect during redelivery. Before 3.0.0 may be
-used for another REAL execution, new 2.4.5 implementation dispatch must stop,
-`PORTFOLIO_RESULT_SENDERS` must be changed exactly to
-`ai-sdlc-result-writer[bot]`, deployed Runtime Preflight and immutable REAL
-preflight must pass, and the source consumer must advance through its own
-reviewed PR. Published 2.4.4 remains immutable historical evidence but is not an
+separate result-journal identity defect during redelivery. The sender allowlist has already been cut over to `ai-sdlc-result-writer[bot]`; before another REAL execution, 3.0.1 must be published and attested, deployed Runtime Preflight and immutable REAL preflight must pass, and the source consumer must advance to 3.0.1 through its own reviewed PR. The immutable `codex-adapter-v3.0.0` target remains unchanged and keeps its reviewed 3.0.0 receiver pin. Published 2.4.4 remains immutable historical evidence but is not an
 execution-safe rollback for cost-bearing implementation.
+
+The unpublished [`ai-sdlc-v3.0.1` candidate](docs/releases/3.0.1.md)
+repairs deployed Runtime Preflight's organization-secret metadata audit from
+issue #93. It reuses `codex-adapter-v3.0.0` and changes no runtime contract or
+target interface. Until 3.0.1 is published, preflighted, and adopted, do not
+approve a new 2.4.5 implementation task: the source result-sender allowlist has
+already been cut over to the GitHub App identity.
 
 ## AI-SDLC contract validation
 

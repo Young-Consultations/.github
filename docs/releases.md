@@ -123,6 +123,18 @@ required for a given registered repository.
 
 ## Current compatibility update
 
+Release 3.0.1 is the current unpublished PATCH candidate for organization
+issue #93. Deployed 3.0.0 Runtime Preflight run 36370005352 proved activation,
+publication, remote tag identity, and the live source sender allowlist, but
+falsely reported the App private key missing because the auditor checked only
+repository/environment secret metadata. The private key is intentionally an
+organization Actions secret restricted to consulting-playbook. 3.0.1 repairs
+that metadata audit without changing the reusable workflow interface, payload
+contract, target adapter, App identity, or registry semantics. Because the
+source sender allowlist has already been cut over while portfolio-tasks still
+pins 2.4.5, no new 2.4.5 implementation approval may be issued until the
+corrected control plane is published and adopted.
+
 The current published control-plane compatibility release is
 `ai-sdlc-v3.0.0`, attested to reviewed candidate merge commit
 `80889ca14b3bef4254d5212f7f801bf9877ddf72`. It preserves the closed
@@ -148,9 +160,7 @@ Release 3.0.0 repairs that identity boundary using the dedicated GitHub App and
 requires `PORTFOLIO_RESULT_SENDERS` to exactly match the immutable trusted
 result-author set before cost-bearing REAL execution. Issue #89 / consulting
 DEF-0069 remains open until deployed Runtime Preflight proves that live
-configuration. Full REAL acceptance remains pending until 3.0.0 is preflighted,
-adopted by the source consumer, and same-delivery redelivery produces one
-receiver/source projection.
+configuration. Full REAL acceptance remains pending until 3.0.1 is published and attested, deployed Runtime Preflight and immutable REAL preflight pass, the source consumer adopts 3.0.1, and same-delivery redelivery produces one receiver/source projection. The immutable `codex-adapter-v3.0.0` target remains unchanged and retains its reviewed 3.0.0 receiver pin.
 
 REAL issue #151 proved that published 2.4.4 is not an execution-safe rollback
 for cost-bearing implementation. It may remain immutable historical predecessor

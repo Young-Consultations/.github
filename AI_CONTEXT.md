@@ -175,8 +175,7 @@ without implementation evidence.
 `TC-MVP-E2E-001` is one acceptance architecture with two modes, not two
 execution paths. `TC-MVP-E2E-001-SIM` resolves and executes the exact immutable
 adapter of the sole enabled target through deterministic fake Codex/publication
-effects and passes target-produced results through the published 3.0.0 receiver
-logic using in-memory journal/forwarding effects. `TC-MVP-E2E-001-REAL` uses the
+effects and passes target-produced results through the current control-plane receiver logic using in-memory journal/forwarding effects. The 3.0.1 control-plane patch deliberately reuses immutable `codex-adapter-v3.0.0`, whose target workflow retains the reviewed 3.0.0 receiver pin. `TC-MVP-E2E-001-REAL` uses the
 existing source, router, target, receiver, and source-projection path after a
 non-mutating preflight. The REAL execution trigger remains the existing
 authorized-human `status:approved` action in `portfolio-tasks`; the control
@@ -196,9 +195,7 @@ required result-writer credential interface to the dedicated GitHub App.
 
 Historical 2.4.3 replacement evidence remains quarantined as incident history.
 Do not infer current readiness, rollback safety, or activation from older tags.
-Publication and live consumption are separate: portfolio-tasks still consumes
-2.4.5 until the controlled 3.0.0 sender-allowlist, deployed-preflight, and
-consumer-pin cutover completes. Terminal delivery identities from failed REAL
+Publication and live consumption are separate: portfolio-tasks still consumes 2.4.5. The sender allowlist is already cut over to the App-bot identity; the remaining path is publish/attest 3.0.1, pass deployed and immutable REAL preflight, then advance the consumer pin. Terminal delivery identities from failed REAL
 issues remain non-reusable.
 
 Explicitly excluded are exactly-once transport, autonomous approval, automatic
@@ -336,14 +333,14 @@ must:
 Legacy-looking artifacts are not automatically deleted; each disposition is
 decided and justified during the relevant implementation task.
 
-For the 3.0.0 cutover, Runtime Preflight must verify the source
+For the 3.x cutover, Runtime Preflight must verify the source
 projector's operational sender allowlist, not only the existence of its
 repository variable. `portfolio-tasks` variable `PORTFOLIO_RESULT_SENDERS`
 must exactly match the immutable `trusted_result_authors` set
 (`ai-sdlc-result-writer[bot]` for this release) before cost-bearing REAL
 execution. Because published 2.4.5 still uses the prior sender, perform this
 variable cutover only after new 2.4.5 implementation dispatch is stopped and
-before deployed 3.0.0 preflight/REAL acceptance. Organization issue #89 tracks
+before deployed corrective-release preflight/REAL acceptance. Organization issue #89 tracks
 the pre-publication gap that led to this invariant.
 
 ## Known gaps or conflicts
@@ -400,6 +397,30 @@ interface policy changes. Recheck every relative link and command whenever it
 is edited. Keep historical behavior in Git history, release records, or ADRs;
 do not maintain multiple active policies or compatibility paths in this index.
 
+
+## 3.0.1 Runtime Preflight organization-secret repair candidate
+
+Deployed 3.0.0 Runtime Preflight run 36370005352 failed closed before Codex
+because the auditor checked `AI_SDLC_RESULT_WRITER_PRIVATE_KEY` only through
+repository-secret metadata even though the reviewed deployment stores it as an
+organization Actions secret restricted to consulting-playbook. Organization
+issue #93 tracks this false-negative prerequisite defect.
+
+The resolved audit rule is storage-scope aware: repository/environment secrets
+use their native metadata endpoints; an organization secret can satisfy a
+repository role only when it belongs to the repository owner, uses
+`selected` visibility, and explicitly selects the exact repository. Secret
+values are never read. `PREFLIGHT_AUDIT_TOKEN` therefore needs organization
+Actions Secrets read metadata access in addition to its prior repository-level
+audit access.
+
+The corrective control-plane candidate is `ai-sdlc-v3.0.1`; it reuses
+immutable `codex-adapter-v3.0.0` because no target code or interface changes.
+Published `ai-sdlc-v3.0.0` remains immutable. The failed deployed preflight
+reported no `PORTFOLIO_RESULT_SENDERS` mismatch, so the live sender binding
+has already been cut over to `ai-sdlc-result-writer[bot]`. Until 3.0.1 is
+published, preflighted, and adopted by portfolio-tasks, no new 2.4.5
+implementation approval may be issued.
 
 ## 3.0.0 published result-writer identity release
 

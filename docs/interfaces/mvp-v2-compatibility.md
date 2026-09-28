@@ -4,7 +4,14 @@
 **Payload version:** `ai-sdlc-contract/v2` (v3 is out of scope).
 **Payload compatibility baseline:** `ai-sdlc-contract/v2`, fixture `2.3.0`.
 **Current published control-plane compatibility release:** `ai-sdlc-v3.0.0`.
-**Current source-consumer pin:** `ai-sdlc-v2.4.5` pending controlled 3.0.0 cutover.
+**Current source-consumer pin:** `ai-sdlc-v2.4.5` pending corrected 3.0.1 cutover.
+
+The unpublished `ai-sdlc-v3.0.1` PATCH candidate changes only deployed
+Runtime Preflight credential-metadata auditing so the approved
+organization-scoped `AI_SDLC_RESULT_WRITER_PRIVATE_KEY` can be verified at its
+actual storage scope. It does not change the v3 reusable receiver interface,
+payload contract, target adapter, trusted result-writer identity, or source
+projection semantics.
 
 Published `ai-sdlc-v2.3.2` remains immutable historical compatibility evidence
 at commit `5738ace3ee90dde11336f8f8099e64e5645f7139`; it is not the current
@@ -245,10 +252,12 @@ App capability proof before Codex, and mints a fresh App installation token in
 the receiver after execution. The immutable `codex-adapter-v2.4.6` tag remains
 unused historical candidate evidence after issue #85 classified the required
 receiver-secret change as MAJOR. Full REAL acceptance remains blocked until new
-2.4.5 implementation dispatch is stopped, `PORTFOLIO_RESULT_SENDERS` is cut
-over exactly to the immutable result-author set, deployed Runtime Preflight and
-immutable REAL preflight pass, portfolio-tasks adopts 3.0.0, and the
-same-delivery redelivery step passes.
+2.4.5 implementation dispatch is stopped, `PORTFOLIO_RESULT_SENDERS` remains
+bound exactly to the immutable result-author set, corrective 3.0.1 is published
+and attested, deployed Runtime Preflight and immutable REAL preflight pass,
+portfolio-tasks adopts `ai-sdlc-v3.0.1`, and the same-delivery redelivery step
+passes. The immutable `codex-adapter-v3.0.0` target remains unchanged and
+retains its reviewed `ai-sdlc-v3.0.0` receiver pin.
 
 ### Historical 2.4.0 publication gates
 

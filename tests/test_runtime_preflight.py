@@ -10,19 +10,17 @@ def test_current_runtime_record_is_generated_from_authoritative_state():
     path = Path("release/current-runtime.json")
     assert path.read_text(encoding="utf-8") == generate_current_runtime.render()
     value = json.loads(path.read_text(encoding="utf-8"))
-    assert value["release_state"] == "published"
-    assert value["control_plane"]["tag"] == "ai-sdlc-v3.0.0"
-    assert value["control_plane"]["tag_commit_sha"] == (
-        "80889ca14b3bef4254d5212f7f801bf9877ddf72"
-    )
+    assert value["release_state"] == "candidate"
+    assert value["control_plane"]["tag"] == "ai-sdlc-v3.0.1"
+    assert value["control_plane"]["tag_commit_sha"] is None
     assert value["activation"]["enabled_targets"] == [
         "Young-Consultations/consulting-playbook"
     ]
 
 
-def test_offline_published_preflight_is_safe_and_passes_for_sim():
+def test_offline_candidate_preflight_is_safe_and_passes_for_sim():
     result = subprocess.run(
-        ["python3", "scripts/runtime_preflight.py", "--offline"],
+        ["python3", "scripts/runtime_preflight.py", "--offline", "--candidate"],
         check=False,
         text=True,
         capture_output=True,
@@ -31,10 +29,10 @@ def test_offline_published_preflight_is_safe_and_passes_for_sim():
     report = json.loads(result.stdout)
     assert report["status"] == "PASS"
     assert report["next_action"] == "run SIM"
-    assert report["release_state"] == "published"
+    assert report["release_state"] == "candidate"
     assert report["checks"][1] == {
         "boundary": "release-publication",
-        "status": "PASS",
+        "status": "CANDIDATE",
     }
 
 
@@ -95,6 +93,174 @@ def test_credential_metadata_uses_only_the_audit_token(monkeypatch):
         "endpoint": "repos/org/repo/actions/secrets?per_page=100",
         "token": "audit-token",
     }
+
+
+def test_selected_organization_secret_verifies_exact_repository(monkeypatch):
+    observed = []
+
+    def fake_api_one(endpoint, *, token=None):
+        observed.append((endpoint, token))
+        return {
+            "name": "AI_SDLC_RESULT_WRITER_PRIVATE_KEY",
+            "visibility": "selected",
+        }
+
+    def fake_api(endpoint, *, token=None):
+        observed.append((endpoint, token))
+        return [{
+            "repositories": [
+                {"full_name": "Young-Consultations/consulting-playbook"}
+            ]
+        }]
+
+    monkeypatch.setattr(runtime_preflight, "api_one", fake_api_one)
+    monkeypatch.setattr(runtime_preflight, "api", fake_api)
+    assert runtime_preflight.organization_secret_selected_for_repository(
+        "Young-Consultations/consulting-playbook",
+        "AI_SDLC_RESULT_WRITER_PRIVATE_KEY",
+        "audit-token",
+    )
+    assert observed == [
+        (
+            "orgs/Young-Consultations/actions/secrets/"
+            "AI_SDLC_RESULT_WRITER_PRIVATE_KEY",
+            "audit-token",
+        ),
+        (
+            "orgs/Young-Consultations/actions/secrets/"
+            "AI_SDLC_RESULT_WRITER_PRIVATE_KEY/repositories?per_page=100",
+            "audit-token",
+        ),
+    ]
+
+
+def test_selected_organization_secret_rejects_different_repository(monkeypatch):
+    monkeypatch.setattr(
+        runtime_preflight,
+        "api_one",
+        lambda *args, **kwargs: {
+            "name": "AI_SDLC_RESULT_WRITER_PRIVATE_KEY",
+            "visibility": "selected",
+        },
+    )
+    monkeypatch.setattr(
+        runtime_preflight,
+        "api",
+        lambda *args, **kwargs: [{
+            "repositories": [
+                {"full_name": "Young-Consultations/another-repository"}
+            ]
+        }],
+    )
+    assert not runtime_preflight.organization_secret_selected_for_repository(
+        "Young-Consultations/consulting-playbook",
+        "AI_SDLC_RESULT_WRITER_PRIVATE_KEY",
+        "audit-token",
+    )
+
+
+def test_broad_organization_secret_visibility_is_not_accepted(monkeypatch):
+    monkeypatch.setattr(
+        runtime_preflight,
+        "api_one",
+        lambda *args, **kwargs: {
+            "name": "AI_SDLC_RESULT_WRITER_PRIVATE_KEY",
+            "visibility": "all",
+        },
+    )
+    monkeypatch.setattr(
+        runtime_preflight,
+        "api",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            AssertionError("selected repository list must not be queried")
+        ),
+    )
+    assert not runtime_preflight.organization_secret_selected_for_repository(
+        "Young-Consultations/consulting-playbook",
+        "AI_SDLC_RESULT_WRITER_PRIVATE_KEY",
+        "audit-token",
+    )
+
+
+def test_repository_secret_role_accepts_selected_organization_secret(monkeypatch):
+    roles = {
+        "Young-Consultations/consulting-playbook": {
+            "secrets": {
+                "AI_SDLC_RESULT_WRITER_PRIVATE_KEY": "result writer private key"
+            },
+            "variables": {},
+        }
+    }
+
+    def fake_named_values(repository, kind, audit_token, *, environment=None):
+        assert repository == "Young-Consultations/consulting-playbook"
+        assert audit_token == "audit-token"
+        return set()
+
+    monkeypatch.setattr(runtime_preflight, "named_values", fake_named_values)
+    monkeypatch.setattr(
+        runtime_preflight,
+        "organization_secret_selected_for_repository",
+        lambda repository, name, audit_token: True,
+    )
+    assert runtime_preflight.audit_credentials(roles, "audit-token") == []
+
+
+def test_repository_secret_role_rejects_wrong_organization_selection(monkeypatch):
+    roles = {
+        "Young-Consultations/consulting-playbook": {
+            "secrets": {
+                "AI_SDLC_RESULT_WRITER_PRIVATE_KEY": "result writer private key"
+            },
+            "variables": {},
+        }
+    }
+    monkeypatch.setattr(
+        runtime_preflight,
+        "named_values",
+        lambda *args, **kwargs: set(),
+    )
+    monkeypatch.setattr(
+        runtime_preflight,
+        "organization_secret_selected_for_repository",
+        lambda repository, name, audit_token: False,
+    )
+    assert runtime_preflight.audit_credentials(roles, "audit-token") == [
+        "credentials: Young-Consultations/consulting-playbook secret "
+        "AI_SDLC_RESULT_WRITER_PRIVATE_KEY is missing or is not an "
+        "organization secret restricted to this repository"
+    ]
+
+
+def test_repository_secret_role_surfaces_org_metadata_audit_failure(monkeypatch):
+    roles = {
+        "Young-Consultations/consulting-playbook": {
+            "secrets": {
+                "AI_SDLC_RESULT_WRITER_PRIVATE_KEY": "result writer private key"
+            },
+            "variables": {},
+        }
+    }
+    monkeypatch.setattr(
+        runtime_preflight,
+        "named_values",
+        lambda *args, **kwargs: set(),
+    )
+
+    def unavailable(*args, **kwargs):
+        raise subprocess.CalledProcessError(403, ["gh", "api"])
+
+    monkeypatch.setattr(
+        runtime_preflight,
+        "organization_secret_selected_for_repository",
+        unavailable,
+    )
+    failures = runtime_preflight.audit_credentials(roles, "audit-token")
+    assert len(failures) == 1
+    assert failures[0].startswith(
+        "credentials: cannot verify Young-Consultations/consulting-playbook "
+        "secret AI_SDLC_RESULT_WRITER_PRIVATE_KEY through organization scope:"
+    )
 
 
 def test_environment_credential_metadata_uses_environment_endpoint(monkeypatch):
@@ -239,7 +405,7 @@ def test_missing_audit_token_reports_failed_credential_boundary(
         "remote_tag_commit",
         lambda tag: "80889ca14b3bef4254d5212f7f801bf9877ddf72",
     )
-    monkeypatch.setattr("sys.argv", ["runtime_preflight.py"])
+    monkeypatch.setattr("sys.argv", ["runtime_preflight.py", "--candidate"])
 
     assert runtime_preflight.main() == 1
     report = json.loads(capsys.readouterr().out)
