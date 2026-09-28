@@ -63,6 +63,17 @@ Every arrow requires identity, integrity, version, authorization and semantic va
   variable existence is insufficient. This prevents a post-Codex projection
   failure or retention of an obsolete sender identity.
 
+- Runtime Preflight audits credential availability at the credential's reviewed
+  storage scope without reading secret values. Repository and environment
+  secrets use their repository-scoped metadata endpoints. A required repository
+  role may also be satisfied by an organization Actions secret only when the
+  organization matches the repository owner, the secret visibility is
+  `selected`, and the exact repository is in that selected set. Broader
+  organization-secret visibility does not satisfy this boundary. The
+  `PREFLIGHT_AUDIT_TOKEN` therefore requires read access to organization
+  Actions secret metadata and selected-repository access in addition to the
+  existing repository/environment metadata reads.
+
 ## Secrets and data protection
 
 Secrets live in an approved secret service/environment, are never embedded in contracts, prompts, source, logs, artifacts or diagnostics, and are rotated/revoked on exposure or offboarding. Classify/minimize payloads; prohibit secrets and disallowed personal/confidential data; sanitize failure messages; apply least-access retention/deletion to prompts, logs, artifacts and results.
