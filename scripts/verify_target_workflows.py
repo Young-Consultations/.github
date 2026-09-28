@@ -521,9 +521,19 @@ def verify_receiver_action(source: str) -> None:
         raise CompatibilityError("result receiver action exposes receiver environment to another step")
 
 
-def verify_receiver_bundle_policy(script: str, policy_raw: bytes) -> None:
+def verify_receiver_bundle_policy(
+    script: str, policy_raw: bytes, compatibility_raw: bytes, receiver_release: str
+) -> None:
     if 'TRUST_POLICY = ROOT / "config/codex-result-trust.json"' not in script:
         raise CompatibilityError("result receiver does not load control-plane trust policy")
+    if (
+        'RECEIVER_COMPATIBILITY_POLICY = ROOT / '
+        '"config/codex-result-receiver-compatibility.json"'
+        not in script
+    ):
+        raise CompatibilityError(
+            "result receiver does not load immutable release compatibility policy"
+        )
     if "CODEX_TRUSTED_JOURNAL_AUTHORS" in script:
         raise CompatibilityError("result receiver reads caller-controlled journal-author policy")
     try:
@@ -544,6 +554,41 @@ def verify_receiver_bundle_policy(script: str, policy_raw: bytes) -> None:
     )
     if not valid:
         raise CompatibilityError("result receiver trust policy is not a reviewed non-empty allowlist")
+    try:
+        compatibility = json.loads(compatibility_raw)
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise CompatibilityError(
+            "result receiver compatibility policy is not valid JSON"
+        ) from exc
+    accepted = (
+        compatibility.get("accepted_admission_releases")
+        if isinstance(compatibility, dict)
+        else None
+    )
+    compatibility_valid = (
+        isinstance(compatibility, dict)
+        and set(compatibility)
+        == {
+            "policy_format_version",
+            "receiver_release",
+            "accepted_admission_releases",
+        }
+        and compatibility.get("policy_format_version") == 1
+        and compatibility.get("receiver_release") == receiver_release
+        and isinstance(accepted, list)
+        and bool(accepted)
+        and all(
+            isinstance(value, str)
+            and IMMUTABLE_RECEIVER_REF_RE.fullmatch(value) is not None
+            for value in accepted
+        )
+        and len(set(accepted)) == len(accepted)
+        and receiver_release in accepted
+    )
+    if not compatibility_valid:
+        raise CompatibilityError(
+            "result receiver compatibility policy is not a reviewed fail-closed allowlist"
+        )
 
 
 def verify_interface(source: str) -> str:
@@ -686,7 +731,15 @@ def verify_receiver_at_ref(receiver_ref: str, token: str | None) -> str:
         action_ref,
         token,
     )
-    verify_receiver_bundle_policy(receiver_script, policy_raw)
+    compatibility_raw = fetch_content(
+        "Young-Consultations/.github",
+        "config/codex-result-receiver-compatibility.json",
+        action_ref,
+        token,
+    )
+    verify_receiver_bundle_policy(
+        receiver_script, policy_raw, compatibility_raw, action_ref
+    )
     fetch_content(
         "Young-Consultations/.github",
         "contracts/execution-result.schema.json",
