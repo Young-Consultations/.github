@@ -116,6 +116,34 @@ def test_target_receiver_pin_must_be_immutable():
         checker.verify_interface(source)
 
 
+def v3_target_workflow(receiver_ref: str = "4" * 40) -> str:
+    return CANONICAL.replace(
+        "@0123456789abcdef0123456789abcdef01234567",
+        f"@{receiver_ref}",
+    ).replace(
+        "CODEX_RESULT_TOKEN: ${{ secrets.CODEX_RESULT_TOKEN }}",
+        "RESULT_WRITER_PRIVATE_KEY: ${{ secrets.AI_SDLC_RESULT_WRITER_PRIVATE_KEY }}",
+    )
+
+
+def test_v3_target_requires_exact_private_key_secret_mapping():
+    source = v3_target_workflow().replace(
+        "RESULT_WRITER_PRIVATE_KEY: ${{ secrets.AI_SDLC_RESULT_WRITER_PRIVATE_KEY }}",
+        "RESULT_WRITER_PRIVATE_KEY: ${{ secrets.CODEX_RESULT_TOKEN }}",
+    )
+    with pytest.raises(checker.CompatibilityError, match="exact reviewed target secret"):
+        checker.verify_receiver_compatibility(source)
+
+
+def test_legacy_target_requires_exact_result_token_mapping():
+    source = CANONICAL.replace(
+        "CODEX_RESULT_TOKEN: ${{ secrets.CODEX_RESULT_TOKEN }}",
+        "CODEX_RESULT_TOKEN: ${{ secrets.UNRELATED_TOKEN }}",
+    )
+    with pytest.raises(checker.CompatibilityError, match="exact reviewed target secret"):
+        checker.verify_receiver_compatibility(source)
+
+
 def test_canonical_receiver_accepts_only_result_delivery_credential():
     source = (ROOT / ".github/workflows/codex-result-receiver.yml").read_text()
     assert checker.verify_receiver_interface(source) == current_receiver_release()
@@ -233,7 +261,7 @@ def test_disabled_target_can_be_explicitly_verified_before_activation(tmp_path):
     with (
         patch.object(checker, "fetch_tag_commit", return_value="2" * 40),
         patch.object(checker, "fetch_workflow", return_value=CANONICAL),
-        patch.object(checker, "verify_receiver_at_ref"),
+        patch.object(checker, "verify_receiver_at_ref", return_value="CODEX_RESULT_TOKEN"),
         patch.object(checker, "verify_conformance_report"),
     ):
         report = checker.verify_registry(
@@ -259,7 +287,7 @@ def test_enabled_only_verifies_enabled_targets_and_omits_disabled_targets(tmp_pa
     with (
         patch.object(checker, "fetch_tag_commit", return_value="2" * 40),
         patch.object(checker, "fetch_workflow", return_value=CANONICAL),
-        patch.object(checker, "verify_receiver_at_ref"),
+        patch.object(checker, "verify_receiver_at_ref", return_value="CODEX_RESULT_TOKEN"),
         patch.object(checker, "verify_conformance_report"),
     ):
         report = checker.verify_registry(
@@ -306,7 +334,7 @@ def test_network_fetch_is_mocked_for_success(tmp_path):
     with (
         patch.object(checker, "fetch_tag_commit", return_value="2" * 40),
         patch.object(checker, "fetch_workflow", return_value=CANONICAL) as fetch,
-        patch.object(checker, "verify_receiver_at_ref") as receiver_check,
+        patch.object(checker, "verify_receiver_at_ref", return_value="CODEX_RESULT_TOKEN") as receiver_check,
         patch.object(checker, "verify_conformance_report") as report_check,
     ):
         report = checker.verify_registry(entries, "fake-token")
@@ -320,6 +348,42 @@ def test_network_fetch_is_mocked_for_success(tmp_path):
         "fake-token",
     )
     assert report[0]["result"] == "pass"
+
+
+def test_commit_pinned_v3_receiver_interface_is_determined_from_bundle(tmp_path):
+    entries = checker.load_registry(registry(tmp_path, {"org/repo": entry()}))
+    source = v3_target_workflow()
+    with (
+        patch.object(checker, "fetch_tag_commit", return_value="2" * 40),
+        patch.object(checker, "fetch_workflow", return_value=source),
+        patch.object(
+            checker,
+            "verify_receiver_at_ref",
+            return_value="RESULT_WRITER_PRIVATE_KEY",
+        ),
+        patch.object(checker, "verify_conformance_report"),
+    ):
+        report = checker.verify_registry(entries, "fake-token")
+    assert report[0]["result"] == "pass"
+
+
+def test_target_credential_must_match_commit_pinned_receiver_bundle(tmp_path):
+    entries = checker.load_registry(registry(tmp_path, {"org/repo": entry()}))
+    source = v3_target_workflow()
+    with (
+        patch.object(checker, "fetch_tag_commit", return_value="2" * 40),
+        patch.object(checker, "fetch_workflow", return_value=source),
+        patch.object(
+            checker,
+            "verify_receiver_at_ref",
+            return_value="CODEX_RESULT_TOKEN",
+        ),
+        patch.object(checker, "verify_conformance_report"),
+    ):
+        report = checker.verify_registry(entries, "fake-token")
+    assert report[0]["result"] == (
+        "fail: target receiver credential does not match the immutable receiver bundle"
+    )
 
 
 def complete_report(repository="org/repo"):
@@ -620,7 +684,7 @@ def test_one_incompatible_target_does_not_block_unrelated_target(tmp_path):
     with (
         patch.object(checker, "fetch_tag_commit", return_value="2" * 40),
         patch.object(checker, "fetch_workflow", side_effect=fake_fetch),
-        patch.object(checker, "verify_receiver_at_ref"),
+        patch.object(checker, "verify_receiver_at_ref", return_value="CODEX_RESULT_TOKEN"),
         patch.object(checker, "verify_conformance_report"),
     ):
         report = checker.verify_registry(entries, None)
