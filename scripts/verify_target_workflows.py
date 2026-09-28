@@ -308,7 +308,14 @@ def parse_workflow(source: str) -> dict[str, Any]:
     return document
 
 
-def verify_receiver_compatibility(source: str) -> str:
+TARGET_RECEIVER_SECRET_EXPRESSIONS = {
+    "CODEX_RESULT_TOKEN": "${{ secrets.CODEX_RESULT_TOKEN }}",
+    "RESULT_WRITER_PRIVATE_KEY": "${{ secrets.AI_SDLC_RESULT_WRITER_PRIVATE_KEY }}",
+}
+
+
+def receiver_call_binding(source: str) -> tuple[str, str]:
+    """Return immutable receiver ref and exact target credential interface."""
     workflow = parse_workflow(source)
     jobs = workflow.get("jobs")
     if not isinstance(jobs, dict):
@@ -332,20 +339,21 @@ def verify_receiver_compatibility(source: str) -> str:
     if "CODEX_TRUSTED_JOURNAL_AUTHORS" in source:
         raise CompatibilityError("target must not supply control-plane journal-author policy")
     receiver_secrets = receiver_job.get("secrets")
-    expected_secret = (
-        "RESULT_WRITER_PRIVATE_KEY"
-        if receiver_ref.startswith("ai-sdlc-v3.")
-        else "CODEX_RESULT_TOKEN"
-    )
-    if not isinstance(receiver_secrets, dict) or set(receiver_secrets) != {expected_secret}:
+    if not isinstance(receiver_secrets, dict) or len(receiver_secrets) != 1:
+        raise CompatibilityError("result receiver call must supply exactly one delivery credential")
+    secret_name = next(iter(receiver_secrets))
+    expected_expression = TARGET_RECEIVER_SECRET_EXPRESSIONS.get(secret_name)
+    if expected_expression is None:
+        raise CompatibilityError("result receiver call uses an unsupported delivery credential")
+    if receiver_secrets[secret_name] != expected_expression:
         raise CompatibilityError(
-            f"result receiver call must supply only {expected_secret}"
+            f"result receiver {secret_name} must map to its exact reviewed target secret"
         )
-    if (
-        not isinstance(receiver_secrets[expected_secret], str)
-        or not receiver_secrets[expected_secret].strip()
-    ):
-        raise CompatibilityError("result delivery credential is missing")
+    return receiver_ref, secret_name
+
+
+def verify_receiver_compatibility(source: str) -> str:
+    receiver_ref, _ = receiver_call_binding(source)
     return receiver_ref
 
 
@@ -622,7 +630,7 @@ def fetch_tag_commit(repository: str, tag: str, token: str | None = None) -> str
     raise CompatibilityError("adapter tag does not resolve to a commit")
 
 
-def verify_receiver_at_ref(receiver_ref: str, token: str | None) -> None:
+def verify_receiver_at_ref(receiver_ref: str, token: str | None) -> str:
     receiver_commit = fetch_ref_commit("Young-Consultations/.github", receiver_ref, token)
     source = fetch_workflow(
         "Young-Consultations/.github",
@@ -660,6 +668,12 @@ def verify_receiver_at_ref(receiver_ref: str, token: str | None) -> None:
         action_ref,
         token,
     )
+    receiver_workflow = parse_workflow(source)
+    receiver_call = receiver_workflow.get("on", {}).get("workflow_call", {})
+    receiver_secrets = receiver_call.get("secrets") if isinstance(receiver_call, dict) else None
+    if not isinstance(receiver_secrets, dict) or len(receiver_secrets) != 1:
+        raise CompatibilityError("result receiver delivery credential cannot be determined")
+    return next(iter(receiver_secrets))
 
 
 def verify_conformance_pin(
@@ -810,7 +824,12 @@ def verify_registry(
                 raise CompatibilityError("adapter tag does not resolve to the reviewed adapter commit")
             source = fetch_workflow(workflow_repository, path, ref, token)
             row["transport_interface"] = verify_interface(source)
-            verify_receiver_at_ref(verify_receiver_compatibility(source), token)
+            receiver_ref, supplied_secret = receiver_call_binding(source)
+            required_secret = verify_receiver_at_ref(receiver_ref, token)
+            if supplied_secret != required_secret:
+                raise CompatibilityError(
+                    "target receiver credential does not match the immutable receiver bundle"
+                )
             verify_conformance_report(repository, ref, path, evidence, token)
             row["result"] = "pass"
         except CompatibilityError as exc:
