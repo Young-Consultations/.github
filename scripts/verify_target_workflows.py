@@ -526,18 +526,18 @@ def verify_receiver_action(source: str) -> None:
 
 
 def verify_receiver_bundle_policy(
-    script: str, policy_raw: bytes, compatibility_raw: bytes, receiver_release: str
+    script: str,
+    policy_raw: bytes,
+    compatibility_raw: bytes | None,
+    receiver_release: str,
 ) -> None:
     if 'TRUST_POLICY = ROOT / "config/codex-result-trust.json"' not in script:
         raise CompatibilityError("result receiver does not load control-plane trust policy")
-    if (
+    has_compatibility_policy = (
         'RECEIVER_COMPATIBILITY_POLICY = ROOT / '
         '"config/codex-result-receiver-compatibility.json"'
-        not in script
-    ):
-        raise CompatibilityError(
-            "result receiver does not load immutable release compatibility policy"
-        )
+        in script
+    )
     if "CODEX_TRUSTED_JOURNAL_AUTHORS" in script:
         raise CompatibilityError("result receiver reads caller-controlled journal-author policy")
     try:
@@ -558,6 +558,16 @@ def verify_receiver_bundle_policy(
     )
     if not valid:
         raise CompatibilityError("result receiver trust policy is not a reviewed non-empty allowlist")
+    if not has_compatibility_policy:
+        if compatibility_raw is not None:
+            raise CompatibilityError(
+                "historical result receiver unexpectedly carries a release compatibility policy"
+            )
+        return
+    if compatibility_raw is None:
+        raise CompatibilityError(
+            "result receiver declares but does not bundle release compatibility policy"
+        )
     try:
         compatibility = json.loads(compatibility_raw)
     except (UnicodeDecodeError, json.JSONDecodeError) as exc:
@@ -735,12 +745,18 @@ def verify_receiver_at_ref(receiver_ref: str, token: str | None) -> str:
         action_ref,
         token,
     )
-    compatibility_raw = fetch_content(
-        "Young-Consultations/.github",
-        "config/codex-result-receiver-compatibility.json",
-        action_ref,
-        token,
-    )
+    compatibility_raw = None
+    if (
+        'RECEIVER_COMPATIBILITY_POLICY = ROOT / '
+        '"config/codex-result-receiver-compatibility.json"'
+        in receiver_script
+    ):
+        compatibility_raw = fetch_content(
+            "Young-Consultations/.github",
+            "config/codex-result-receiver-compatibility.json",
+            action_ref,
+            token,
+        )
     verify_receiver_bundle_policy(
         receiver_script, policy_raw, compatibility_raw, action_ref
     )
