@@ -187,15 +187,15 @@ Historical compatibility evidence remains immutable. The 2.3.2 compatibility
 unit at commit `5738ace3ee90dde11336f8f8099e64e5645f7139` and the 2.4.0 receiver
 retry correction explain earlier contract evolution, but they are not the
 current control-plane release. The current published control-plane compatibility
-release is `ai-sdlc-v3.0.0` at reviewed candidate commit
-`80889ca14b3bef4254d5212f7f801bf9877ddf72`. It preserves
+release is `ai-sdlc-v3.0.1` at reviewed PR #94 merge commit
+`a98730deb729cc35dbd4d699395a87facb3ec78e`. It preserves
 `ai-sdlc-contract/v2` and the resolved idempotent
 `draft-pr-created -> duplicate-reused` receiver semantics while changing the
 required result-writer credential interface to the dedicated GitHub App.
 
 Historical 2.4.3 replacement evidence remains quarantined as incident history.
 Do not infer current readiness, rollback safety, or activation from older tags.
-Publication and live consumption are separate: portfolio-tasks still consumes 2.4.5. The sender allowlist is already cut over to the App-bot identity; the remaining path is publish/attest 3.0.1, pass deployed and immutable REAL preflight, then advance the consumer pin. Terminal delivery identities from failed REAL
+Publication and live consumption are separate: portfolio-tasks still consumes 2.4.5. The sender allowlist is already cut over to the App-bot identity; the remaining path is pass deployed 3.0.1 Runtime Preflight and immutable REAL preflight, then advance the consumer pin to 3.0.1. Terminal delivery identities from failed REAL
 issues remain non-reusable.
 
 Explicitly excluded are exactly-once transport, autonomous approval, automatic
@@ -249,12 +249,11 @@ git diff --check
 ```
 
 `python scripts/validate_release.py` verifies structural release coherence.
-Published control-plane compatibility state is `ai-sdlc-v3.0.0` at reviewed
-candidate commit `80889ca14b3bef4254d5212f7f801bf9877ddf72`; the manifest
+Published control-plane compatibility state is `ai-sdlc-v3.0.1` at reviewed
+PR #94 merge commit `a98730deb729cc35dbd4d699395a87facb3ec78e`; the manifest
 records `tag_published: true` with that exact `tag_commit_sha`. The source
-consumer still selects 2.4.5. Do not describe 3.0.0 as operationally deployed,
-source-adopted, or REAL-accepted until the separate sender-allowlist cutover,
-deployed Runtime Preflight, immutable REAL preflight, consumer PR, and live
+consumer still selects 2.4.5. Do not describe 3.0.1 as source-adopted or REAL-accepted until deployed Runtime
+Preflight, immutable REAL preflight, the portfolio consumer PR, and live
 redelivery gates complete.
 
 During any future pre-publication candidate window,
@@ -398,7 +397,7 @@ is edited. Keep historical behavior in Git history, release records, or ADRs;
 do not maintain multiple active policies or compatibility paths in this index.
 
 
-## 3.0.1 Runtime Preflight organization-secret repair candidate
+## 3.0.1 published Runtime Preflight organization-secret repair
 
 Deployed 3.0.0 Runtime Preflight run 36370005352 failed closed before Codex
 because the auditor checked `AI_SDLC_RESULT_WRITER_PRIVATE_KEY` only through
@@ -414,13 +413,14 @@ values are never read. `PREFLIGHT_AUDIT_TOKEN` therefore needs organization
 Actions Secrets read metadata access in addition to its prior repository-level
 audit access.
 
-The corrective control-plane candidate is `ai-sdlc-v3.0.1`; it reuses
-immutable `codex-adapter-v3.0.0` because no target code or interface changes.
-Published `ai-sdlc-v3.0.0` remains immutable. The failed deployed preflight
+The corrective control-plane release is `ai-sdlc-v3.0.1` at
+`a98730deb729cc35dbd4d699395a87facb3ec78e`; it reuses immutable
+`codex-adapter-v3.0.0` because no target code or interface changes. Published
+`ai-sdlc-v3.0.0` remains immutable predecessor evidence. The failed deployed preflight
 reported no `PORTFOLIO_RESULT_SENDERS` mismatch, so the live sender binding
-has already been cut over to `ai-sdlc-result-writer[bot]`. Until 3.0.1 is
-published, preflighted, and adopted by portfolio-tasks, no new 2.4.5
-implementation approval may be issued.
+has already been cut over to `ai-sdlc-result-writer[bot]`. Until deployed 3.0.1 Runtime Preflight, immutable REAL preflight, and adoption
+by portfolio-tasks complete, no new 2.4.5 implementation approval may be
+issued.
 
 ## 3.0.0 published result-writer identity release
 
