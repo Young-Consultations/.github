@@ -170,6 +170,64 @@ def test_missing_environment_secret_identifies_exact_scope(monkeypatch):
     ]
 
 
+def test_repository_variable_value_uses_only_audit_token(monkeypatch):
+    observed = {}
+
+    def fake_api_one(endpoint, *, token=None):
+        observed["endpoint"] = endpoint
+        observed["token"] = token
+        return {"name": "PORTFOLIO_RESULT_SENDERS", "value": "ai-sdlc-result-writer[bot]"}
+
+    monkeypatch.setattr(runtime_preflight, "api_one", fake_api_one)
+    assert runtime_preflight.repository_variable_value(
+        "Young-Consultations/portfolio-tasks",
+        "PORTFOLIO_RESULT_SENDERS",
+        "audit-token",
+    ) == "ai-sdlc-result-writer[bot]"
+    assert observed == {
+        "endpoint": (
+            "repos/Young-Consultations/portfolio-tasks/actions/variables/"
+            "PORTFOLIO_RESULT_SENDERS"
+        ),
+        "token": "audit-token",
+    }
+
+
+def test_result_sender_binding_requires_exact_trusted_result_author(monkeypatch):
+    monkeypatch.setattr(
+        runtime_preflight,
+        "repository_variable_value",
+        lambda *args, **kwargs: "ai-sdlc-result-writer[bot]",
+    )
+    assert runtime_preflight.audit_result_sender_binding("audit-token") == []
+
+
+def test_result_sender_binding_rejects_missing_trusted_result_author(monkeypatch):
+    monkeypatch.setattr(
+        runtime_preflight,
+        "repository_variable_value",
+        lambda *args, **kwargs: "mightyjoe909",
+    )
+    assert runtime_preflight.audit_result_sender_binding("audit-token") == [
+        "credentials: Young-Consultations/portfolio-tasks variable "
+        "PORTFOLIO_RESULT_SENDERS must exactly match immutable "
+        "trusted_result_authors"
+    ]
+
+
+def test_result_sender_binding_rejects_extra_sender(monkeypatch):
+    monkeypatch.setattr(
+        runtime_preflight,
+        "repository_variable_value",
+        lambda *args, **kwargs: "ai-sdlc-result-writer[bot],mightyjoe909",
+    )
+    assert runtime_preflight.audit_result_sender_binding("audit-token") == [
+        "credentials: Young-Consultations/portfolio-tasks variable "
+        "PORTFOLIO_RESULT_SENDERS must exactly match immutable "
+        "trusted_result_authors"
+    ]
+
+
 def test_missing_audit_token_reports_failed_credential_boundary(
     monkeypatch, capsys,
 ):
