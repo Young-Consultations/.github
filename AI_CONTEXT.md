@@ -247,11 +247,12 @@ git diff --check
 ```
 
 `python scripts/validate_release.py` verifies structural release coherence.
-The current manifest records published `ai-sdlc-v2.4.5` at reviewed commit
-`afe09d320268581bc83021cbfc80bf2a0f0bff91`, with
-`tag_published: true` and that exact `tag_commit_sha`. Deployed Runtime
-Preflight and immutable REAL preflight have passed for this release, and
-portfolio-tasks selects 2.4.5.
+Published production remains `ai-sdlc-v2.4.5` at reviewed commit
+`afe09d320268581bc83021cbfc80bf2a0f0bff91`, and portfolio-tasks still
+selects 2.4.5. On the current release-candidate branch, the manifest describes
+unpublished `ai-sdlc-v3.0.0` with `tag_published: false` and
+`tag_commit_sha: null`. Candidate state must not be described as deployed or
+accepted before the separate tag/attestation/preflight/consumer gates complete.
 
 During any future pre-publication candidate window,
 `verify_release_target_workflows.py` delegates to normal remote verification
@@ -329,6 +330,16 @@ must:
 Legacy-looking artifacts are not automatically deleted; each disposition is
 decided and justified during the relevant implementation task.
 
+For the 3.0.0 cutover, Runtime Preflight must verify the source
+projector's operational sender allowlist, not only the existence of its
+repository variable. `portfolio-tasks` variable `PORTFOLIO_RESULT_SENDERS`
+must exactly match the immutable `trusted_result_authors` set
+(`ai-sdlc-result-writer[bot]` for this candidate) before cost-bearing REAL
+execution. Because published 2.4.5 still uses the prior sender, perform this
+variable cutover only after new 2.4.5 implementation dispatch is stopped and
+before deployed 3.0.0 preflight/REAL acceptance. Organization issue #89 tracks
+the pre-publication gap that led to this invariant.
+
 ## Known gaps or conflicts
 
 - Live verification of the published 2.3.1 registry found that the
@@ -382,6 +393,48 @@ moves, its approval status changes, ownership boundaries change, or the current
 interface policy changes. Recheck every relative link and command whenever it
 is edited. Keep historical behavior in Git history, release records, or ADRs;
 do not maintain multiple active policies or compatibility paths in this index.
+
+
+## 3.0.0 result-writer identity candidate
+
+REAL issue #156 proved target-side managed-draft reuse without a second Codex
+execution but exposed control-plane defect #83: the deployed result credential
+wrote receiver journal markers as `mightyjoe909` while the immutable result
+trust policy expected `github-actions[bot]`. The receiver therefore could not
+recognize its own prior durable evidence and forwarded the equivalent result a
+second time; the source failed closed and quarantined it.
+
+The resolved workload identity is the organization-owned GitHub App
+`ai-sdlc-result-writer`, App ID `5100679`, installed only on
+`Young-Consultations/portfolio-tasks`. The reviewed target is immutable
+`codex-adapter-v3.0.0` at
+`0fa11c078b248ea3201f0aa0f2912fce299a7766`, with conformance report
+SHA256 `16333cad6ab38c0a799853a0ab32795525d026f98562982b697492f4b2f6ac91`.
+Before Codex, the target reuses its authoritative admission gate, mints a
+repository-bounded App installation token, verifies the App slug, and runs the
+control-plane-owned result credential capability preflight. The App credential
+does not enter the Codex adapter environment.
+
+The 3.0.0 receiver accepts only `RESULT_WRITER_PRIVATE_KEY`, mints a fresh
+short-lived installation token after target execution, verifies the same App
+slug, and passes only that token to the immutable receiver action. The trusted
+result author is `ai-sdlc-result-writer[bot]`, disjoint from admission author
+`mightyjoe909`. The portfolio projector listens only to
+`ai-sdlc-execution-result-v2`; the dedicated credential probe event has no
+business-logic consumer.
+
+Issue #85 established that changing the required reusable-workflow secret from
+`CODEX_RESULT_TOKEN` to `RESULT_WRITER_PRIVATE_KEY` is a MAJOR interface
+change under the approved release policy. The immutable
+`codex-adapter-v2.4.6` tag is therefore unused historical candidate evidence,
+and no matching `ai-sdlc-v2.4.6` control-plane release is authorized. The
+payload contract remains `ai-sdlc-contract/v2`.
+
+Do not close #83 or claim full REAL acceptance until 3.0.0 is published and
+attested, deployed Runtime Preflight and immutable REAL preflight pass,
+portfolio-tasks adopts the release, and controlled same-delivery redelivery
+proves one managed draft, no second Codex execution, one trusted receiver
+effect, and one source projection.
 
 ## 2.4.5 current release and acceptance state
 

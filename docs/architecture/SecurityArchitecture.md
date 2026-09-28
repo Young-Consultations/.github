@@ -29,19 +29,39 @@ Every arrow requires identity, integrity, version, authorization and semantic va
   caller-associated workflow context to select policy. Targets supply only the
   result-delivery credential and cannot add, replace, or inherit the author
   allowlist. Empty or invalid policy denies all results.
-- The GitHub principal authenticated by the result-delivery credential must
-  exactly match a reviewed `trusted_result_authors` identity and must remain
-  distinct from every trusted admission author. A control-plane-owned
+- For the 3.0.0 result path, the dedicated workload identity is GitHub App
+  `ai-sdlc-result-writer` (App ID `5100679`), installed only on
+  `Young-Consultations/portfolio-tasks`. The enabled target may access its
+  private key only as `AI_SDLC_RESULT_WRITER_PRIVATE_KEY` and uses it to mint
+  a short-lived installation token scoped to that repository with only Issues
+  write and Contents write. The App private key and installation token must not
+  enter the Codex adapter environment. The reusable receiver accepts only
+  `RESULT_WRITER_PRIVATE_KEY`, mints a fresh installation token after target
+  execution, verifies the App slug, and passes only the short-lived token to the
+  immutable receiver action.
+- The GitHub principal authenticated by the result-delivery token must exactly
+  match a reviewed `trusted_result_authors` identity and must remain distinct
+  from every trusted admission author. For 3.0.0 the reviewed identity is
+  `ai-sdlc-result-writer[bot]`. A control-plane-owned
   credential preflight verifies the runtime identity and required source write
   capabilities before cost-bearing execution by creating and deleting one
   marker comment and sending a dedicated no-consumer repository-dispatch
-  probe. The comment response supplies GitHub's authoritative author identity,
+  probe. The portfolio source projector listens only for
+  `ai-sdlc-execution-result-v2`, so
+  `ai-sdlc-result-credential-preflight-v1` is not a business-logic trigger. The comment response supplies GitHub's authoritative author identity,
   so both user-bound and GitHub App installation credentials are supported
   without exposing token material. The receiver repeats the reversible
   comment-author check before any result-journal mutation. Any identity,
   issue-write, cleanup, or dispatch-capability mismatch fails closed.
 - Govern registry enablement, workflow permissions, security policy and releases with designated independent human review and verified identities where supported.
 - Protected default branches and environments enforce that automation cannot clear draft status, merge, deploy, or change settings.
+
+- The source projector sender allowlist is part of the result trust boundary.
+  For the 3.0.0 path, `PORTFOLIO_RESULT_SENDERS` must exactly match the
+  immutable `trusted_result_authors` set before REAL execution. Runtime
+  Preflight verifies this operational value with the audit credential; mere
+  variable existence is insufficient. This prevents a post-Codex projection
+  failure or retention of an obsolete sender identity.
 
 ## Secrets and data protection
 

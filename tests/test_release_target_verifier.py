@@ -15,11 +15,15 @@ def _manifest_tag() -> str:
 def test_remote_receiver_verification_takes_precedence(monkeypatch: pytest.MonkeyPatch) -> None:
     calls: list[tuple[str, str | None]] = []
 
-    def succeeds(receiver_ref: str, token: str | None) -> None:
+    def succeeds(receiver_ref: str, token: str | None) -> str:
         calls.append((receiver_ref, token))
+        return "CODEX_RESULT_TOKEN"
 
     monkeypatch.setattr(release_checker, "_REMOTE_VERIFY_RECEIVER", succeeds)
-    release_checker.verify_release_receiver_at_ref(_manifest_tag(), "token")
+    assert (
+        release_checker.verify_release_receiver_at_ref(_manifest_tag(), "token")
+        == "CODEX_RESULT_TOKEN"
+    )
     assert calls == [(_manifest_tag(), "token")]
 
 def test_missing_published_manifest_tag_fails_closed(
@@ -90,6 +94,11 @@ def test_exact_missing_manifest_tag_uses_reviewed_local_candidate(
     )
     monkeypatch.setattr(
         release_checker.checker,
+        "receiver_declared_secret",
+        lambda source: "RESULT_WRITER_PRIVATE_KEY",
+    )
+    monkeypatch.setattr(
+        release_checker.checker,
         "verify_receiver_action",
         lambda source: checks.append(source),
     )
@@ -98,7 +107,10 @@ def test_exact_missing_manifest_tag_uses_reviewed_local_candidate(
         "verify_receiver_bundle_policy",
         lambda source, trust: checks.extend((source, trust.decode())),
     )
-    release_checker.verify_release_receiver_at_ref(manifest["tag"], "token")
+    assert (
+        release_checker.verify_release_receiver_at_ref(manifest["tag"], "token")
+        == "RESULT_WRITER_PRIVATE_KEY"
+    )
     assert checks == ["workflow", "action", "receiver", "trust"]
 
 

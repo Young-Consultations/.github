@@ -7,21 +7,21 @@
     "source": "Young-Consultations/.github@main:config/codex-activation.json"
   },
   "control_plane": {
-    "release_version": "2.4.5",
+    "release_version": "3.0.0",
     "result_receiver_action": "actions/codex-result-receiver/action.yml",
     "result_receiver_workflow": ".github/workflows/codex-result-receiver.yml",
     "router_action": "actions/codex-router/action.yml",
     "router_workflow": ".github/workflows/codex-router.yml",
-    "tag": "ai-sdlc-v2.4.5",
-    "tag_commit_sha": "afe09d320268581bc83021cbfc80bf2a0f0bff91",
-    "tag_published": true
+    "tag": "ai-sdlc-v3.0.0",
+    "tag_commit_sha": null,
+    "tag_published": false
   },
   "credential_role_manifest": {
     "path": "config/codex-credential-roles.json",
     "scope": "enabled-portfolio-to-consulting-path",
-    "sha256": "efb436406132160e45a7d8895c40aa09461683b47fc668b1f8af7ca8b333ac93"
+    "sha256": "e4f78125c16e18466fb807bed177448f2612497d8130cbf5b9cbd89fd071ba77"
   },
-  "release_state": "published",
+  "release_state": "candidate",
   "runtime_record_format_version": 1,
   "targets": {
     "Young-Consultations/.github": {
@@ -34,7 +34,7 @@
       "contract_version": "ai-sdlc-contract/v2",
       "draft_pr_only": true,
       "enabled": true,
-      "workflow_ref": "Young-Consultations/consulting-playbook/.github/workflows/codex-execute.yml@codex-adapter-v2.4.5"
+      "workflow_ref": "Young-Consultations/consulting-playbook/.github/workflows/codex-execute.yml@codex-adapter-v3.0.0"
     },
     "Young-Consultations/portfolio-tasks": {
       "contract_version": "ai-sdlc-contract/v2",

@@ -26,6 +26,20 @@ Published 2.4.4 remains immutable historical evidence, but REAL #151 proved it i
 not an execution-safe rollback for cost-bearing implementation because its
 publication transport can lose successful Codex work.
 
+
+The unpublished [3.0.0 candidate](docs/releases/3.0.0.md) repairs the separate
+REAL #156 result-journal identity defect. It binds
+`codex-adapter-v3.0.0` at
+`0fa11c078b248ea3201f0aa0f2912fce299a7766`, preserves payload
+`ai-sdlc-contract/v2`, and changes the reusable receiver credential interface
+to the dedicated `ai-sdlc-result-writer` GitHub App. The receiver accepts the
+App private key only to mint a fresh repository-bounded installation token
+after execution; the App token is then authenticated against immutable
+`trusted_result_authors`. This required secret-interface change is MAJOR under
+the approved release policy, so no `ai-sdlc-v2.4.6` control-plane release is
+authorized. Published 2.4.5 remains active until 3.0.0 is reviewed, tagged,
+attested, preflighted, and adopted by the source consumer.
+
 ## AI-SDLC contract validation
 
 This repository publishes `ai-sdlc-contracts`, a small Python library backed
@@ -152,7 +166,10 @@ by delivery ID, and forwards one validated `repository_dispatch` projection. It
 loads trusted journal-author identities from
 [`config/codex-result-trust.json`](config/codex-result-trust.json) through a
 self-pinned composite action in the same immutable control-plane release;
-targets supply only the result-delivery credential. It never uses the
+the enabled v3 target supplies only the dedicated
+`RESULT_WRITER_PRIVATE_KEY`; the receiver mints a fresh short-lived
+`ai-sdlc-result-writer` installation token scoped to `portfolio-tasks` and
+passes only that token to its immutable action. It never uses the
 caller-associated reusable-workflow context to select policy content.
 The current reviewed author lists are explicit policy, not permissive defaults.
 `consulting-playbook` is the sole enabled target; its registry entry records

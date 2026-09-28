@@ -4,6 +4,7 @@
 **Payload version:** `ai-sdlc-contract/v2` (v3 is out of scope).
 **Payload compatibility baseline:** `ai-sdlc-contract/v2`, fixture `2.3.0`.
 **Current published control-plane release:** `ai-sdlc-v2.4.5`.
+**Current corrective candidate:** `ai-sdlc-v3.0.0` (unpublished).
 
 Published `ai-sdlc-v2.3.2` remains immutable historical compatibility evidence
 at commit `5738ace3ee90dde11336f8f8099e64e5645f7139`; it is not the current
@@ -12,7 +13,11 @@ published in 2.4.0 remains part of the current 2.4.5 behavior: a target may
 return `draft-pr-created` on first successful delivery and `duplicate-reused`
 when the same managed draft is found on redelivery, subject to the stable-effect
 identity rules below. Later 2.4.x patch releases preserve the closed v2 schemas
-while repairing execution/publication boundaries.
+while repairing execution/publication boundaries. The 3.0.0 candidate also
+preserves payload `ai-sdlc-contract/v2`; its MAJOR classification is caused by
+the breaking reusable-workflow secret interface change from
+`CODEX_RESULT_TOKEN` to `RESULT_WRITER_PRIVATE_KEY`, not by a payload-schema
+change.
 
 The four and only four MVP targets are `Young-Consultations/.github`,
 `Young-Consultations/portfolio-tasks`, `Young-Consultations/slugger`, and
@@ -59,7 +64,7 @@ represented as `ambiguous-rejected`.
 | --- | --- | --- | --- | --- | --- |
 | Router / `.github` control plane | `.github/workflows/codex-router.yml` | Required `task_payload`; optional `execution_mode` (defaults to `implement`) | `CODEX_ROUTER_TOKEN` | `execution_result`, `correlation_id`, `delivery_id`, `failure_category`, `diagnostic_summary`, `concurrency_group` | Admit only the task rules above, an exact capability entry, and current activation. Rejections are represented in `execution_result`; there is no separate `accepted` output. |
 | Target adapter / selected repository | `.github/workflows/codex-execute.yml` at its registry-bound immutable adapter ref, triggered only by `workflow_dispatch` | Exactly two required strings: `execution_input_json` and matching `concurrency_group` | Target-owned executor/publication credentials | No reusable-workflow output is returned to the router; target delivers a canonical result to the receiver separately | No fallback interface is active. Target revalidates identity/contract/policy and can publish only a managed draft. |
-| Result receiver / `.github` control plane | `.github/workflows/codex-result-receiver.yml` | `execution_result`, `source_issue` | Only `CODEX_RESULT_TOKEN`; targets never supply trusted-author policy | `accepted`, `delivery_id`, `correlation_id`, `execution_status`, `failure_category`, `diagnostic_summary` | Authenticate, bind, deduplicate/reconcile, durably record, and forward at most one source projection. |
+| Result receiver / `.github` control plane | `.github/workflows/codex-result-receiver.yml` | `execution_result`, `source_issue` | In 3.0.0, only `RESULT_WRITER_PRIVATE_KEY`; legacy immutable v2 receivers accepted `CODEX_RESULT_TOKEN`. Targets never supply trusted-author policy. | `accepted`, `delivery_id`, `correlation_id`, `execution_status`, `failure_category`, `diagnostic_summary` | Authenticate, bind, deduplicate/reconcile, durably record, and forward at most one source projection. |
 
 Target-side defense in depth remains mandatory after router activation checks.
 Each adapter independently authenticates and authorizes the admitted caller;
@@ -89,10 +94,15 @@ capability/protocol rules but do not consult activation.
 ## Result receiver and source-projection handoff
 
 The reusable receiver is triggered only by `workflow_call`. `execution_result`
-and `source_issue` are required strings. `CODEX_RESULT_TOKEN` is the only secret
-accepted from a target and is authorized only to validate, store, and forward
-results; it provides no target code-write, merge, release, or deployment
-authority.
+and `source_issue` are required strings. In the 3.0.0 interface,
+`RESULT_WRITER_PRIVATE_KEY` is the only accepted secret. It is the private key
+for the dedicated `ai-sdlc-result-writer` GitHub App (App ID `5100679`) and
+is used only to mint a fresh installation token scoped to
+`Young-Consultations/portfolio-tasks` with Issues write and Contents write.
+The private key is never passed to the receiver action, source projector, target
+adapter, or AI provider. Immutable v2 receiver bundles retain their historical
+`CODEX_RESULT_TOKEN` interface and are verified as history, not as the enabled
+3.0.0 path.
 
 The receiver invokes the control-plane-owned
 `actions/codex-result-receiver` composite action from its own immutable release
@@ -100,8 +110,9 @@ bundle. The action loads `config/codex-result-trust.json` from that same bundle.
 The target cannot supply, override, or inherit trusted journal-author identities.
 An empty or malformed role allowlist denies all results.
 
-The GitHub author observed from `CODEX_RESULT_TOKEN` must be one of the
+The GitHub author observed from the minted installation token must be one of the
 immutable `trusted_result_authors` and must not also be an admission author.
+For 3.0.0 that principal is `ai-sdlc-result-writer[bot]`.
 The same release bundle exposes `actions/codex-result-credential-preflight`
 so an implementation target can verify the actual result-writer identity plus
 the exact source write capabilities before invoking a cost-bearing execution
@@ -112,6 +123,15 @@ business logic to that probe event. This approach supports user-bound and
 GitHub App installation credentials and leaves no persistent probe comment.
 The receiver repeats the reversible comment-author authentication before it
 writes receipt or forwarding journal state.
+
+For the 3.0.0 deployment, the source projector's operational
+`PORTFOLIO_RESULT_SENDERS` repository variable must exactly match the
+immutable `trusted_result_authors` set before cost-bearing REAL execution.
+Runtime Preflight reads and compares the normalized value through the audit
+credential. This check is distinct from the dedicated no-op repository-dispatch
+probe: the probe proves API capability, while the variable binding proves the
+actual `ai-sdlc-execution-result-v2` projector will authorize the reviewed App
+principal.
 
 The receiver shall:
 
@@ -195,7 +215,7 @@ receiver binding.
 
 ## Deployment/governance gates
 
-### Current 2.4.5 state
+### Current published 2.4.5 state and 3.0.0 corrective candidate
 
 The current published control-plane release is `ai-sdlc-v2.4.5`. Publication
 attestation, deployed Runtime Preflight, immutable REAL preflight, and the source
@@ -212,6 +232,17 @@ Published 2.4.4 is immutable historical evidence but is not an execution-safe
 rollback for cost-bearing implementation after REAL issue #151. Rollback
 handling must follow `docs/releases.md` and keep implementation dispatch
 disabled when no separately reviewed safe rollback is available.
+
+REAL issue #156 proved target-side managed-draft reuse but exposed control-plane
+defect #83: receiver journal evidence was written by a principal outside the
+immutable result-author allowlist and was therefore invisible on redelivery. The
+unpublished 3.0.0 candidate binds the result path to
+`ai-sdlc-result-writer[bot]`, requires App capability proof before Codex, and
+mints a fresh App installation token in the receiver after execution. The
+immutable `codex-adapter-v2.4.6` tag remains unused historical candidate
+evidence after issue #85 classified the required receiver-secret change as
+MAJOR. Full REAL acceptance remains blocked until 3.0.0 is published, adopted,
+and the same-delivery redelivery step passes.
 
 ### Historical 2.4.0 publication gates
 

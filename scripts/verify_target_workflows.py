@@ -308,7 +308,14 @@ def parse_workflow(source: str) -> dict[str, Any]:
     return document
 
 
-def verify_receiver_compatibility(source: str) -> str:
+TARGET_RECEIVER_SECRET_EXPRESSIONS = {
+    "CODEX_RESULT_TOKEN": "${{ secrets.CODEX_RESULT_TOKEN }}",
+    "RESULT_WRITER_PRIVATE_KEY": "${{ secrets.AI_SDLC_RESULT_WRITER_PRIVATE_KEY }}",
+}
+
+
+def receiver_call_binding(source: str) -> tuple[str, str]:
+    """Return immutable receiver ref and exact target credential interface."""
     workflow = parse_workflow(source)
     jobs = workflow.get("jobs")
     if not isinstance(jobs, dict):
@@ -332,11 +339,40 @@ def verify_receiver_compatibility(source: str) -> str:
     if "CODEX_TRUSTED_JOURNAL_AUTHORS" in source:
         raise CompatibilityError("target must not supply control-plane journal-author policy")
     receiver_secrets = receiver_job.get("secrets")
-    if not isinstance(receiver_secrets, dict) or set(receiver_secrets) != {"CODEX_RESULT_TOKEN"}:
-        raise CompatibilityError("result receiver call must supply only CODEX_RESULT_TOKEN")
-    if not isinstance(receiver_secrets["CODEX_RESULT_TOKEN"], str) or not receiver_secrets["CODEX_RESULT_TOKEN"].strip():
-        raise CompatibilityError("result-only delivery credential is missing")
+    if not isinstance(receiver_secrets, dict) or len(receiver_secrets) != 1:
+        raise CompatibilityError("result receiver call must supply exactly one delivery credential")
+    secret_name = next(iter(receiver_secrets))
+    expected_expression = TARGET_RECEIVER_SECRET_EXPRESSIONS.get(secret_name)
+    if expected_expression is None:
+        raise CompatibilityError("result receiver call uses an unsupported delivery credential")
+    if receiver_secrets[secret_name] != expected_expression:
+        raise CompatibilityError(
+            f"result receiver {secret_name} must map to its exact reviewed target secret"
+        )
+    return receiver_ref, secret_name
+
+
+def verify_receiver_compatibility(source: str) -> str:
+    receiver_ref, _ = receiver_call_binding(source)
     return receiver_ref
+
+
+def receiver_declared_secret(source: str) -> str:
+    workflow = parse_workflow(source)
+    triggers = workflow.get("on")
+    call = triggers.get("workflow_call") if isinstance(triggers, dict) else None
+    if not isinstance(call, dict):
+        raise CompatibilityError("result receiver workflow_call interface is missing")
+    secrets = call.get("secrets")
+    if not isinstance(secrets, dict) or len(secrets) != 1:
+        raise CompatibilityError("result receiver must accept exactly one delivery credential")
+    secret_name = next(iter(secrets))
+    if secret_name not in {"CODEX_RESULT_TOKEN", "RESULT_WRITER_PRIVATE_KEY"}:
+        raise CompatibilityError("result receiver delivery credential is unsupported")
+    secret_definition = secrets[secret_name]
+    if not isinstance(secret_definition, dict) or secret_definition.get("required") is not True:
+        raise CompatibilityError(f"result receiver {secret_name} must be required")
+    return secret_name
 
 
 def verify_receiver_interface(source: str) -> str:
@@ -346,37 +382,37 @@ def verify_receiver_interface(source: str) -> str:
     if not isinstance(call, dict):
         raise CompatibilityError("result receiver workflow_call interface is missing")
     inputs = call.get("inputs")
-    secrets = call.get("secrets")
     if not isinstance(inputs, dict) or set(inputs) != {"execution_result", "source_issue"}:
         raise CompatibilityError("result receiver inputs are incompatible")
     for name, definition in inputs.items():
         if not isinstance(definition, dict) or definition.get("required") is not True or definition.get("type") != "string":
             raise CompatibilityError(f"result receiver input {name} must be a required string")
-    if not isinstance(secrets, dict) or set(secrets) != {"CODEX_RESULT_TOKEN"}:
-        raise CompatibilityError("result receiver must accept only CODEX_RESULT_TOKEN")
-    token = secrets["CODEX_RESULT_TOKEN"]
-    if not isinstance(token, dict) or token.get("required") is not True:
-        raise CompatibilityError("result receiver CODEX_RESULT_TOKEN must be required")
+    secret_name = receiver_declared_secret(source)
     jobs = workflow.get("jobs")
     if not isinstance(jobs, dict):
         raise CompatibilityError("result receiver jobs are missing")
-    action_steps: list[tuple[dict[str, Any], str]] = []
+    action_steps: list[tuple[dict[str, Any], list[Any], int, dict[str, Any], str]] = []
     for job in jobs.values():
         steps = job.get("steps") if isinstance(job, dict) else None
         if not isinstance(steps, list):
             continue
-        for step in steps:
+        for index, step in enumerate(steps):
             if not isinstance(step, dict) or not isinstance(step.get("uses"), str):
                 continue
             if match := RECEIVER_ACTION_RE.fullmatch(step["uses"]):
-                action_steps.append((step, match.group(1)))
+                action_steps.append((job, steps, index, step, match.group(1)))
     if len(action_steps) != 1:
         raise CompatibilityError("result receiver must invoke exactly one canonical control-plane action bundle")
-    action_step, action_ref = action_steps[0]
+    _, action_job_steps, action_index, action_step, action_ref = action_steps[0]
     if not IMMUTABLE_RECEIVER_REF_RE.fullmatch(action_ref):
         raise CompatibilityError("result receiver action bundle must use an immutable ai-sdlc release or full commit SHA")
+    result_token = (
+        "${{ steps.result-writer-token.outputs.token }}"
+        if secret_name == "RESULT_WRITER_PRIVATE_KEY"
+        else "${{ secrets.CODEX_RESULT_TOKEN }}"
+    )
     expected_with = {
-        "result-token": "${{ secrets.CODEX_RESULT_TOKEN }}",
+        "result-token": result_token,
         "execution-result": "${{ inputs.execution_result }}",
         "source-issue": "${{ inputs.source_issue }}",
         "caller-repository": "${{ github.repository }}",
@@ -384,6 +420,54 @@ def verify_receiver_interface(source: str) -> str:
     }
     if action_step.get("with") != expected_with or "env" in action_step:
         raise CompatibilityError("result receiver action inputs are incompatible")
+    if secret_name == "RESULT_WRITER_PRIVATE_KEY":
+        token_positions = [
+            index
+            for index, step in enumerate(action_job_steps[:action_index])
+            if isinstance(step, dict) and step.get("id") == "result-writer-token"
+        ]
+        if len(token_positions) != 1:
+            raise CompatibilityError(
+                "result receiver must mint exactly one result-writer installation token "
+                "in the receiver action job before delivery"
+            )
+        token_index = token_positions[0]
+        token_step = action_job_steps[token_index]
+        if token_step.get("uses") != (
+            "actions/create-github-app-token@"
+            "bcd2ba49218906704ab6c1aa796996da409d3eb1"
+        ):
+            raise CompatibilityError("result-writer token action is not immutably pinned")
+        if token_step.get("with") != {
+            "app-id": "5100679",
+            "private-key": "${{ secrets.RESULT_WRITER_PRIVATE_KEY }}",
+            "owner": "Young-Consultations",
+            "repositories": "portfolio-tasks",
+            "permission-issues": "write",
+            "permission-contents": "write",
+        }:
+            raise CompatibilityError("result-writer installation token scope is incompatible")
+
+        identity_steps = []
+        for index, step in enumerate(action_job_steps[token_index + 1:action_index], start=token_index + 1):
+            if not isinstance(step, dict):
+                continue
+            env = step.get("env")
+            run = step.get("run")
+            if (
+                isinstance(env, dict)
+                and env.get("APP_SLUG") == "${{ steps.result-writer-token.outputs.app-slug }}"
+                and isinstance(run, str)
+                and '[[ "$APP_SLUG" == "ai-sdlc-result-writer" ]]' in run
+            ):
+                identity_steps.append(index)
+        if len(identity_steps) != 1:
+            raise CompatibilityError(
+                "result receiver must verify the minted GitHub App slug exactly once "
+                "in the receiver action job before delivery"
+            )
+        if "CODEX_RESULT_TOKEN" in source:
+            raise CompatibilityError("legacy result token interface remains in v3 receiver")
     if "actions/checkout@" in source:
         raise CompatibilityError("result receiver must not checkout caller-controlled policy content")
     return action_ref
@@ -571,7 +655,7 @@ def fetch_tag_commit(repository: str, tag: str, token: str | None = None) -> str
     raise CompatibilityError("adapter tag does not resolve to a commit")
 
 
-def verify_receiver_at_ref(receiver_ref: str, token: str | None) -> None:
+def verify_receiver_at_ref(receiver_ref: str, token: str | None) -> str:
     receiver_commit = fetch_ref_commit("Young-Consultations/.github", receiver_ref, token)
     source = fetch_workflow(
         "Young-Consultations/.github",
@@ -609,6 +693,12 @@ def verify_receiver_at_ref(receiver_ref: str, token: str | None) -> None:
         action_ref,
         token,
     )
+    receiver_workflow = parse_workflow(source)
+    receiver_call = receiver_workflow.get("on", {}).get("workflow_call", {})
+    receiver_secrets = receiver_call.get("secrets") if isinstance(receiver_call, dict) else None
+    if not isinstance(receiver_secrets, dict) or len(receiver_secrets) != 1:
+        raise CompatibilityError("result receiver delivery credential cannot be determined")
+    return next(iter(receiver_secrets))
 
 
 def verify_conformance_pin(
@@ -759,7 +849,12 @@ def verify_registry(
                 raise CompatibilityError("adapter tag does not resolve to the reviewed adapter commit")
             source = fetch_workflow(workflow_repository, path, ref, token)
             row["transport_interface"] = verify_interface(source)
-            verify_receiver_at_ref(verify_receiver_compatibility(source), token)
+            receiver_ref, supplied_secret = receiver_call_binding(source)
+            required_secret = verify_receiver_at_ref(receiver_ref, token)
+            if supplied_secret != required_secret:
+                raise CompatibilityError(
+                    "target receiver credential does not match the immutable receiver bundle"
+                )
             verify_conformance_report(repository, ref, path, evidence, token)
             row["result"] = "pass"
         except CompatibilityError as exc:

@@ -116,12 +116,44 @@ def test_target_receiver_pin_must_be_immutable():
         checker.verify_interface(source)
 
 
+def v3_target_workflow(receiver_ref: str = "4" * 40) -> str:
+    return CANONICAL.replace(
+        "@0123456789abcdef0123456789abcdef01234567",
+        f"@{receiver_ref}",
+    ).replace(
+        "CODEX_RESULT_TOKEN: ${{ secrets.CODEX_RESULT_TOKEN }}",
+        "RESULT_WRITER_PRIVATE_KEY: ${{ secrets.AI_SDLC_RESULT_WRITER_PRIVATE_KEY }}",
+    )
+
+
+def test_v3_target_requires_exact_private_key_secret_mapping():
+    source = v3_target_workflow().replace(
+        "RESULT_WRITER_PRIVATE_KEY: ${{ secrets.AI_SDLC_RESULT_WRITER_PRIVATE_KEY }}",
+        "RESULT_WRITER_PRIVATE_KEY: ${{ secrets.CODEX_RESULT_TOKEN }}",
+    )
+    with pytest.raises(checker.CompatibilityError, match="exact reviewed target secret"):
+        checker.verify_receiver_compatibility(source)
+
+
+def test_legacy_target_requires_exact_result_token_mapping():
+    source = CANONICAL.replace(
+        "CODEX_RESULT_TOKEN: ${{ secrets.CODEX_RESULT_TOKEN }}",
+        "CODEX_RESULT_TOKEN: ${{ secrets.UNRELATED_TOKEN }}",
+    )
+    with pytest.raises(checker.CompatibilityError, match="exact reviewed target secret"):
+        checker.verify_receiver_compatibility(source)
+
+
 def test_canonical_receiver_accepts_only_result_delivery_credential():
     source = (ROOT / ".github/workflows/codex-result-receiver.yml").read_text()
     assert checker.verify_receiver_interface(source) == current_receiver_release()
     checker.verify_receiver_action(
         (ROOT / "actions/codex-result-receiver/action.yml").read_text()
     )
+
+    assert "RESULT_WRITER_PRIVATE_KEY" in source
+    assert "CODEX_RESULT_TOKEN" not in source
+    assert "actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1" in source
 
     incompatible = source.replace(
         "    outputs:",
@@ -130,8 +162,70 @@ def test_canonical_receiver_accepts_only_result_delivery_credential():
         "    outputs:",
         1,
     )
-    with pytest.raises(checker.CompatibilityError, match="only CODEX_RESULT_TOKEN"):
+    with pytest.raises(checker.CompatibilityError, match="exactly one delivery credential"):
         checker.verify_receiver_interface(incompatible)
+
+
+def test_v3_receiver_token_mint_must_share_receiver_action_job():
+    source = (ROOT / ".github/workflows/codex-result-receiver.yml").read_text()
+    document = checker.parse_workflow(source)
+    receive_steps = document["jobs"]["receive"]["steps"]
+    token_index = next(
+        index for index, step in enumerate(receive_steps)
+        if isinstance(step, dict) and step.get("id") == "result-writer-token"
+    )
+    token_step = receive_steps.pop(token_index)
+    document["jobs"]["mint-elsewhere"] = {
+        "runs-on": "ubuntu-latest",
+        "steps": [token_step],
+    }
+    unsafe = checker.yaml.safe_dump(document, sort_keys=False)
+    with pytest.raises(
+        checker.CompatibilityError,
+        match="receiver action job before delivery",
+    ):
+        checker.verify_receiver_interface(unsafe)
+
+
+def test_v3_receiver_identity_check_must_bind_minted_app_slug():
+    source = (ROOT / ".github/workflows/codex-result-receiver.yml").read_text()
+    unsafe = source.replace(
+        "APP_SLUG: ${{ steps.result-writer-token.outputs.app-slug }}",
+        "APP_SLUG: ${{ github.actor }}",
+        1,
+    )
+    with pytest.raises(
+        checker.CompatibilityError,
+        match="verify the minted GitHub App slug exactly once",
+    ):
+        checker.verify_receiver_interface(unsafe)
+
+
+def test_v3_receiver_identity_check_must_precede_delivery_action():
+    source = (ROOT / ".github/workflows/codex-result-receiver.yml").read_text()
+    document = checker.parse_workflow(source)
+    steps = document["jobs"]["receive"]["steps"]
+    identity_index = next(
+        index for index, step in enumerate(steps)
+        if isinstance(step, dict)
+        and isinstance(step.get("env"), dict)
+        and step["env"].get("APP_SLUG")
+        == "${{ steps.result-writer-token.outputs.app-slug }}"
+    )
+    identity_step = steps.pop(identity_index)
+    action_index = next(
+        index for index, step in enumerate(steps)
+        if isinstance(step, dict)
+        and isinstance(step.get("uses"), str)
+        and "actions/codex-result-receiver@" in step["uses"]
+    )
+    steps.insert(action_index + 1, identity_step)
+    unsafe = checker.yaml.safe_dump(document, sort_keys=False)
+    with pytest.raises(
+        checker.CompatibilityError,
+        match="verify the minted GitHub App slug exactly once",
+    ):
+        checker.verify_receiver_interface(unsafe)
 
 
 def test_receiver_cannot_checkout_policy_from_caller_context():
@@ -229,7 +323,7 @@ def test_disabled_target_can_be_explicitly_verified_before_activation(tmp_path):
     with (
         patch.object(checker, "fetch_tag_commit", return_value="2" * 40),
         patch.object(checker, "fetch_workflow", return_value=CANONICAL),
-        patch.object(checker, "verify_receiver_at_ref"),
+        patch.object(checker, "verify_receiver_at_ref", return_value="CODEX_RESULT_TOKEN"),
         patch.object(checker, "verify_conformance_report"),
     ):
         report = checker.verify_registry(
@@ -255,7 +349,7 @@ def test_enabled_only_verifies_enabled_targets_and_omits_disabled_targets(tmp_pa
     with (
         patch.object(checker, "fetch_tag_commit", return_value="2" * 40),
         patch.object(checker, "fetch_workflow", return_value=CANONICAL),
-        patch.object(checker, "verify_receiver_at_ref"),
+        patch.object(checker, "verify_receiver_at_ref", return_value="CODEX_RESULT_TOKEN"),
         patch.object(checker, "verify_conformance_report"),
     ):
         report = checker.verify_registry(
@@ -302,7 +396,7 @@ def test_network_fetch_is_mocked_for_success(tmp_path):
     with (
         patch.object(checker, "fetch_tag_commit", return_value="2" * 40),
         patch.object(checker, "fetch_workflow", return_value=CANONICAL) as fetch,
-        patch.object(checker, "verify_receiver_at_ref") as receiver_check,
+        patch.object(checker, "verify_receiver_at_ref", return_value="CODEX_RESULT_TOKEN") as receiver_check,
         patch.object(checker, "verify_conformance_report") as report_check,
     ):
         report = checker.verify_registry(entries, "fake-token")
@@ -316,6 +410,42 @@ def test_network_fetch_is_mocked_for_success(tmp_path):
         "fake-token",
     )
     assert report[0]["result"] == "pass"
+
+
+def test_commit_pinned_v3_receiver_interface_is_determined_from_bundle(tmp_path):
+    entries = checker.load_registry(registry(tmp_path, {"org/repo": entry()}))
+    source = v3_target_workflow()
+    with (
+        patch.object(checker, "fetch_tag_commit", return_value="2" * 40),
+        patch.object(checker, "fetch_workflow", return_value=source),
+        patch.object(
+            checker,
+            "verify_receiver_at_ref",
+            return_value="RESULT_WRITER_PRIVATE_KEY",
+        ),
+        patch.object(checker, "verify_conformance_report"),
+    ):
+        report = checker.verify_registry(entries, "fake-token")
+    assert report[0]["result"] == "pass"
+
+
+def test_target_credential_must_match_commit_pinned_receiver_bundle(tmp_path):
+    entries = checker.load_registry(registry(tmp_path, {"org/repo": entry()}))
+    source = v3_target_workflow()
+    with (
+        patch.object(checker, "fetch_tag_commit", return_value="2" * 40),
+        patch.object(checker, "fetch_workflow", return_value=source),
+        patch.object(
+            checker,
+            "verify_receiver_at_ref",
+            return_value="CODEX_RESULT_TOKEN",
+        ),
+        patch.object(checker, "verify_conformance_report"),
+    ):
+        report = checker.verify_registry(entries, "fake-token")
+    assert report[0]["result"] == (
+        "fail: target receiver credential does not match the immutable receiver bundle"
+    )
 
 
 def complete_report(repository="org/repo"):
@@ -616,7 +746,7 @@ def test_one_incompatible_target_does_not_block_unrelated_target(tmp_path):
     with (
         patch.object(checker, "fetch_tag_commit", return_value="2" * 40),
         patch.object(checker, "fetch_workflow", side_effect=fake_fetch),
-        patch.object(checker, "verify_receiver_at_ref"),
+        patch.object(checker, "verify_receiver_at_ref", return_value="CODEX_RESULT_TOKEN"),
         patch.object(checker, "verify_conformance_report"),
     ):
         report = checker.verify_registry(entries, None)
@@ -639,7 +769,7 @@ def test_migrated_target_entries_use_v2_and_expected_paths():
     assert entries["Young-Consultations/consulting-playbook"]["contract_version"] == checker.CANONICAL_VERSION
     expected_refs = {
         "Young-Consultations/.github": "codex-adapter-v2.3.1",
-        "Young-Consultations/consulting-playbook": "codex-adapter-v2.4.5",
+        "Young-Consultations/consulting-playbook": "codex-adapter-v3.0.0",
         "Young-Consultations/portfolio-tasks": "codex-adapter-v2.3.2",
         "Young-Consultations/slugger": "codex-adapter-v2.3.2",
     }

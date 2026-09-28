@@ -71,6 +71,11 @@ draft PR with receiver/source projection accepted. Published 2.4.4 remains
 immutable historical evidence, not an execution-safe rollback for cost-bearing
 implementation.
 
+The unpublished 3.0.0 candidate binds the enabled consulting target to
+`codex-adapter-v3.0.0` and replaces the external receiver token secret with
+the dedicated App private-key interface. The current portfolio caller remains
+pinned to 2.4.5 until 3.0.0 publication and deployed gates complete.
+
 ## Registry changes
 
 Every immutable capability entry contains only shared policy keys:
@@ -200,11 +205,14 @@ complete shared oracle is the behavioral proof. Preflight must independently
 observe branch existence and pull-request state; disagreement fails before the
 executor.
 
-The target returns that result through the immutable organization receiver with
-only `CODEX_RESULT_TOKEN`. Journal-author trust is loaded from
-`config/codex-result-trust.json` by the receiver's self-pinned control-plane
-action at the same release commit; a target-supplied author allowlist is
-incompatible and rejected.
+A v3 target returns that result through the immutable organization receiver
+with only `RESULT_WRITER_PRIVATE_KEY`. The receiver uses that key solely to
+mint a fresh `ai-sdlc-result-writer` installation token scoped to
+`portfolio-tasks`, verifies the App slug, and passes only the short-lived token
+to its self-pinned control-plane action. Journal-author trust is loaded from
+`config/codex-result-trust.json` at the same release commit; a target-supplied
+author allowlist is incompatible and rejected. Immutable v2 target/receiver
+bundles retain their historical `CODEX_RESULT_TOKEN` interface.
 
 Operator recovery for ambiguous state is manual: inspect all branches and PRs
 with the `ai-sdlc-delivery-id` marker, close or relabel invalid duplicates,

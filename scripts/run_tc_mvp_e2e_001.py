@@ -32,8 +32,8 @@ ACTIVATION = ROOT / "config/codex-activation.json"
 REGISTRY = ROOT / "config/codex-repositories.json"
 RELEASE_MANIFEST = ROOT / "release/release-manifest.json"
 REAL_TARGET = "Young-Consultations/consulting-playbook"
-PUBLISHED_BASELINE = "2.4.4"
-CANDIDATE_RELEASE = "2.4.5"
+PUBLISHED_BASELINE = "2.4.5"
+CANDIDATE_RELEASE = "3.0.0"
 TARGET_ROOT_ENV = "TC_MVP_E2E_TARGET_ROOT"
 COMMIT_SHA = re.compile(r"^[0-9a-f]{40}$")
 

@@ -26,10 +26,9 @@ def _missing_ref_error(exc: checker.CompatibilityError) -> bool:
     return "HTTP 404:" in message or "HTTP 422:" in message
 
 
-def verify_release_receiver_at_ref(receiver_ref: str, token: str | None) -> None:
+def verify_release_receiver_at_ref(receiver_ref: str, token: str | None) -> str:
     try:
-        _REMOTE_VERIFY_RECEIVER(receiver_ref, token)
-        return
+        return _REMOTE_VERIFY_RECEIVER(receiver_ref, token)
     except checker.CompatibilityError as exc:
         manifest = json.loads((ROOT / "release/release-manifest.json").read_text(encoding="utf-8"))
         candidate_state = (
@@ -62,9 +61,11 @@ def verify_release_receiver_at_ref(receiver_ref: str, token: str | None) -> None
     )
     if not schema_path.is_file():
         raise checker.CompatibilityError("local release-candidate result schema is missing")
+    secret_name = checker.receiver_declared_secret(source)
     checker.debug(
         f"{receiver_ref}: remote tag is unused; verified exact manifest receiver candidate from current checkout"
     )
+    return secret_name
 
 
 def main(argv: list[str] | None = None) -> int:
