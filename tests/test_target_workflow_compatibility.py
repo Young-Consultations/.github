@@ -268,6 +268,37 @@ def test_live_receiver_bundle_requires_nonempty_control_plane_trust():
     )
 
 
+def test_historical_receiver_without_compatibility_policy_remains_verifiable():
+    script = (ROOT / "scripts/codex_result_receiver.py").read_text()
+    historical = script.replace(
+        'RECEIVER_COMPATIBILITY_POLICY = ROOT / '
+        '"config/codex-result-receiver-compatibility.json"\n',
+        "",
+    )
+    trust = (
+        b'{"policy_format_version":2,"trusted_admission_authors":["router[bot]"],'
+        b'"trusted_result_authors":["receiver[bot]"]}'
+    )
+    checker.verify_receiver_bundle_policy(
+        historical, trust, None, "ai-sdlc-v3.0.0"
+    )
+
+
+def test_receiver_declaring_compatibility_policy_requires_bundled_policy():
+    script = (ROOT / "scripts/codex_result_receiver.py").read_text()
+    trust = (
+        b'{"policy_format_version":2,"trusted_admission_authors":["router[bot]"],'
+        b'"trusted_result_authors":["receiver[bot]"]}'
+    )
+    with pytest.raises(
+        checker.CompatibilityError,
+        match="declares but does not bundle",
+    ):
+        checker.verify_receiver_bundle_policy(
+            script, trust, None, current_receiver_release()
+        )
+
+
 def test_live_receiver_bundle_rejects_unreviewed_release_compatibility():
     script = (ROOT / "scripts/codex_result_receiver.py").read_text()
     trust = (
