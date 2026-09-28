@@ -166,6 +166,68 @@ def test_canonical_receiver_accepts_only_result_delivery_credential():
         checker.verify_receiver_interface(incompatible)
 
 
+def test_v3_receiver_token_mint_must_share_receiver_action_job():
+    source = (ROOT / ".github/workflows/codex-result-receiver.yml").read_text()
+    document = checker.parse_workflow(source)
+    receive_steps = document["jobs"]["receive"]["steps"]
+    token_index = next(
+        index for index, step in enumerate(receive_steps)
+        if isinstance(step, dict) and step.get("id") == "result-writer-token"
+    )
+    token_step = receive_steps.pop(token_index)
+    document["jobs"]["mint-elsewhere"] = {
+        "runs-on": "ubuntu-latest",
+        "steps": [token_step],
+    }
+    unsafe = checker.yaml.safe_dump(document, sort_keys=False)
+    with pytest.raises(
+        checker.CompatibilityError,
+        match="receiver action job before delivery",
+    ):
+        checker.verify_receiver_interface(unsafe)
+
+
+def test_v3_receiver_identity_check_must_bind_minted_app_slug():
+    source = (ROOT / ".github/workflows/codex-result-receiver.yml").read_text()
+    unsafe = source.replace(
+        "APP_SLUG: ${{ steps.result-writer-token.outputs.app-slug }}",
+        "APP_SLUG: ${{ github.actor }}",
+        1,
+    )
+    with pytest.raises(
+        checker.CompatibilityError,
+        match="verify the minted GitHub App slug exactly once",
+    ):
+        checker.verify_receiver_interface(unsafe)
+
+
+def test_v3_receiver_identity_check_must_precede_delivery_action():
+    source = (ROOT / ".github/workflows/codex-result-receiver.yml").read_text()
+    document = checker.parse_workflow(source)
+    steps = document["jobs"]["receive"]["steps"]
+    identity_index = next(
+        index for index, step in enumerate(steps)
+        if isinstance(step, dict)
+        and isinstance(step.get("env"), dict)
+        and step["env"].get("APP_SLUG")
+        == "${{ steps.result-writer-token.outputs.app-slug }}"
+    )
+    identity_step = steps.pop(identity_index)
+    action_index = next(
+        index for index, step in enumerate(steps)
+        if isinstance(step, dict)
+        and isinstance(step.get("uses"), str)
+        and "actions/codex-result-receiver@" in step["uses"]
+    )
+    steps.insert(action_index + 1, identity_step)
+    unsafe = checker.yaml.safe_dump(document, sort_keys=False)
+    with pytest.raises(
+        checker.CompatibilityError,
+        match="verify the minted GitHub App slug exactly once",
+    ):
+        checker.verify_receiver_interface(unsafe)
+
+
 def test_receiver_cannot_checkout_policy_from_caller_context():
     source = (ROOT / ".github/workflows/codex-result-receiver.yml").read_text()
     unsafe = source.replace(
