@@ -57,12 +57,12 @@ tokens are supported without calling the user-only `GET /user` endpoint. On
 redelivery, only an identical marker written by that same author is reused;
 untrusted lookalike comments are never admission authority.
 
-The published [3.0.0 release](releases/3.0.0.md) is the current
+The published [3.0.1 release](releases/3.0.1.md) is the current
 control-plane compatibility release. Its immutable tag resolves to reviewed
-candidate merge commit
-`80889ca14b3bef4254d5212f7f801bf9877ddf72`. The portfolio source consumer
-still invokes the 2.4.5 router until the controlled operational cutover is
-completed.
+PR #94 merge commit
+`a98730deb729cc35dbd4d699395a87facb3ec78e`. The portfolio source consumer
+still invokes the 2.4.5 router until deployed 3.0.1 Runtime Preflight,
+immutable REAL preflight, and the repository-local consumer update complete.
 
 Release 2.4.5 selects `codex-adapter-v2.4.5` at
 `4f062ca73acfc3458f0d690bf1c7687bafd0a8eb` to repair the publication
@@ -78,8 +78,8 @@ Release 3.0.0 binds the enabled consulting target to
 the dedicated App private-key interface. Corrective control-plane patch 3.0.1
 repairs Runtime Preflight's organization-secret metadata audit without
 republishing that target. The current portfolio caller remains pinned to 2.4.5
-until 3.0.1 is published and attested, the App-bot sender binding remains exact,
-deployed Runtime Preflight and immutable REAL preflight pass, and the
+until the App-bot sender binding remains exact, deployed 3.0.1 Runtime
+Preflight and immutable REAL preflight pass, and the
 repository-local consumer pin advances to `ai-sdlc-v3.0.1`. The immutable
 target continues to use its reviewed `ai-sdlc-v3.0.0` receiver pin.
 
