@@ -124,6 +124,15 @@ GitHub App installation credentials and leaves no persistent probe comment.
 The receiver repeats the reversible comment-author authentication before it
 writes receipt or forwarding journal state.
 
+For the 3.0.0 deployment, the source projector's operational
+`PORTFOLIO_RESULT_SENDERS` repository variable must exactly match the
+immutable `trusted_result_authors` set before cost-bearing REAL execution.
+Runtime Preflight reads and compares the normalized value through the audit
+credential. This check is distinct from the dedicated no-op repository-dispatch
+probe: the probe proves API capability, while the variable binding proves the
+actual `ai-sdlc-execution-result-v2` projector will authorize the reviewed App
+principal.
+
 The receiver shall:
 
 1. authenticate the caller;
