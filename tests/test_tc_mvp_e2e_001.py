@@ -63,6 +63,18 @@ def test_sim_passes_without_real_effects(tmp_path: Path) -> None:
     assert payload["failures"] == []
 
 
+def test_control_plane_patch_reuses_reviewed_target_receiver_pin() -> None:
+    target_root = _target_root()
+    assert e2e.TARGET_RECEIVER_RELEASE == "3.0.0"
+    assert e2e._target_receiver_pin_errors(target_root) == []
+
+
+def test_real_preflight_workflow_uses_current_control_plane_release_tag() -> None:
+    source = Path(".github/workflows/tc-mvp-e2e-001.yml").read_text(encoding="utf-8")
+    assert "ref: refs/tags/ai-sdlc-v3.0.1" in source
+    assert "immutable ai-sdlc-v3.0.1 evidence" in source
+
+
 def test_target_identity_mismatch_fails_before_adapter_import(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
