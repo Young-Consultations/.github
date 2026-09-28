@@ -18,13 +18,14 @@ exactly to reviewed PR #94 merge commit
 `a98730deb729cc35dbd4d699395a87facb3ec78e`. It reuses
 `codex-adapter-v3.0.0` at
 `0fa11c078b248ea3201f0aa0f2912fce299a7766`, preserves payload
-`ai-sdlc-contract/v2`, and changes the reusable receiver credential interface
-to the dedicated `ai-sdlc-result-writer` GitHub App. The receiver accepts the
-App private key only to mint a fresh repository-bounded installation token
-after execution; the App token is then authenticated against immutable
-`trusted_result_authors`. This required secret-interface change is MAJOR under
-the approved release policy, so no `ai-sdlc-v2.4.6` control-plane release is
-authorized.
+`ai-sdlc-contract/v2`, and retains the dedicated
+`ai-sdlc-result-writer` GitHub App receiver credential interface introduced by
+3.0.0. Release 3.0.1 changes only Runtime Preflight's organization-secret
+metadata auditing. The receiver continues to accept the App private key only to
+mint a fresh repository-bounded installation token after execution; the App
+token is then authenticated against immutable `trusted_result_authors`. The
+3.0.0 secret-interface change was MAJOR under the approved release policy, so
+no `ai-sdlc-v2.4.6` control-plane release is authorized.
 
 Publication is not the operational cutover. `portfolio-tasks` still selects
 2.4.5, whose initial live path was proven by issue #154. REAL #156 exposed the
