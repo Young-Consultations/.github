@@ -45,6 +45,7 @@ def verify_release_receiver_at_ref(receiver_ref: str, token: str | None) -> str:
     workflow_path = ROOT / manifest["result_receiver_workflow"]
     action_path = ROOT / manifest["result_receiver_action"]
     trust_path = ROOT / manifest["result_trust_policy"]
+    compatibility_path = ROOT / manifest["result_receiver_compatibility_policy"]
     receiver_script_path = ROOT / "scripts/codex_result_receiver.py"
     schema_path = ROOT / "contracts/execution-result.schema.json"
 
@@ -58,6 +59,8 @@ def verify_release_receiver_at_ref(receiver_ref: str, token: str | None) -> str:
     checker.verify_receiver_bundle_policy(
         receiver_script_path.read_text(encoding="utf-8"),
         trust_path.read_bytes(),
+        compatibility_path.read_bytes(),
+        receiver_ref,
     )
     if not schema_path.is_file():
         raise checker.CompatibilityError("local release-candidate result schema is missing")
