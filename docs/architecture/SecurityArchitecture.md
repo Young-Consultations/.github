@@ -56,6 +56,13 @@ Every arrow requires identity, integrity, version, authorization and semantic va
 - Govern registry enablement, workflow permissions, security policy and releases with designated independent human review and verified identities where supported.
 - Protected default branches and environments enforce that automation cannot clear draft status, merge, deploy, or change settings.
 
+- The source projector sender allowlist is part of the result trust boundary.
+  For the 3.0.0 path, `PORTFOLIO_RESULT_SENDERS` must exactly match the
+  immutable `trusted_result_authors` set before REAL execution. Runtime
+  Preflight verifies this operational value with the audit credential; mere
+  variable existence is insufficient. This prevents a post-Codex projection
+  failure or retention of an obsolete sender identity.
+
 ## Secrets and data protection
 
 Secrets live in an approved secret service/environment, are never embedded in contracts, prompts, source, logs, artifacts or diagnostics, and are rotated/revoked on exposure or offboarding. Classify/minimize payloads; prohibit secrets and disallowed personal/confidential data; sanitize failure messages; apply least-access retention/deletion to prompts, logs, artifacts and results.
