@@ -32,8 +32,9 @@ ACTIVATION = ROOT / "config/codex-activation.json"
 REGISTRY = ROOT / "config/codex-repositories.json"
 RELEASE_MANIFEST = ROOT / "release/release-manifest.json"
 REAL_TARGET = "Young-Consultations/consulting-playbook"
-PUBLISHED_BASELINE = "2.4.5"
+PUBLISHED_BASELINE = "3.0.0"
 CANDIDATE_RELEASE = "3.0.1"
+TARGET_RECEIVER_RELEASE = "3.0.0"
 TARGET_ROOT_ENV = "TC_MVP_E2E_TARGET_ROOT"
 COMMIT_SHA = re.compile(r"^[0-9a-f]{40}$")
 
@@ -194,11 +195,12 @@ def _target_receiver_pin_errors(target_root: Path) -> list[str]:
         return ["enabled target execution workflow is missing"]
     required = (
         "Young-Consultations/.github/.github/workflows/codex-result-receiver.yml@"
-        f"ai-sdlc-v{CANDIDATE_RELEASE}"
+        f"ai-sdlc-v{TARGET_RECEIVER_RELEASE}"
     )
     source = workflow.read_text(encoding="utf-8")
     return [] if source.count(required) == 1 else [
-        f"enabled target is not pinned to the ai-sdlc-v{CANDIDATE_RELEASE} receiver"
+        "enabled target is not pinned to the reviewed "
+        f"ai-sdlc-v{TARGET_RECEIVER_RELEASE} receiver"
     ]
 
 
