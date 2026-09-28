@@ -75,6 +75,60 @@ def named_values(
     return {str(item.get("name")) for item in values if isinstance(item, dict)}
 
 
+def repository_variable_value(
+    repository: str,
+    name: str,
+    audit_token: str,
+) -> str:
+    value = api_one(
+        f"repos/{repository}/actions/variables/{quote(name, safe='')}",
+        token=audit_token,
+    )
+    if (
+        not isinstance(value, dict)
+        or value.get("name") != name
+        or not isinstance(value.get("value"), str)
+    ):
+        raise ValueError(f"repository variable {name} returned an invalid response")
+    return value["value"]
+
+
+def audit_result_sender_binding(audit_token: str) -> list[str]:
+    policy = load("config/codex-result-trust.json")
+    expected = {
+        author.casefold()
+        for author in policy.get("trusted_result_authors", [])
+        if isinstance(author, str) and author.strip()
+    }
+    if not expected:
+        return ["credentials: immutable trusted result-author policy is empty"]
+
+    try:
+        raw = repository_variable_value(
+            "Young-Consultations/portfolio-tasks",
+            "PORTFOLIO_RESULT_SENDERS",
+            audit_token,
+        )
+    except (subprocess.CalledProcessError, json.JSONDecodeError, ValueError) as exc:
+        return [
+            "credentials: cannot inspect Young-Consultations/portfolio-tasks "
+            f"variable PORTFOLIO_RESULT_SENDERS: {exc}"
+        ]
+
+    actual = {
+        value.strip().casefold()
+        for value in raw.split(",")
+        if value.strip()
+    }
+    if actual != expected:
+        return [
+            "credentials: Young-Consultations/portfolio-tasks variable "
+            "PORTFOLIO_RESULT_SENDERS must exactly match immutable "
+            "trusted_result_authors"
+        ]
+    return []
+
+
 def audit_credentials(roles: dict[str, Any], audit_token: str) -> list[str]:
     failures: list[str] = []
     for repository, expected in roles.items():
@@ -164,6 +218,7 @@ def main() -> int:
             failures.append("credentials: PREFLIGHT_AUDIT_TOKEN is unavailable")
         else:
             failures.extend(audit_credentials(roles, audit_token))
+            failures.extend(audit_result_sender_binding(audit_token))
         checks.append({
             "boundary": "credential-metadata",
             "status": "PASS" if not any(
