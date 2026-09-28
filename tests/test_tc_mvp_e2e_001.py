@@ -26,8 +26,8 @@ def test_sim_passes_without_real_effects(tmp_path: Path) -> None:
     payload = json.loads(report.read_text(encoding="utf-8"))
     assert payload["test_id"] == "TC-MVP-E2E-001-SIM"
     assert payload["published_baseline"] == "2.4.5"
-    assert payload["candidate_release"] == "3.0.0"
-    assert payload["candidate_tag_published"] is True
+    assert payload["candidate_release"] == "3.0.1"
+    assert payload["candidate_tag_published"] is False
     assert payload["execution_provider"] == "fake"
     assert payload["dispatch_provider"] == "fake-in-process-target"
     assert payload["target"] == e2e.REAL_TARGET
@@ -106,7 +106,7 @@ def test_publication_identity_compares_tag_with_attested_commit(
     actual = "0" * 40
     monkeypatch.setattr(e2e, "_git_output", lambda args, cwd=e2e.ROOT: (actual, None))
     assert e2e._control_plane_release_identity_errors() == [
-        f"published tag ai-sdlc-v3.0.0 resolves to {actual}, not attested commit {expected}"
+        f"published tag ai-sdlc-v3.0.1 resolves to {actual}, not attested commit {expected}"
     ]
 
 
