@@ -357,19 +357,13 @@ def verify_receiver_compatibility(source: str) -> str:
     return receiver_ref
 
 
-def verify_receiver_interface(source: str) -> str:
+def receiver_declared_secret(source: str) -> str:
     workflow = parse_workflow(source)
     triggers = workflow.get("on")
     call = triggers.get("workflow_call") if isinstance(triggers, dict) else None
     if not isinstance(call, dict):
         raise CompatibilityError("result receiver workflow_call interface is missing")
-    inputs = call.get("inputs")
     secrets = call.get("secrets")
-    if not isinstance(inputs, dict) or set(inputs) != {"execution_result", "source_issue"}:
-        raise CompatibilityError("result receiver inputs are incompatible")
-    for name, definition in inputs.items():
-        if not isinstance(definition, dict) or definition.get("required") is not True or definition.get("type") != "string":
-            raise CompatibilityError(f"result receiver input {name} must be a required string")
     if not isinstance(secrets, dict) or len(secrets) != 1:
         raise CompatibilityError("result receiver must accept exactly one delivery credential")
     secret_name = next(iter(secrets))
@@ -378,6 +372,22 @@ def verify_receiver_interface(source: str) -> str:
     secret_definition = secrets[secret_name]
     if not isinstance(secret_definition, dict) or secret_definition.get("required") is not True:
         raise CompatibilityError(f"result receiver {secret_name} must be required")
+    return secret_name
+
+
+def verify_receiver_interface(source: str) -> str:
+    workflow = parse_workflow(source)
+    triggers = workflow.get("on")
+    call = triggers.get("workflow_call") if isinstance(triggers, dict) else None
+    if not isinstance(call, dict):
+        raise CompatibilityError("result receiver workflow_call interface is missing")
+    inputs = call.get("inputs")
+    if not isinstance(inputs, dict) or set(inputs) != {"execution_result", "source_issue"}:
+        raise CompatibilityError("result receiver inputs are incompatible")
+    for name, definition in inputs.items():
+        if not isinstance(definition, dict) or definition.get("required") is not True or definition.get("type") != "string":
+            raise CompatibilityError(f"result receiver input {name} must be a required string")
+    secret_name = receiver_declared_secret(source)
     jobs = workflow.get("jobs")
     if not isinstance(jobs, dict):
         raise CompatibilityError("result receiver jobs are missing")
