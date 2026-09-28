@@ -2,8 +2,8 @@
 
 **Status:** Approved next-MVP acceptance design
 **Owner:** `Young-Consultations/.github`
-**Published baseline:** `ai-sdlc-v3.0.0` / `ai-sdlc-contract/v2`
-**Current live acceptance state:** fresh REAL issue #154 completed successfully on 2.4.5; REAL #156 exposed result-writer identity defect #83 during explicit redelivery/idempotency acceptance; 3.0.0 published, but deployed preflight exposed organization-secret audit defect #93; corrective 3.0.1 acceptance is pending
+**Published baseline:** `ai-sdlc-v3.0.1` / `ai-sdlc-contract/v2`
+**Current live acceptance state:** fresh REAL issue #154 completed successfully on 2.4.5; REAL #156 exposed result-writer identity defect #83 during explicit redelivery/idempotency acceptance; corrective 3.0.1 is published and attested, but deployed 3.0.1 Runtime Preflight, immutable REAL preflight, consumer adoption, and REAL redelivery acceptance remain pending
 **Initial enabled target:** `Young-Consultations/consulting-playbook`
 
 > **2.4.5 completion addendum:** REAL issue #151 exposed the 2.4.4 target publication-transport defect after successful Codex execution. The immutable repair is `codex-adapter-v2.4.5` (`4f062ca73acfc3458f0d690bf1c7687bafd0a8eb`) with conformance report SHA256 `8a7e3479a8768050b7621cec4d7663d8ab60d266291cb2d1027886200799c2fc`. Control-plane release `ai-sdlc-v2.4.5` resolves to `afe09d320268581bc83021cbfc80bf2a0f0bff91`; publication attestation merged, deployed Runtime Preflight run 36277959203 and immutable REAL preflight run 36278028013 passed, portfolio-tasks advanced to 2.4.5, and fresh issue #154 completed the live path through target run 36279165335 and managed draft PR #66. See [2.4.5 release procedure](../releases/2.4.5.md).
@@ -15,10 +15,9 @@
 > reported no source-sender mismatch, but falsely reported
 > `AI_SDLC_RESULT_WRITER_PRIVATE_KEY` missing because the audit inspected only
 > repository/environment secret metadata. The key is intentionally an
-> organization Actions secret restricted to consulting-playbook. Candidate
+> organization Actions secret restricted to consulting-playbook. Published
 > `ai-sdlc-v3.0.1` repairs only that metadata scope check and reuses immutable
-> `codex-adapter-v3.0.0`. No new REAL execution is allowed until 3.0.1 is
-> published, attested, and its deployed Runtime Preflight passes. See
+> `codex-adapter-v3.0.0`. No new REAL execution is allowed until deployed 3.0.1 Runtime Preflight and immutable REAL preflight pass. See
 > [3.0.1 release procedure](../releases/3.0.1.md).
 >
 ## Purpose
@@ -78,7 +77,7 @@ The SIM harness shall:
    harness with `published_baseline: 3.0.0` and
    `candidate_release: 3.0.1`, record the exact target adapter identity,
    keep `real_acceptance_satisfied: false`, and record that the 3.0.1
-   control-plane tag remains unpublished until attestation.
+   control-plane tag is published and attested.
 
 For retry evidence, `duplicate-reused` is accepted without another source projection only when it describes the same stable managed-draft effect as the prior successful result. A different branch, pull request, validation/test outcome, failure category, or any other non-approved result transition remains ambiguous and fails closed.
 
@@ -140,7 +139,7 @@ remaining acceptance exercise. REAL issue #156 subsequently proved target-side
 managed-draft reuse but exposed .github defect #83: the deployed result
 credential principal did not match the immutable trusted result-writer policy,
 so equivalent redelivery was forwarded again and quarantined by the source.
-Therefore 2.4.5 remains the currently consumed source path and is **initial-live-path verified**, not fully REAL-accepted. The 3.0.0 control plane is published and attested, and the live sender allowlist is already cut over to `ai-sdlc-result-writer[bot]`. The next REAL attempt remains blocked until 3.0.1 is published and attested, deployed Runtime Preflight and immutable REAL preflight pass, and portfolio-tasks adopts 3.0.1. The immutable `codex-adapter-v3.0.0` target remains unchanged and retains its reviewed 3.0.0 receiver pin.
+Therefore 2.4.5 remains the currently consumed source path and is **initial-live-path verified**, not fully REAL-accepted. The 3.0.0 control plane is published and attested, and the live sender allowlist is already cut over to `ai-sdlc-result-writer[bot]`. The next REAL attempt remains blocked until deployed 3.0.1 Runtime Preflight and immutable REAL preflight pass, and portfolio-tasks adopts 3.0.1. The immutable `codex-adapter-v3.0.0` target remains unchanged and retains its reviewed 3.0.0 receiver pin.
 
 ### REAL execution procedure
 
