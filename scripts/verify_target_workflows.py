@@ -332,13 +332,20 @@ def verify_receiver_compatibility(source: str) -> str:
     if "CODEX_TRUSTED_JOURNAL_AUTHORS" in source:
         raise CompatibilityError("target must not supply control-plane journal-author policy")
     receiver_secrets = receiver_job.get("secrets")
-    if not isinstance(receiver_secrets, dict) or set(receiver_secrets) != {"RESULT_WRITER_PRIVATE_KEY"}:
-        raise CompatibilityError("result receiver call must supply only RESULT_WRITER_PRIVATE_KEY")
+    expected_secret = (
+        "RESULT_WRITER_PRIVATE_KEY"
+        if receiver_ref.startswith("ai-sdlc-v3.")
+        else "CODEX_RESULT_TOKEN"
+    )
+    if not isinstance(receiver_secrets, dict) or set(receiver_secrets) != {expected_secret}:
+        raise CompatibilityError(
+            f"result receiver call must supply only {expected_secret}"
+        )
     if (
-        not isinstance(receiver_secrets["RESULT_WRITER_PRIVATE_KEY"], str)
-        or not receiver_secrets["RESULT_WRITER_PRIVATE_KEY"].strip()
+        not isinstance(receiver_secrets[expected_secret], str)
+        or not receiver_secrets[expected_secret].strip()
     ):
-        raise CompatibilityError("result-writer private key is missing")
+        raise CompatibilityError("result delivery credential is missing")
     return receiver_ref
 
 
@@ -355,11 +362,14 @@ def verify_receiver_interface(source: str) -> str:
     for name, definition in inputs.items():
         if not isinstance(definition, dict) or definition.get("required") is not True or definition.get("type") != "string":
             raise CompatibilityError(f"result receiver input {name} must be a required string")
-    if not isinstance(secrets, dict) or set(secrets) != {"RESULT_WRITER_PRIVATE_KEY"}:
-        raise CompatibilityError("result receiver must accept only RESULT_WRITER_PRIVATE_KEY")
-    private_key = secrets["RESULT_WRITER_PRIVATE_KEY"]
-    if not isinstance(private_key, dict) or private_key.get("required") is not True:
-        raise CompatibilityError("result receiver RESULT_WRITER_PRIVATE_KEY must be required")
+    if not isinstance(secrets, dict) or len(secrets) != 1:
+        raise CompatibilityError("result receiver must accept exactly one delivery credential")
+    secret_name = next(iter(secrets))
+    if secret_name not in {"CODEX_RESULT_TOKEN", "RESULT_WRITER_PRIVATE_KEY"}:
+        raise CompatibilityError("result receiver delivery credential is unsupported")
+    secret_definition = secrets[secret_name]
+    if not isinstance(secret_definition, dict) or secret_definition.get("required") is not True:
+        raise CompatibilityError(f"result receiver {secret_name} must be required")
     jobs = workflow.get("jobs")
     if not isinstance(jobs, dict):
         raise CompatibilityError("result receiver jobs are missing")
@@ -378,8 +388,13 @@ def verify_receiver_interface(source: str) -> str:
     action_step, action_ref = action_steps[0]
     if not IMMUTABLE_RECEIVER_REF_RE.fullmatch(action_ref):
         raise CompatibilityError("result receiver action bundle must use an immutable ai-sdlc release or full commit SHA")
+    result_token = (
+        "${{ steps.result-writer-token.outputs.token }}"
+        if secret_name == "RESULT_WRITER_PRIVATE_KEY"
+        else "${{ secrets.CODEX_RESULT_TOKEN }}"
+    )
     expected_with = {
-        "result-token": "${{ steps.result-writer-token.outputs.token }}",
+        "result-token": result_token,
         "execution-result": "${{ inputs.execution_result }}",
         "source-issue": "${{ inputs.source_issue }}",
         "caller-repository": "${{ github.repository }}",
@@ -387,30 +402,39 @@ def verify_receiver_interface(source: str) -> str:
     }
     if action_step.get("with") != expected_with or "env" in action_step:
         raise CompatibilityError("result receiver action inputs are incompatible")
-    token_steps = [
-        step for job in jobs.values()
-        for step in (job.get("steps") if isinstance(job, dict) and isinstance(job.get("steps"), list) else [])
-        if isinstance(step, dict)
-        and step.get("id") == "result-writer-token"
-    ]
-    if len(token_steps) != 1:
-        raise CompatibilityError("result receiver must mint exactly one result-writer installation token")
-    token_step = token_steps[0]
-    if token_step.get("uses") != "actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1":
-        raise CompatibilityError("result-writer token action is not immutably pinned")
-    if token_step.get("with") != {
-        "app-id": "5100679",
-        "private-key": "${{ secrets.RESULT_WRITER_PRIVATE_KEY }}",
-        "owner": "Young-Consultations",
-        "repositories": "portfolio-tasks",
-        "permission-issues": "write",
-        "permission-contents": "write",
-    }:
-        raise CompatibilityError("result-writer installation token scope is incompatible")
-    if '[[ "$APP_SLUG" == "ai-sdlc-result-writer" ]]' not in source:
-        raise CompatibilityError("result receiver does not bind the GitHub App slug")
-    if "CODEX_RESULT_TOKEN" in source:
-        raise CompatibilityError("legacy result token interface remains in receiver workflow")
+    if secret_name == "RESULT_WRITER_PRIVATE_KEY":
+        token_steps = [
+            step for job in jobs.values()
+            for step in (
+                job.get("steps")
+                if isinstance(job, dict) and isinstance(job.get("steps"), list)
+                else []
+            )
+            if isinstance(step, dict) and step.get("id") == "result-writer-token"
+        ]
+        if len(token_steps) != 1:
+            raise CompatibilityError(
+                "result receiver must mint exactly one result-writer installation token"
+            )
+        token_step = token_steps[0]
+        if token_step.get("uses") != (
+            "actions/create-github-app-token@"
+            "bcd2ba49218906704ab6c1aa796996da409d3eb1"
+        ):
+            raise CompatibilityError("result-writer token action is not immutably pinned")
+        if token_step.get("with") != {
+            "app-id": "5100679",
+            "private-key": "${{ secrets.RESULT_WRITER_PRIVATE_KEY }}",
+            "owner": "Young-Consultations",
+            "repositories": "portfolio-tasks",
+            "permission-issues": "write",
+            "permission-contents": "write",
+        }:
+            raise CompatibilityError("result-writer installation token scope is incompatible")
+        if '[[ "$APP_SLUG" == "ai-sdlc-result-writer" ]]' not in source:
+            raise CompatibilityError("result receiver does not bind the GitHub App slug")
+        if "CODEX_RESULT_TOKEN" in source:
+            raise CompatibilityError("legacy result token interface remains in v3 receiver")
     if "actions/checkout@" in source:
         raise CompatibilityError("result receiver must not checkout caller-controlled policy content")
     return action_ref
