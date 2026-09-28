@@ -36,6 +36,13 @@ preflight must pass, and the source consumer must advance through its own
 reviewed PR. Published 2.4.4 remains immutable historical evidence but is not an
 execution-safe rollback for cost-bearing implementation.
 
+The unpublished [`ai-sdlc-v3.0.1` candidate](docs/releases/3.0.1.md)
+repairs deployed Runtime Preflight's organization-secret metadata audit from
+issue #93. It reuses `codex-adapter-v3.0.0` and changes no runtime contract or
+target interface. Until 3.0.1 is published, preflighted, and adopted, do not
+approve a new 2.4.5 implementation task: the source result-sender allowlist has
+already been cut over to the GitHub App identity.
+
 ## AI-SDLC contract validation
 
 This repository publishes `ai-sdlc-contracts`, a small Python library backed
