@@ -210,6 +210,7 @@ def receive(
     caller: str,
     journal: Journal,
     control_plane_release: str | None = None,
+    receiver_compatibility_policy: Path = RECEIVER_COMPATIBILITY_POLICY,
 ) -> Receipt:
     try:
         result = json.loads(raw)
@@ -244,7 +245,9 @@ def receive(
     if len(unique_bindings) != 1 or any(bindings[0].get(key) != value for key, value in expected.items()):
         raise ReceiverError("authorization", "result does not match one admitted delivery binding")
     if control_plane_release:
-        receiver_release, accepted_admission_releases = load_receiver_compatibility()
+        receiver_release, accepted_admission_releases = load_receiver_compatibility(
+            receiver_compatibility_policy
+        )
         if control_plane_release != receiver_release:
             raise ReceiverError(
                 "authorization", "receiver release does not match immutable compatibility policy"
