@@ -71,7 +71,7 @@ The SIM harness shall:
 
 For retry evidence, `duplicate-reused` is accepted without another source projection only when it describes the same stable managed-draft effect as the prior successful result. A different branch, pull request, validation/test outcome, failure category, or any other non-approved result transition remains ambiguous and fails closed.
 
-SIM may run on pull requests and by manual dispatch. It is candidate evidence, not production-readiness evidence, and cannot substitute for the live acceptance run.
+SIM may run on pull requests and by manual dispatch. It is deterministic compatibility evidence, not production-readiness evidence, and cannot substitute for the live acceptance run.
 
 ## TC-MVP-E2E-001-REAL
 
@@ -175,7 +175,7 @@ Sensitive values and issue content not required for audit must be omitted or red
 
 ## Acceptance decision
 
-`TC-MVP-E2E-001-SIM` passes only when its deterministic candidate evidence is green, the exact immutable target adapter and candidate receiver semantics were exercised, the equivalent retry produces no second visible effect, and every prohibited real-effect counter is zero.
+`TC-MVP-E2E-001-SIM` passes only when its deterministic compatibility evidence is green, the exact immutable target adapter and published receiver semantics were exercised, the equivalent retry produces no second visible effect, and every prohibited real-effect counter is zero.
 
 `TC-MVP-E2E-001-REAL` passes only after the corrective receiver is in a published immutable compatibility release, the selected target is immutably pinned to it, and the deliberate human-triggered live run completes with one correlated managed draft PR, one canonical source projection, and successful equivalent retry/idempotency evidence.
 
