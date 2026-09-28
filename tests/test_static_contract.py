@@ -41,7 +41,7 @@ def test_registry_json_syntax_and_required_fields():
     } == {"Young-Consultations/consulting-playbook"}
     expected_adapter_refs = {
         "Young-Consultations/.github": "codex-adapter-v2.3.1",
-        "Young-Consultations/consulting-playbook": "codex-adapter-v2.4.5",
+        "Young-Consultations/consulting-playbook": "codex-adapter-v3.0.0",
         "Young-Consultations/portfolio-tasks": "codex-adapter-v2.3.2",
         "Young-Consultations/slugger": "codex-adapter-v2.3.2",
     }
@@ -117,6 +117,12 @@ def test_result_receiver_owns_journal_author_policy():
 
     assert "CODEX_TRUSTED_JOURNAL_AUTHORS" not in receiver
     assert "actions/checkout@" not in receiver
+    assert "CODEX_RESULT_TOKEN" not in receiver
+    assert "RESULT_WRITER_PRIVATE_KEY" in receiver
+    assert "actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1" in receiver
+    assert 'app-id: "5100679"' in receiver
+    assert "repositories: portfolio-tasks" in receiver
+    assert '[[ "$APP_SLUG" == "ai-sdlc-result-writer" ]]' in receiver
     assert receiver.count(
         f"Young-Consultations/.github/actions/codex-result-receiver@{manifest['tag']}"
     ) == 1
@@ -125,7 +131,7 @@ def test_result_receiver_owns_journal_author_policy():
     assert policy == {
         "policy_format_version": 2,
         "trusted_admission_authors": ["mightyjoe909"],
-        "trusted_result_authors": ["github-actions[bot]"],
+        "trusted_result_authors": ["ai-sdlc-result-writer[bot]"],
     }
 
 
