@@ -48,6 +48,8 @@ def test_credential_roles_cover_only_the_enabled_runtime_path():
     assert "CODEX_ROUTER_TOKEN" in roles["Young-Consultations/portfolio-tasks"]["secrets"]
     assert "PORTFOLIO_APPROVERS" in roles["Young-Consultations/portfolio-tasks"]["variables"]
     consulting = roles["Young-Consultations/consulting-playbook"]
+    assert "AI_SDLC_RESULT_WRITER_PRIVATE_KEY" in consulting["secrets"]
+    assert "CODEX_RESULT_TOKEN" not in consulting["secrets"]
     assert "OPENAI_API_KEY" not in consulting["secrets"]
     assert "OPENAI_API_KEY" in (
         consulting["environments"]["consulting-playbook-codex"]["secrets"]
