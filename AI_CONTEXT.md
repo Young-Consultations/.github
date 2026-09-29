@@ -453,9 +453,9 @@ The corrective control-plane release is `ai-sdlc-v3.0.1` at
 `codex-adapter-v3.0.0` because no target code or interface changes. Published
 `ai-sdlc-v3.0.0` remains immutable predecessor evidence. The failed deployed preflight
 reported no `PORTFOLIO_RESULT_SENDERS` mismatch, so the live sender binding
-has already been cut over to `ai-sdlc-result-writer[bot]`. Until deployed 3.0.1 Runtime Preflight, immutable REAL preflight, and adoption
-by portfolio-tasks complete, no new 2.4.5 implementation approval may be
-issued.
+has already been cut over to `ai-sdlc-result-writer[bot]`. Portfolio-tasks now consumes 3.0.1. That release is immutable predecessor
+evidence; current release and cutover guidance is defined by the 3.0.2 section
+above.
 
 ## 3.0.0 published result-writer identity release
 
@@ -502,34 +502,32 @@ portfolio-tasks consumer adoption, and controlled same-delivery redelivery must
 prove one managed draft, no second Codex execution, one trusted receiver effect,
 and one source projection before #83 / DEF-0064 can close.
 
-## 2.4.5 current source-consumer and acceptance state
+## 3.0.1 current source-consumer and acceptance state
 
-The currently consumed portfolio source path remains `ai-sdlc-v2.4.5`,
-resolving to reviewed release commit
-`afe09d320268581bc83021cbfc80bf2a0f0bff91`. The newer 3.0.0 compatibility
-release is published but not yet adopted by portfolio-tasks.
-Publication-attestation PR #79 merged at
-`75815fdc83ebd28f53e483b6de71e0107e74356f`. The approved release policy
-accepts lightweight or annotated Git tags; immutable release identity is the tag
-name plus its independently resolved commit SHA.
+Portfolio-tasks currently consumes `ai-sdlc-v3.0.1` through
+`.github/workflows/route-approved-task.yml`. That source adoption is distinct
+from the current published control-plane compatibility release, which is 3.0.2.
 
-The reviewed target repair is `codex-adapter-v2.4.5` at
-`4f062ca73acfc3458f0d690bf1c7687bafd0a8eb`, with conformance report SHA256
-`8a7e3479a8768050b7621cec4d7663d8ab60d266291cb2d1027886200799c2fc`.
-Deployed Runtime Preflight run 36277959203 and immutable REAL preflight run
-36278028013 passed before portfolio-tasks advanced its router consumer to 2.4.5.
-Fresh human-approved portfolio issue #154 then exercised the published path:
-target run 36279165335 prepared the sandbox, invoked Codex, passed validation and
-tests, published one managed draft PR, delivered the canonical result through
-the 2.4.5 receiver, and projected it back to the source issue. Generated PR #66
-passed conformance and human review and merged.
+The earlier 2.4.5 path remains immutable initial-live-path evidence from REAL
+#154. REAL #156 exposed the result-journal identity defect that drove the 3.0.0
+App credential repair. REAL #159 later proved the result-writer prerequisite
+path healthy but exposed DEF-0073 when the 3.0.0 receiver rejected a valid
+3.0.1 admission. The 3.0.2 release repairs that compatibility boundary.
 
-Published 2.4.4 remains immutable historical evidence but is not an
-execution-safe rollback for cost-bearing implementation because REAL issue #151
-proved its publication transport could lose successful Codex work. Any rollback
-that may invoke Codex requires a separately reviewed safe release or REAL
-execution must remain disabled.
+Do not describe 3.0.2 as source-adopted or REAL-accepted until deployed 3.0.2
+Runtime Preflight, immutable REAL preflight, the portfolio consumer repin from
+3.0.1 to 3.0.2, one corrected terminal projection for #159, and unchanged
+same-delivery redelivery all succeed.
 
-The broader organization-level cost-bearing prerequisite policy remains owned by
-issue #77 and is not silently expanded by this release. See
-[2.4.5 release procedure](docs/releases/2.4.5.md).
+Historical 2.4.5 target evidence remains
+`codex-adapter-v2.4.5` at
+`4f062ca73acfc3458f0d690bf1c7687bafd0a8eb`. Fresh human-approved issue #154
+proved that earlier path could prepare the sandbox, invoke Codex, pass
+validation/tests, publish one managed draft PR, deliver the canonical result,
+and project it back to the source. Published 2.4.4 remains immutable historical
+evidence but is not an execution-safe rollback for cost-bearing implementation
+because REAL #151 proved its publication transport could lose successful Codex
+work.
+
+The broader organization-level cost-bearing prerequisite policy remains owned
+by issue #77 and is not silently expanded by 3.0.2.
