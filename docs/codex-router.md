@@ -73,11 +73,6 @@ Runtime Preflight metadata repair; release 3.0.0 remains immutable predecessor
 evidence for the dedicated App private-key receiver interface. Published 2.4.5
 remains initial-live-path evidence and 2.4.4 is not an execution-safe rollback
 for cost-bearing implementation.
-until the App-bot sender binding remains exact, deployed 3.0.1 Runtime
-Preflight and immutable REAL preflight pass, and the
-repository-local consumer pin advances to `ai-sdlc-v3.0.1`. The immutable
-target continues to use its reviewed `ai-sdlc-v3.0.0` receiver pin.
-
 ## Registry changes
 
 Every immutable capability entry contains only shared policy keys:
