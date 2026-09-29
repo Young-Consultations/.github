@@ -175,7 +175,7 @@ without implementation evidence.
 `TC-MVP-E2E-001` is one acceptance architecture with two modes, not two
 execution paths. `TC-MVP-E2E-001-SIM` resolves and executes the exact immutable
 adapter of the sole enabled target through deterministic fake Codex/publication
-effects and passes target-produced results through the current control-plane receiver logic using in-memory journal/forwarding effects. The 3.0.1 control-plane patch deliberately reuses immutable `codex-adapter-v3.0.0`, whose target workflow retains the reviewed 3.0.0 receiver pin. `TC-MVP-E2E-001-REAL` uses the
+effects and passes target-produced results through the current control-plane receiver logic using in-memory journal/forwarding effects. Published 3.0.2 binds the enabled consulting target to immutable `codex-adapter-v3.0.2`, whose target workflow pins the 3.0.2 credential preflight and receiver. The receiver uses an immutable compatibility allowlist so the already-admitted 3.0.1 delivery for #159 remains valid without requiring source and receiver release strings to be equal. `TC-MVP-E2E-001-REAL` uses the
 existing source, router, target, receiver, and source-projection path after a
 non-mutating preflight. The REAL execution trigger remains the existing
 authorized-human `status:approved` action in `portfolio-tasks`; the control
@@ -187,17 +187,24 @@ Historical compatibility evidence remains immutable. The 2.3.2 compatibility
 unit at commit `5738ace3ee90dde11336f8f8099e64e5645f7139` and the 2.4.0 receiver
 retry correction explain earlier contract evolution, but they are not the
 current control-plane release. The current published control-plane compatibility
-release is `ai-sdlc-v3.0.1` at reviewed PR #94 merge commit
-`a98730deb729cc35dbd4d699395a87facb3ec78e`. It preserves
+release is `ai-sdlc-v3.0.2` at reviewed PR #101 merge commit
+`eae81af30eb8f1e2cf51a30b1e5a6d7dbd76bc6e`. It preserves
 `ai-sdlc-contract/v2`, the resolved idempotent
 `draft-pr-created -> duplicate-reused` receiver semantics, and the dedicated
-GitHub App result-writer credential interface introduced by 3.0.0. The 3.0.1
-PATCH changes only Runtime Preflight's organization-secret metadata auditing.
+GitHub App result-writer credential interface introduced by 3.0.0. The 3.0.2
+PATCH repairs receiver release-composition validation through an immutable
+receiver-owned allowlist; 3.0.1 remains immutable predecessor evidence for the
+organization-secret metadata audit repair.
 
 Historical 2.4.3 replacement evidence remains quarantined as incident history.
 Do not infer current readiness, rollback safety, or activation from older tags.
-Publication and live consumption are separate: portfolio-tasks still consumes 2.4.5. The sender allowlist is already cut over to the App-bot identity; the remaining path is pass deployed 3.0.1 Runtime Preflight and immutable REAL preflight, then advance the consumer pin to 3.0.1. Terminal delivery identities from failed REAL
-issues remain non-reusable.
+Publication and live consumption are separate: portfolio-tasks currently consumes
+`ai-sdlc-v3.0.1`. The sender allowlist is already cut over to the App-bot
+identity; the remaining path is pass deployed 3.0.2 Runtime Preflight and
+immutable REAL preflight, then advance the consumer pin from 3.0.1 to 3.0.2.
+The already-admitted #159 delivery is an explicit compatibility exception and
+must preserve its existing 3.0.1 admission/delivery identity during authorized
+recovery; unrelated terminal delivery identities remain non-reusable.
 
 Explicitly excluded are exactly-once transport, autonomous approval, automatic
 merge, release or deployment automation authority, production operation,
@@ -250,12 +257,12 @@ git diff --check
 ```
 
 `python scripts/validate_release.py` verifies structural release coherence.
-Published control-plane compatibility state is `ai-sdlc-v3.0.1` at reviewed
-PR #94 merge commit `a98730deb729cc35dbd4d699395a87facb3ec78e`; the manifest
+Published control-plane compatibility state is `ai-sdlc-v3.0.2` at reviewed
+PR #101 merge commit `eae81af30eb8f1e2cf51a30b1e5a6d7dbd76bc6e`; the manifest
 records `tag_published: true` with that exact `tag_commit_sha`. The source
-consumer still selects 2.4.5. Do not describe 3.0.1 as source-adopted or REAL-accepted until deployed Runtime
-Preflight, immutable REAL preflight, the portfolio consumer PR, and live
-redelivery gates complete.
+consumer still selects 3.0.1. Do not describe 3.0.2 as source-adopted or
+REAL-accepted until deployed Runtime Preflight, immutable REAL preflight, the
+portfolio consumer PR, and live terminal/redelivery gates complete.
 
 During any future pre-publication candidate window,
 `verify_release_target_workflows.py` delegates to normal remote verification
@@ -398,6 +405,33 @@ is edited. Keep historical behavior in Git history, release records, or ADRs;
 do not maintain multiple active policies or compatibility paths in this index.
 
 
+## 3.0.2 published receiver compatibility repair
+
+REAL #159 exposed DEF-0073 after the result-writer credential prerequisites
+passed: the 3.0.0 receiver rejected a valid 3.0.1 admission because it forced
+the admission's control-plane release identity to equal the receiver bundle
+release. The resolved architecture separates those identities and uses an
+immutable receiver-owned compatibility allowlist instead of string equality.
+
+The published control-plane release is `ai-sdlc-v3.0.2` at
+`eae81af30eb8f1e2cf51a30b1e5a6d7dbd76bc6e`. The enabled consulting target
+is immutable `codex-adapter-v3.0.2` at
+`3bde0dc760088b9af21454a0f70ed498dae043a7`, with conformance adapter
+revision
+`sha256:1af153a276e2a3a87f6dd274a0aae111f09350a6a4995d874bd0014174e0ee04`
+and report SHA-256
+`f7251f7ac3ceb46c350106b9d3190f52be71ffd0b57a0faca5dffe2d847074e6`.
+The compatibility policy accepts 3.0.1 admissions only as an explicitly
+reviewed predecessor needed to recover the already-admitted #159 delivery, and
+accepts 3.0.2 for new admissions after source adoption. Unsupported release
+combinations remain fail-closed.
+
+Portfolio-tasks currently consumes 3.0.1. Publication alone does not authorize
+cost-bearing REAL execution or prove source adoption. Require deployed 3.0.2
+Runtime Preflight, immutable REAL preflight, repository-local consumer repin,
+then controlled REAL terminal projection and unchanged same-delivery redelivery
+before closing DEF-0073 / #100 or the older redelivery acceptance defect.
+
 ## 3.0.1 published Runtime Preflight organization-secret repair
 
 Deployed 3.0.0 Runtime Preflight run 36370005352 failed closed before Codex
@@ -419,9 +453,9 @@ The corrective control-plane release is `ai-sdlc-v3.0.1` at
 `codex-adapter-v3.0.0` because no target code or interface changes. Published
 `ai-sdlc-v3.0.0` remains immutable predecessor evidence. The failed deployed preflight
 reported no `PORTFOLIO_RESULT_SENDERS` mismatch, so the live sender binding
-has already been cut over to `ai-sdlc-result-writer[bot]`. Until deployed 3.0.1 Runtime Preflight, immutable REAL preflight, and adoption
-by portfolio-tasks complete, no new 2.4.5 implementation approval may be
-issued.
+has already been cut over to `ai-sdlc-result-writer[bot]`. Portfolio-tasks now consumes 3.0.1. That release is immutable predecessor
+evidence; current release and cutover guidance is defined by the 3.0.2 section
+above.
 
 ## 3.0.0 published result-writer identity release
 
@@ -468,34 +502,32 @@ portfolio-tasks consumer adoption, and controlled same-delivery redelivery must
 prove one managed draft, no second Codex execution, one trusted receiver effect,
 and one source projection before #83 / DEF-0064 can close.
 
-## 2.4.5 current source-consumer and acceptance state
+## 3.0.1 current source-consumer and acceptance state
 
-The currently consumed portfolio source path remains `ai-sdlc-v2.4.5`,
-resolving to reviewed release commit
-`afe09d320268581bc83021cbfc80bf2a0f0bff91`. The newer 3.0.0 compatibility
-release is published but not yet adopted by portfolio-tasks.
-Publication-attestation PR #79 merged at
-`75815fdc83ebd28f53e483b6de71e0107e74356f`. The approved release policy
-accepts lightweight or annotated Git tags; immutable release identity is the tag
-name plus its independently resolved commit SHA.
+Portfolio-tasks currently consumes `ai-sdlc-v3.0.1` through
+`.github/workflows/route-approved-task.yml`. That source adoption is distinct
+from the current published control-plane compatibility release, which is 3.0.2.
 
-The reviewed target repair is `codex-adapter-v2.4.5` at
-`4f062ca73acfc3458f0d690bf1c7687bafd0a8eb`, with conformance report SHA256
-`8a7e3479a8768050b7621cec4d7663d8ab60d266291cb2d1027886200799c2fc`.
-Deployed Runtime Preflight run 36277959203 and immutable REAL preflight run
-36278028013 passed before portfolio-tasks advanced its router consumer to 2.4.5.
-Fresh human-approved portfolio issue #154 then exercised the published path:
-target run 36279165335 prepared the sandbox, invoked Codex, passed validation and
-tests, published one managed draft PR, delivered the canonical result through
-the 2.4.5 receiver, and projected it back to the source issue. Generated PR #66
-passed conformance and human review and merged.
+The earlier 2.4.5 path remains immutable initial-live-path evidence from REAL
+#154. REAL #156 exposed the result-journal identity defect that drove the 3.0.0
+App credential repair. REAL #159 later proved the result-writer prerequisite
+path healthy but exposed DEF-0073 when the 3.0.0 receiver rejected a valid
+3.0.1 admission. The 3.0.2 release repairs that compatibility boundary.
 
-Published 2.4.4 remains immutable historical evidence but is not an
-execution-safe rollback for cost-bearing implementation because REAL issue #151
-proved its publication transport could lose successful Codex work. Any rollback
-that may invoke Codex requires a separately reviewed safe release or REAL
-execution must remain disabled.
+Do not describe 3.0.2 as source-adopted or REAL-accepted until deployed 3.0.2
+Runtime Preflight, immutable REAL preflight, the portfolio consumer repin from
+3.0.1 to 3.0.2, one corrected terminal projection for #159, and unchanged
+same-delivery redelivery all succeed.
 
-The broader organization-level cost-bearing prerequisite policy remains owned by
-issue #77 and is not silently expanded by this release. See
-[2.4.5 release procedure](docs/releases/2.4.5.md).
+Historical 2.4.5 target evidence remains
+`codex-adapter-v2.4.5` at
+`4f062ca73acfc3458f0d690bf1c7687bafd0a8eb`. Fresh human-approved issue #154
+proved that earlier path could prepare the sandbox, invoke Codex, pass
+validation/tests, publish one managed draft PR, deliver the canonical result,
+and project it back to the source. Published 2.4.4 remains immutable historical
+evidence but is not an execution-safe rollback for cost-bearing implementation
+because REAL #151 proved its publication transport could lose successful Codex
+work.
+
+The broader organization-level cost-bearing prerequisite policy remains owned
+by issue #77 and is not silently expanded by 3.0.2.

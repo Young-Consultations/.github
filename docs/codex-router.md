@@ -40,7 +40,7 @@ group. The target workflow applies the canonical group with
 ```yaml
 jobs:
   route:
-    uses: Young-Consultations/.github/.github/workflows/codex-router.yml@ai-sdlc-v2.4.5
+    uses: Young-Consultations/.github/.github/workflows/codex-router.yml@ai-sdlc-v3.0.1
     permissions:
       contents: read
       actions: read
@@ -57,32 +57,22 @@ tokens are supported without calling the user-only `GET /user` endpoint. On
 redelivery, only an identical marker written by that same author is reused;
 untrusted lookalike comments are never admission authority.
 
-The published [3.0.1 release](releases/3.0.1.md) is the current
+The published [3.0.2 release](releases/3.0.2.md) is the current
 control-plane compatibility release. Its immutable tag resolves to reviewed
-PR #94 merge commit
-`a98730deb729cc35dbd4d699395a87facb3ec78e`. The portfolio source consumer
-still invokes the 2.4.5 router until deployed 3.0.1 Runtime Preflight,
-immutable REAL preflight, and the repository-local consumer update complete.
+PR #101 merge commit
+`eae81af30eb8f1e2cf51a30b1e5a6d7dbd76bc6e`. The portfolio source consumer
+currently invokes the published 3.0.1 router and must not advance to 3.0.2
+until deployed 3.0.2 Runtime Preflight and immutable REAL preflight pass.
 
-Release 2.4.5 selects `codex-adapter-v2.4.5` at
-`4f062ca73acfc3458f0d690bf1c7687bafd0a8eb` to repair the publication
-transport defect exposed by REAL issue #151. Publication attestation and both
-deployed preflight gates passed before the source consumer advanced. Fresh REAL
-issue #154 subsequently exercised the published path and produced one managed
-draft PR with receiver/source projection accepted. Published 2.4.4 remains
-immutable historical evidence, not an execution-safe rollback for cost-bearing
-implementation.
-
-Release 3.0.0 binds the enabled consulting target to
-`codex-adapter-v3.0.0` and replaces the external receiver token secret with
-the dedicated App private-key interface. Corrective control-plane patch 3.0.1
-repairs Runtime Preflight's organization-secret metadata audit without
-republishing that target. The current portfolio caller remains pinned to 2.4.5
-until the App-bot sender binding remains exact, deployed 3.0.1 Runtime
-Preflight and immutable REAL preflight pass, and the
-repository-local consumer pin advances to `ai-sdlc-v3.0.1`. The immutable
-target continues to use its reviewed `ai-sdlc-v3.0.0` receiver pin.
-
+The enabled consulting target is immutable `codex-adapter-v3.0.2` at
+`3bde0dc760088b9af21454a0f70ed498dae043a7`. Release 3.0.2 repairs
+DEF-0073 through a receiver-owned compatibility allowlist that permits the
+already-admitted 3.0.1 #159 delivery while rejecting unreviewed release
+combinations. Release 3.0.1 remains immutable predecessor evidence for the
+Runtime Preflight metadata repair; release 3.0.0 remains immutable predecessor
+evidence for the dedicated App private-key receiver interface. Published 2.4.5
+remains initial-live-path evidence and 2.4.4 is not an execution-safe rollback
+for cost-bearing implementation.
 ## Registry changes
 
 Every immutable capability entry contains only shared policy keys:
