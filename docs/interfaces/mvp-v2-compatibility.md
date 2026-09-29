@@ -3,15 +3,18 @@
 **Normative status:** organization-owned baseline for consumer alignment.
 **Payload version:** `ai-sdlc-contract/v2` (v3 is out of scope).
 **Payload compatibility baseline:** `ai-sdlc-contract/v2`, fixture `2.3.0`.
-**Current published control-plane compatibility release:** `ai-sdlc-v3.0.1`.
-**Current source-consumer pin:** `ai-sdlc-v2.4.5` pending corrected 3.0.1 cutover.
+**Current published control-plane compatibility release:** `ai-sdlc-v3.0.2`.
+**Current source-consumer pin:** `ai-sdlc-v3.0.1` pending reviewed 3.0.2 cutover.
 
-The published `ai-sdlc-v3.0.1` PATCH release changes only deployed
-Runtime Preflight credential-metadata auditing so the approved
-organization-scoped `AI_SDLC_RESULT_WRITER_PRIVATE_KEY` can be verified at its
-actual storage scope. It does not change the v3 reusable receiver interface,
-payload contract, target adapter, trusted result-writer identity, or source
-projection semantics.
+Published `ai-sdlc-v3.0.2` repairs DEF-0073 by separating admission
+control-plane release identity from receiver implementation release identity and
+validating the pair through an immutable receiver-owned compatibility allowlist.
+It preserves payload `ai-sdlc-contract/v2`, the dedicated
+`ai-sdlc-result-writer` identity, and source projection semantics. The policy
+explicitly accepts 3.0.1 admissions required to recover the already-admitted
+#159 delivery and accepts 3.0.2 for new admissions after source cutover.
+Published 3.0.1 remains immutable predecessor evidence for the Runtime
+Preflight organization-secret metadata repair.
 
 Published `ai-sdlc-v2.3.2` remains immutable historical compatibility evidence
 at commit `5738ace3ee90dde11336f8f8099e64e5645f7139`; it is not the current
