@@ -12,32 +12,30 @@ package are released as one immutable compatibility unit. Current activation in
 that consumer compatibility unit. See [release, upgrade,
 deprecation, and rollback procedures](docs/releases.md).
 
-The published [`ai-sdlc-v3.0.1` release](docs/releases/3.0.1.md) is
+The published [`ai-sdlc-v3.0.2` release](docs/releases/3.0.2.md) is
 the current control-plane compatibility baseline. Its lightweight tag resolves
-exactly to reviewed PR #94 merge commit
-`a98730deb729cc35dbd4d699395a87facb3ec78e`. It reuses
-`codex-adapter-v3.0.0` at
-`0fa11c078b248ea3201f0aa0f2912fce299a7766`, preserves payload
-`ai-sdlc-contract/v2`, and retains the dedicated
-`ai-sdlc-result-writer` GitHub App receiver credential interface introduced by
-3.0.0. Release 3.0.1 changes only Runtime Preflight's organization-secret
-metadata auditing. The receiver continues to accept the App private key only to
-mint a fresh repository-bounded installation token after execution; the App
-token is then authenticated against immutable `trusted_result_authors`. The
-3.0.0 secret-interface change was MAJOR under the approved release policy, so
-no `ai-sdlc-v2.4.6` control-plane release is authorized.
+exactly to reviewed PR #101 merge commit
+`eae81af30eb8f1e2cf51a30b1e5a6d7dbd76bc6e`. The enabled consulting target
+is immutable `codex-adapter-v3.0.2` at
+`3bde0dc760088b9af21454a0f70ed498dae043a7`, and it pins both the result
+credential preflight and result receiver to 3.0.2. Payload
+`ai-sdlc-contract/v2` and the dedicated `ai-sdlc-result-writer` GitHub App
+credential boundary remain unchanged.
 
-Publication is not the operational cutover. `portfolio-tasks` still selects
-2.4.5, whose initial live path was proven by issue #154. REAL #156 exposed the
-separate result-journal identity defect during redelivery. The sender allowlist has already been cut over to `ai-sdlc-result-writer[bot]`; before another REAL execution, deployed 3.0.1 Runtime Preflight and immutable REAL preflight must pass, and the source consumer must advance to 3.0.1 through its own reviewed PR. The immutable `codex-adapter-v3.0.0` target remains unchanged and keeps its reviewed 3.0.0 receiver pin. Published 2.4.4 remains immutable historical evidence but is not an
-execution-safe rollback for cost-bearing implementation.
+Release 3.0.2 repairs DEF-0073 by replacing accidental equality between the
+admission's control-plane release and receiver implementation release with an
+immutable receiver-owned compatibility allowlist. The published policy accepts
+3.0.1 admissions so the already-admitted #159 delivery can be recovered without
+inventing a new identity, while unreviewed release combinations remain
+fail-closed.
 
-Release 3.0.1 repairs deployed Runtime Preflight's organization-secret
-metadata audit from issue #93. It reuses `codex-adapter-v3.0.0` and changes no
-runtime contract or target interface. Until deployed 3.0.1 Runtime Preflight,
-immutable REAL preflight, and consumer adoption complete, do not approve a new
-2.4.5 implementation task: the source result-sender allowlist has already been
-cut over to the GitHub App identity.
+Publication is not source cutover. `portfolio-tasks` currently selects
+published `ai-sdlc-v3.0.1`. After this publication attestation merges, deployed
+3.0.2 Runtime Preflight and immutable REAL preflight must pass before the source
+consumer advances to 3.0.2. Controlled REAL terminal projection and unchanged
+same-delivery redelivery remain required before closing DEF-0073 and the older
+redelivery acceptance defect. Published 3.0.1, 3.0.0, and earlier releases
+remain immutable predecessor evidence.
 
 ## AI-SDLC contract validation
 
