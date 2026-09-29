@@ -19,7 +19,7 @@ Preflight organization-secret metadata repair.
 Published `ai-sdlc-v2.3.2` remains immutable historical compatibility evidence
 at commit `5738ace3ee90dde11336f8f8099e64e5645f7139`; it is not the current
 control-plane release. The backward-compatible receiver retry correction first
-published in 2.4.0 remains part of the current 2.4.5 behavior: a target may
+published in 2.4.0 remains part of the historical 2.4.5 behavior: a target may
 return `draft-pr-created` on first successful delivery and `duplicate-reused`
 when the same managed draft is found on redelivery, subject to the stable-effect
 identity rules below. Later 2.4.x patch releases preserve the closed v2 schemas
@@ -225,42 +225,40 @@ receiver binding.
 
 ## Deployment/governance gates
 
-### Published 3.0.1 state and current 2.4.5 source-consumer path
+### Published 3.0.2 state and current 3.0.1 source-consumer path
 
-The current published control-plane compatibility release is `ai-sdlc-v3.0.1`,
-attested to reviewed PR #94 merge commit
-`a98730deb729cc35dbd4d699395a87facb3ec78e`. Publication is complete, but
-portfolio-tasks still consumes `ai-sdlc-v2.4.5` until the controlled operational
-cutover is complete. The 2.4.5 path previously passed deployed Runtime
-Preflight and immutable REAL preflight, and fresh issue #154 verified the
-initial live route through human approval, routing, target execution,
-validation/tests, managed draft publication, receiver delivery, and source
-projection.
+The current published control-plane compatibility release is
+`ai-sdlc-v3.0.2`, attested to reviewed PR #101 merge commit
+`eae81af30eb8f1e2cf51a30b1e5a6d7dbd76bc6e`. Portfolio-tasks currently
+consumes published `ai-sdlc-v3.0.1`; publication and source adoption remain
+separate evidence gates.
 
-The full REAL acceptance decision is **not yet complete** because the required
-equivalent redelivery/idempotency exercise remains outstanding under
-portfolio-tasks #121. A published release and successful initial live path do not
-substitute for that separate acceptance evidence.
+The 3.0.2 enabled consulting target is immutable
+`codex-adapter-v3.0.2` at
+`3bde0dc760088b9af21454a0f70ed498dae043a7`. It pins both the result
+credential preflight and receiver to 3.0.2. The receiver's immutable
+compatibility policy accepts 3.0.1 admissions needed to recover the
+already-admitted #159 delivery and 3.0.2 admissions for new work after source
+cutover; unreviewed combinations remain fail-closed.
 
-Published 2.4.4 is immutable historical evidence but is not an execution-safe
-rollback for cost-bearing implementation after REAL issue #151. Rollback
-handling must follow `docs/releases.md` and keep implementation dispatch
-disabled when no separately reviewed safe rollback is available.
+The earlier 2.4.5 path remains initial-live-path evidence from issue #154.
+REAL #156 proved target-side managed-draft reuse but exposed the result-journal
+identity defect that drove the 3.0.0 App credential repair. REAL #159 then
+proved the result-writer prerequisite path healthy but exposed DEF-0073 when
+the 3.0.0 receiver rejected a valid 3.0.1 admission.
 
-REAL issue #156 proved target-side managed-draft reuse but exposed control-plane
-defect #83: receiver journal evidence was written by a principal outside the
-immutable result-author allowlist and was therefore invisible on redelivery.
-Published 3.0.0 binds the result path to `ai-sdlc-result-writer[bot]`, requires
-App capability proof before Codex, and mints a fresh App installation token in
-the receiver after execution. The immutable `codex-adapter-v2.4.6` tag remains
-unused historical candidate evidence after issue #85 classified the required
-receiver-secret change as MAJOR. Full REAL acceptance remains blocked until new
-2.4.5 implementation dispatch is stopped, `PORTFOLIO_RESULT_SENDERS` remains
-bound exactly to the immutable result-author set, corrective 3.0.1 is published
-and attested, deployed Runtime Preflight and immutable REAL preflight pass,
-portfolio-tasks adopts `ai-sdlc-v3.0.1`, and the same-delivery redelivery step
-passes. The immutable `codex-adapter-v3.0.0` target remains unchanged and
-retains its reviewed `ai-sdlc-v3.0.0` receiver pin.
+Full REAL acceptance remains incomplete. After this 3.0.2 publication
+attestation, deployed Runtime Preflight and immutable REAL preflight must pass
+before portfolio-tasks advances from 3.0.1 to 3.0.2. Then the unchanged #159
+delivery must reach one corrected terminal projection and same-delivery
+redelivery must prove `duplicate-reused` without a second Codex execution,
+managed draft, receiver forwarding effect, or source projection.
+
+Published 2.4.4 remains immutable historical evidence but is not an
+execution-safe rollback for cost-bearing implementation after REAL issue #151.
+Rollback handling must follow `docs/releases.md` and keep implementation
+dispatch disabled when no separately reviewed safe rollback is available.
+
 
 ### Historical 2.4.0 publication gates
 
@@ -269,8 +267,8 @@ conformance, registry binding, credentials/settings review, publishability, and
 creation of an immutable 2.4.0 tag. Those gates are retained as historical
 evidence of the compatibility correction that introduced the receiver's
 equivalent managed-draft retry semantics. They are not current publication
-instructions and `tag_published: false` does not describe the current 2.4.5
-release state.
+instructions and `tag_published: false` does not describe the published 2.4.5
+historical release state.
 
 Merge, release publication, deployment, and production operation remain
 human-controlled; this MVP's automated publication boundary remains one managed
