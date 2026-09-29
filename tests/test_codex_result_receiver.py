@@ -185,6 +185,28 @@ def test_receiver_accepts_reviewed_split_release_composition(tmp_path):
     ).accepted
 
 
+def test_bundled_3_0_2_policy_accepts_3_0_1_admission():
+    journal = FakeJournal()
+    binding = {
+        "contract_version": RESULT["contract_version"],
+        "delivery_id": RESULT["delivery_id"],
+        "correlation_id": RESULT["correlation_id"],
+        "source_issue": SOURCE,
+        "target_repository": RESULT["target_repository"],
+        "control_plane_release": "ai-sdlc-v3.0.1",
+        "activation_revision": "a" * 40,
+        "activation_sha256": "b" * 64,
+    }
+    journal.entries[0] = JournalComment(marker(ADMISSION, binding), "router-bot")
+    assert receive(
+        json.dumps(RESULT),
+        SOURCE,
+        RESULT["target_repository"],
+        journal,
+        "ai-sdlc-v3.0.2",
+    ).accepted
+
+
 def test_receiver_rejects_unreviewed_admission_release(tmp_path):
     policy = write_receiver_compatibility_policy(
         tmp_path,
