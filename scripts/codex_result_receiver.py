@@ -22,6 +22,8 @@ from jsonschema import Draft202012Validator, FormatChecker
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA = ROOT / "contracts/execution-result.schema.json"
 TRUST_POLICY = ROOT / "config/codex-result-trust.json"
+RECEIVER_COMPATIBILITY_POLICY = ROOT / "config/codex-result-receiver-compatibility.json"
+RELEASE = re.compile(r"^ai-sdlc-v(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)(?:-[0-9A-Za-z]+(?:[.-][0-9A-Za-z]+)*)?$")
 ISSUE = re.compile(r"^([A-Za-z0-9][A-Za-z0-9-]{0,38}/[A-Za-z0-9._-]{1,100})#([1-9][0-9]*)$")
 AUTHOR = re.compile(r"^[A-Za-z0-9][A-Za-z0-9-]*(?:\[bot\])?$")
 ADMISSION = "<!-- ai-sdlc-admission:v2 "
@@ -82,6 +84,41 @@ def load_trusted_authors(path: Path = TRUST_POLICY) -> dict[str, set[str]]:
     if roles["admission"] & roles["result"]:
         raise ReceiverError("authentication", "result journal trust policy roles must be disjoint")
     return roles
+
+
+def load_receiver_compatibility(
+    path: Path = RECEIVER_COMPATIBILITY_POLICY,
+) -> tuple[str, set[str]]:
+    """Load the immutable receiver-to-admission compatibility policy."""
+    try:
+        policy = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ReceiverError(
+            "authorization", "result receiver compatibility policy is unavailable"
+        ) from exc
+    expected_keys = {
+        "policy_format_version", "receiver_release", "accepted_admission_releases",
+    }
+    if not isinstance(policy, dict) or set(policy) != expected_keys:
+        raise ReceiverError(
+            "authorization", "result receiver compatibility policy has an invalid shape"
+        )
+    receiver_release = policy.get("receiver_release")
+    accepted = policy.get("accepted_admission_releases")
+    if (
+        policy.get("policy_format_version") != 1
+        or not isinstance(receiver_release, str)
+        or RELEASE.fullmatch(receiver_release) is None
+        or not isinstance(accepted, list)
+        or not accepted
+        or any(not isinstance(value, str) or RELEASE.fullmatch(value) is None for value in accepted)
+        or len(set(accepted)) != len(accepted)
+        or receiver_release not in accepted
+    ):
+        raise ReceiverError(
+            "authorization", "result receiver compatibility policy is invalid"
+        )
+    return receiver_release, set(accepted)
 
 
 def canonical_digest(value: dict[str, Any]) -> str:
@@ -173,6 +210,7 @@ def receive(
     caller: str,
     journal: Journal,
     control_plane_release: str | None = None,
+    receiver_compatibility_policy: Path = RECEIVER_COMPATIBILITY_POLICY,
 ) -> Receipt:
     try:
         result = json.loads(raw)
@@ -206,8 +244,19 @@ def receive(
     unique_bindings = {json.dumps(item, separators=(",", ":"), sort_keys=True) for item in bindings}
     if len(unique_bindings) != 1 or any(bindings[0].get(key) != value for key, value in expected.items()):
         raise ReceiverError("authorization", "result does not match one admitted delivery binding")
-    if control_plane_release and bindings[0].get("control_plane_release") != control_plane_release:
-        raise ReceiverError("authorization", "result admission does not match the receiver release")
+    if control_plane_release:
+        receiver_release, accepted_admission_releases = load_receiver_compatibility(
+            receiver_compatibility_policy
+        )
+        if control_plane_release != receiver_release:
+            raise ReceiverError(
+                "authorization", "receiver release does not match immutable compatibility policy"
+            )
+        admission_release = bindings[0].get("control_plane_release")
+        if admission_release not in accepted_admission_releases:
+            raise ReceiverError(
+                "authorization", "result admission release is not compatible with receiver release"
+            )
 
     digest = canonical_digest(result)
     effect_class, effect_sha256 = visible_effect(result)

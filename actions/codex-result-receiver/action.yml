@@ -15,7 +15,7 @@ inputs:
     description: Target repository authenticated by the reusable-workflow caller context.
     required: true
   control-plane-release:
-    description: Immutable control-plane release expected in the admission record.
+    description: Current immutable receiver/control-plane release used to select the bundled admission-release compatibility policy.
     required: true
 
 runs:

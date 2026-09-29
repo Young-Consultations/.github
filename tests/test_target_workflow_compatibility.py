@@ -249,15 +249,74 @@ def test_receiver_action_bundle_pin_must_be_immutable():
 
 def test_live_receiver_bundle_requires_nonempty_control_plane_trust():
     script = (ROOT / "scripts/codex_result_receiver.py").read_text()
+    compatibility = (
+        ROOT / "config/codex-result-receiver-compatibility.json"
+    ).read_bytes()
+    release = current_receiver_release()
     with pytest.raises(checker.CompatibilityError, match="reviewed non-empty"):
         checker.verify_receiver_bundle_policy(
             script,
             b'{"policy_format_version":2,"trusted_admission_authors":[],"trusted_result_authors":["receiver[bot]"]}',
+            compatibility,
+            release,
         )
     checker.verify_receiver_bundle_policy(
         script,
         b'{"policy_format_version":2,"trusted_admission_authors":["router[bot]"],"trusted_result_authors":["receiver[bot]"]}',
+        compatibility,
+        release,
     )
+
+
+def test_historical_receiver_without_compatibility_policy_remains_verifiable():
+    script = (ROOT / "scripts/codex_result_receiver.py").read_text()
+    historical = script.replace(
+        'RECEIVER_COMPATIBILITY_POLICY = ROOT / '
+        '"config/codex-result-receiver-compatibility.json"\n',
+        "",
+    )
+    trust = (
+        b'{"policy_format_version":2,"trusted_admission_authors":["router[bot]"],'
+        b'"trusted_result_authors":["receiver[bot]"]}'
+    )
+    checker.verify_receiver_bundle_policy(
+        historical, trust, None, "ai-sdlc-v3.0.0"
+    )
+
+
+def test_receiver_declaring_compatibility_policy_requires_bundled_policy():
+    script = (ROOT / "scripts/codex_result_receiver.py").read_text()
+    trust = (
+        b'{"policy_format_version":2,"trusted_admission_authors":["router[bot]"],'
+        b'"trusted_result_authors":["receiver[bot]"]}'
+    )
+    with pytest.raises(
+        checker.CompatibilityError,
+        match="declares but does not bundle",
+    ):
+        checker.verify_receiver_bundle_policy(
+            script, trust, None, current_receiver_release()
+        )
+
+
+def test_live_receiver_bundle_rejects_unreviewed_release_compatibility():
+    script = (ROOT / "scripts/codex_result_receiver.py").read_text()
+    trust = (
+        b'{"policy_format_version":2,"trusted_admission_authors":["router[bot]"],'
+        b'"trusted_result_authors":["receiver[bot]"]}'
+    )
+    incompatible = json.dumps({
+        "policy_format_version": 1,
+        "receiver_release": current_receiver_release(),
+        "accepted_admission_releases": ["ai-sdlc-v9.9.9"],
+    }).encode()
+    with pytest.raises(
+        checker.CompatibilityError,
+        match="reviewed fail-closed allowlist",
+    ):
+        checker.verify_receiver_bundle_policy(
+            script, trust, incompatible, current_receiver_release()
+        )
 
 
 @pytest.mark.parametrize(
@@ -769,7 +828,7 @@ def test_migrated_target_entries_use_v2_and_expected_paths():
     assert entries["Young-Consultations/consulting-playbook"]["contract_version"] == checker.CANONICAL_VERSION
     expected_refs = {
         "Young-Consultations/.github": "codex-adapter-v2.3.1",
-        "Young-Consultations/consulting-playbook": "codex-adapter-v3.0.0",
+        "Young-Consultations/consulting-playbook": "codex-adapter-v3.0.2",
         "Young-Consultations/portfolio-tasks": "codex-adapter-v2.3.2",
         "Young-Consultations/slugger": "codex-adapter-v2.3.2",
     }

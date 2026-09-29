@@ -210,6 +210,50 @@ def validate(
     receiver_action = manifest.get("result_receiver_action")
     if not isinstance(receiver_action, str) or not (root / receiver_action).is_file():
         errors.append("release result receiver action must exist")
+    compatibility_policy_path = manifest.get("result_receiver_compatibility_policy")
+    if (
+        not isinstance(compatibility_policy_path, str)
+        or not (root / compatibility_policy_path).is_file()
+    ):
+        errors.append("release result receiver compatibility policy must exist")
+    else:
+        try:
+            compatibility_policy = load_json(root / compatibility_policy_path)
+        except (OSError, json.JSONDecodeError):
+            errors.append("release result receiver compatibility policy must be valid JSON")
+        else:
+            accepted = (
+                compatibility_policy.get("accepted_admission_releases")
+                if isinstance(compatibility_policy, dict)
+                else None
+            )
+            expected_tag = manifest.get("tag")
+            valid_compatibility = (
+                isinstance(compatibility_policy, dict)
+                and set(compatibility_policy)
+                == {
+                    "policy_format_version",
+                    "receiver_release",
+                    "accepted_admission_releases",
+                }
+                and compatibility_policy.get("policy_format_version") == 1
+                and compatibility_policy.get("receiver_release") == expected_tag
+                and isinstance(accepted, list)
+                and bool(accepted)
+                and all(
+                    isinstance(value, str)
+                    and re.fullmatch(
+                        r"^ai-sdlc-v(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)(?:-[0-9A-Za-z]+(?:[.-][0-9A-Za-z]+)*)?$",
+                        value,
+                    )
+                    for value in accepted
+                )
+                and len(set(accepted)) == len(accepted)
+                and expected_tag in accepted
+            )
+            if not valid_compatibility:
+                errors.append("release result receiver compatibility policy is invalid")
+
     trust_policy_path = manifest.get("result_trust_policy")
     if not isinstance(trust_policy_path, str) or not (root / trust_policy_path).is_file():
         errors.append("release result trust policy must exist")

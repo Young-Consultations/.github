@@ -1,9 +1,9 @@
 {
-  "release_version": "3.0.1",
-  "tag": "ai-sdlc-v3.0.1",
-  "tag_published": true,
-  "tag_commit_sha": "a98730deb729cc35dbd4d699395a87facb3ec78e",
-  "contract_package_version": "3.0.1",
+  "release_version": "3.0.2",
+  "tag": "ai-sdlc-v3.0.2",
+  "tag_published": false,
+  "tag_commit_sha": null,
+  "contract_package_version": "3.0.2",
   "contract_payload_version": "ai-sdlc-contract/v2",
   "schema_version": "ai-sdlc-contract/v2",
   "registry_format_version": 1,
@@ -23,10 +23,11 @@
     "release_version": "2.4.4",
     "commit_sha": "adb57508762168b3410f52e8a7b0151078c6e9b9"
   },
-  "recovery_of": "3.0.0",
+  "recovery_of": "3.0.1",
   "result_receiver_workflow": ".github/workflows/codex-result-receiver.yml",
   "result_receiver_action": "actions/codex-result-receiver/action.yml",
   "result_trust_policy": "config/codex-result-trust.json",
   "fixture_version": "2.3.0",
-  "fixture_manifest": "tests/fixtures/mvp-v2/manifest.json"
+  "fixture_manifest": "tests/fixtures/mvp-v2/manifest.json",
+  "result_receiver_compatibility_policy": "config/codex-result-receiver-compatibility.json"
 }
