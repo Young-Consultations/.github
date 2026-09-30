@@ -123,39 +123,45 @@ required for a given registered repository.
 
 ## Current compatibility update
 
-Published `ai-sdlc-v3.0.2` is the current control-plane compatibility
-release for organization issue #100 / consulting-playbook DEF-0073. Its
-lightweight tag resolves exactly to reviewed PR #101 merge commit
-`eae81af30eb8f1e2cf51a30b1e5a6d7dbd76bc6e`.
+Published `ai-sdlc-v3.0.2` remains the current deployed compatibility release
+and portfolio-tasks currently consumes 3.0.2. The enabled published target is
+immutable `codex-adapter-v3.0.2`.
 
-3.0.2 replaces accidental equality between the admission's control-plane
-release and the receiver bundle release with an immutable receiver-owned
-compatibility allowlist. The published policy explicitly accepts 3.0.1
-admissions so the already-admitted #159 delivery can be recovered without
-inventing a new identity, while unreviewed release combinations remain
-fail-closed.
+Unpublished `ai-sdlc-v3.0.3` is the corrective candidate for #103 /
+consulting-playbook DEF-0086. The candidate preserves durable predecessor
+admission evidence across authorized unchanged retries rather than regenerating
+release/activation evidence from the current router.
 
-The enabled consulting target is immutable `codex-adapter-v3.0.2` at
-`3bde0dc760088b9af21454a0f70ed498dae043a7`. It pins both the result
-credential preflight and receiver to `ai-sdlc-v3.0.2`; its conformance adapter
-revision is
-`sha256:1af153a276e2a3a87f6dd274a0aae111f09350a6a4995d874bd0014174e0ee04`
-and its report SHA-256 is
-`f7251f7ac3ceb46c350106b9d3190f52be71ffd0b57a0faca5dffe2d847074e6`.
+The matching immutable target is `codex-adapter-v3.0.3` at
+`f11852c7f563df16ea4afa9ab75bf766242e7327`, with adapter revision
+`sha256:3932def5d016b7db11869a0520087aeedcd092799e61dc8617be8bb2f020be3f`
+and report SHA-256
+`a739cd3dde3c05121fbfc5360495880e265b76448b504936b8583b5efa972ec8`.
 
-Publication and source consumption remain separate. Portfolio-tasks currently
-selects published `ai-sdlc-v3.0.1`. After this attestation merges, run deployed
-3.0.2 Runtime Preflight and immutable REAL preflight before changing that source
-consumer to 3.0.2. DEF-0073 and the older redelivery acceptance defect remain
-open until controlled REAL terminal projection and unchanged same-delivery
-redelivery succeed.
+For this candidate, the reviewed receiver/admission compatibility set is:
 
-Published 3.0.1 remains immutable predecessor evidence for the organization
-secret metadata audit repair. Published 3.0.0 remains immutable predecessor
-evidence for the dedicated GitHub App result-writer credential boundary.
-Published 2.4.4 remains historical evidence and is not an execution-safe
-rollback for cost-bearing implementation because REAL #151 exposed its
-publication-transport defect.
+- `ai-sdlc-v3.0.1`, required to preserve #159's original durable admission;
+- `ai-sdlc-v3.0.2`, required for deliveries admitted after the previous source
+  cutover; and
+- `ai-sdlc-v3.0.3`, required for new admissions after future 3.0.3 adoption.
+
+The target registry declares the same predecessor/current set for cross-release
+reuse, and release-aware target verification must prove that set is a subset of
+the exact pinned receiver allowlist. Same-release exact-binding reuse does not
+depend on the predecessor allowlist.
+
+Candidate readiness requires Contract Tests, Target Compatibility, and
+TC-MVP-E2E-001 SIM on the exact PR head. After candidate merge, create
+`ai-sdlc-v3.0.3` at the exact reviewed merge commit, then merge a separate
+publication-attestation PR. Deployed Runtime Preflight and immutable REAL
+preflight must pass before portfolio-tasks advances from 3.0.2 to 3.0.3.
+
+#159 must not be reauthorized before that source cutover. Full acceptance still
+requires one corrected terminal projection through the preserved 3.0.1
+admission followed by unchanged same-delivery `duplicate-reused` before Codex
+and no second visible effect.
+
+Published 3.0.2, 3.0.1, and 3.0.0 remain immutable predecessor evidence.
 
 ## Rollback
 
