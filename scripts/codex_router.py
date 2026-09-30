@@ -207,12 +207,12 @@ def validate_registry() -> dict[str, Any]:
         reusable_releases = idempotency.get("reusable_admission_releases")
         if (
             not isinstance(reusable_releases, list)
-            or len(reusable_releases) != len(set(reusable_releases))
             or any(
                 not isinstance(release, str)
                 or CONTROL_PLANE_TAG_RE.fullmatch(release) is None
                 for release in reusable_releases
             )
+            or len(reusable_releases) != len(set(reusable_releases))
         ):
             reject(
                 "repository-routing",
@@ -398,7 +398,14 @@ def _existing_admissions(repository: str, issue: str, delivery_id: str) -> list[
             except json.JSONDecodeError:
                 continue
             if isinstance(value, dict) and value.get("delivery_id") == delivery_id:
-                admissions.append({"author": author, "binding": value})
+                comment_id = comment.get("id")
+                admissions.append(
+                    {
+                        "author": author,
+                        "binding": value,
+                        "comment_id": comment_id if isinstance(comment_id, int) else None,
+                    }
+                )
     return admissions
 
 
@@ -493,7 +500,7 @@ def dispatch() -> None:
         "-f", f"concurrency_group={concurrency_group}",
     ]
     try:
-        existing = _existing_admissions(
+        existing_before = _existing_admissions(
             issue_match.group(1), issue_match.group(2), delivery_id,
         )
         posted = _github_json(
@@ -507,8 +514,34 @@ def dispatch() -> None:
             raise ValueError("Admission response did not identify the router credential")
         if not isinstance(posted_id, int):
             raise ValueError("Admission response did not identify the created journal comment")
-        owned = [item["binding"] for item in existing if item["author"] == author]
-        if len(owned) > 1:
+
+        existing_after = _existing_admissions(
+            issue_match.group(1), issue_match.group(2), delivery_id,
+        )
+        before_owned = [item for item in existing_before if item["author"] == author]
+        after_owned = [item for item in existing_after if item["author"] == author]
+        before_ids = {
+            item["comment_id"]
+            for item in before_owned
+            if isinstance(item.get("comment_id"), int)
+        }
+        concurrent = [
+            item
+            for item in after_owned
+            if item.get("comment_id") not in before_ids
+            and item.get("comment_id") != posted_id
+        ]
+        if concurrent:
+            _github_json(
+                f"repos/{issue_match.group(1)}/issues/comments/{posted_id}",
+                "--method", "DELETE",
+            )
+            reject(
+                "authorization",
+                "Concurrent admission journal creation is ambiguous for this delivery.",
+                correlation_id,
+            )
+        if len(before_owned) > 1:
             _github_json(
                 f"repos/{issue_match.group(1)}/issues/comments/{posted_id}",
                 "--method", "DELETE",
@@ -518,15 +551,18 @@ def dispatch() -> None:
                 "Ambiguous admission journal exists for this delivery.",
                 correlation_id,
             )
-        if owned:
+        if before_owned:
+            prior = before_owned[0]["binding"]
+            same_release_reuse = prior == binding
             accepted_releases = set(
                 entry["idempotency"]["reusable_admission_releases"]
             )
-            if not _admission_matches_for_reuse(
-                owned[0],
+            cross_release_reuse = _admission_matches_for_reuse(
+                prior,
                 binding,
                 accepted_releases,
-            ):
+            )
+            if not same_release_reuse and not cross_release_reuse:
                 _github_json(
                     f"repos/{issue_match.group(1)}/issues/comments/{posted_id}",
                     "--method", "DELETE",
