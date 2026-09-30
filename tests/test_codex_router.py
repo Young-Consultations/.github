@@ -353,7 +353,11 @@ def test_registry_rejects_unhashable_reusable_admission_release_policy():
         result = subprocess.run(
             ["python3", "scripts/codex_router.py", "validate-registry"],
             env={
-                **os.environ,
+                **{
+                    key: value
+                    for key, value in os.environ.items()
+                    if key != "GITHUB_OUTPUT"
+                },
                 "CODEX_ACTIVATION_PATH": "config/codex-activation.json",
             },
             text=True,
