@@ -341,6 +341,32 @@ def test_enabled_v2_target_must_declare_actual_single_task_serialization():
         registry_path.write_text(original, encoding="utf-8")
 
 
+def test_registry_rejects_unhashable_reusable_admission_release_policy():
+    registry = json.loads(Path("config/codex-repositories.json").read_text(encoding="utf-8"))
+    registry["repositories"]["Young-Consultations/consulting-playbook"]["idempotency"][
+        "reusable_admission_releases"
+    ] = [{}]
+    registry_path = Path("config/codex-repositories.json")
+    original = registry_path.read_text(encoding="utf-8")
+    try:
+        registry_path.write_text(json.dumps(registry), encoding="utf-8")
+        result = subprocess.run(
+            ["python3", "scripts/codex_router.py", "validate-registry"],
+            env={
+                **os.environ,
+                "CODEX_ACTIVATION_PATH": "config/codex-activation.json",
+            },
+            text=True,
+            capture_output=True,
+        )
+        assert result.returncode == 1
+        assert "failure_category=repository-routing" in result.stdout
+        assert "reusable admission release policy" in result.stdout
+        assert "Traceback" not in result.stderr
+    finally:
+        registry_path.write_text(original, encoding="utf-8")
+
+
 def test_repository_specific_configuration_is_registry_only():
     router = open("scripts/codex_router.py", encoding="utf-8").read()
     for repository in (
