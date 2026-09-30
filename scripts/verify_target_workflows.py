@@ -216,8 +216,28 @@ def load_registry(path: Path = REGISTRY) -> dict[str, dict[str, Any]]:
         if workflow_path in {".github/workflows/codex-router.yml", ".github/workflows/router-smoke-test.yml", ".github/workflows/issue-to-codex.yml"}:
             raise CompatibilityError(f"{repository}: obsolete workflow_ref is not allowed")
         idempotency = entry.get("idempotency")
-        if not isinstance(idempotency, dict) or idempotency.get("branch_identity") != "delivery_id" or idempotency.get("ownership_marker") != "ai-sdlc-delivery-id" or idempotency.get("requires_preflight") is not True or idempotency.get("requires_fail_closed_reuse") is not True or idempotency.get("requires_create_race_requery") is not True:
+        if (
+            not isinstance(idempotency, dict)
+            or idempotency.get("branch_identity") != "delivery_id"
+            or idempotency.get("ownership_marker") != "ai-sdlc-delivery-id"
+            or idempotency.get("requires_preflight") is not True
+            or idempotency.get("requires_fail_closed_reuse") is not True
+            or idempotency.get("requires_create_race_requery") is not True
+        ):
             raise CompatibilityError(f"{repository}: target idempotency policy is incomplete")
+        reusable_releases = idempotency.get("reusable_admission_releases")
+        if (
+            not isinstance(reusable_releases, list)
+            or len(reusable_releases) != len(set(reusable_releases))
+            or any(
+                not isinstance(release, str)
+                or CONTROL_PLANE_RELEASE_RE.fullmatch(release) is None
+                for release in reusable_releases
+            )
+        ):
+            raise CompatibilityError(
+                f"{repository}: reusable admission release policy is invalid"
+            )
         if entry.get("contract_version") != CANONICAL_VERSION:
             raise CompatibilityError(f"{repository}: contract-version mismatch")
         if "conformance" not in entry:
