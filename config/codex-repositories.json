@@ -30,7 +30,8 @@
         "requires_preflight": true,
         "requires_fail_closed_reuse": true,
         "requires_create_race_requery": true,
-        "terminal_reuse_status": "duplicate-reused"
+        "terminal_reuse_status": "duplicate-reused",
+        "reusable_admission_releases": []
       }
     },
     "Young-Consultations/slugger": {
@@ -63,7 +64,8 @@
         "requires_preflight": true,
         "requires_fail_closed_reuse": true,
         "requires_create_race_requery": true,
-        "terminal_reuse_status": "duplicate-reused"
+        "terminal_reuse_status": "duplicate-reused",
+        "reusable_admission_releases": []
       }
     },
     "Young-Consultations/consulting-playbook": {
@@ -95,7 +97,12 @@
         "requires_preflight": true,
         "requires_fail_closed_reuse": true,
         "requires_create_race_requery": true,
-        "terminal_reuse_status": "duplicate-reused"
+        "terminal_reuse_status": "duplicate-reused",
+        "reusable_admission_releases": [
+          "ai-sdlc-v3.0.1",
+          "ai-sdlc-v3.0.2",
+          "ai-sdlc-v3.0.3"
+        ]
       }
     },
     "Young-Consultations/portfolio-tasks": {
@@ -128,7 +135,8 @@
         "requires_preflight": true,
         "requires_fail_closed_reuse": true,
         "requires_create_race_requery": true,
-        "terminal_reuse_status": "duplicate-reused"
+        "terminal_reuse_status": "duplicate-reused",
+        "reusable_admission_releases": []
       }
     }
   }
