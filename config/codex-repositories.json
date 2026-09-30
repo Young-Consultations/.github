@@ -89,8 +89,7 @@
         "report_path": ".ai-sdlc/conformance/tc-mvp-ci-001.json",
         "report_sha256": "a739cd3dde3c05121fbfc5360495880e265b76448b504936b8583b5efa972ec8",
         "status": "pass",
-        "activation_evidence_sufficient": true,
-        "adapter_revision": "sha256:3932def5d016b7db11869a0520087aeedcd092799e61dc8617be8bb2f020be3f"
+        "activation_evidence_sufficient": true
       },
       "idempotency": {
         "branch_identity": "delivery_id",
