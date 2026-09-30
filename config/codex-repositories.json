@@ -100,8 +100,7 @@
         "terminal_reuse_status": "duplicate-reused",
         "reusable_admission_releases": [
           "ai-sdlc-v3.0.1",
-          "ai-sdlc-v3.0.2",
-          "ai-sdlc-v3.0.3"
+          "ai-sdlc-v3.0.2"
         ]
       }
     },
