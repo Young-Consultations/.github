@@ -38,6 +38,18 @@ CONTROL_PLANE_TAG_RE = re.compile(
     r"(?:-[0-9A-Za-z]+(?:[.-][0-9A-Za-z]+)*)?"
 )
 ADMISSION_RE = re.compile(r"<!-- ai-sdlc-admission:v2 (\{[^\n]*\}) -->")
+ADMISSION_CORE_FIELDS = (
+    "contract_version",
+    "delivery_id",
+    "correlation_id",
+    "source_issue",
+    "target_repository",
+)
+ADMISSION_BINDING_FIELDS = set(ADMISSION_CORE_FIELDS) | {
+    "control_plane_release",
+    "activation_revision",
+    "activation_sha256",
+}
 FAILURE_CATEGORIES = {
     "contract-validation", "authorization", "dependency",
     "repository-routing", "publication", "unknown",
@@ -179,8 +191,33 @@ def validate_registry() -> dict[str, Any]:
         if not isinstance(entry["codex_environment"], str) or not entry["codex_environment"]:
             reject("repository-routing", f"Registry entry {name} has an invalid codex_environment.")
         idempotency = entry.get("idempotency")
-        if not isinstance(idempotency, dict) or idempotency.get("branch_identity") != "delivery_id" or idempotency.get("ownership_marker") != "ai-sdlc-delivery-id" or idempotency.get("requires_preflight") is not True or idempotency.get("requires_fail_closed_reuse") is not True or idempotency.get("requires_create_race_requery") is not True or idempotency.get("terminal_reuse_status") != "duplicate-reused":
-            reject("repository-routing", f"Registry entry {name} lacks required target idempotency policy.")
+        if (
+            not isinstance(idempotency, dict)
+            or idempotency.get("branch_identity") != "delivery_id"
+            or idempotency.get("ownership_marker") != "ai-sdlc-delivery-id"
+            or idempotency.get("requires_preflight") is not True
+            or idempotency.get("requires_fail_closed_reuse") is not True
+            or idempotency.get("requires_create_race_requery") is not True
+            or idempotency.get("terminal_reuse_status") != "duplicate-reused"
+        ):
+            reject(
+                "repository-routing",
+                f"Registry entry {name} lacks required target idempotency policy.",
+            )
+        reusable_releases = idempotency.get("reusable_admission_releases")
+        if (
+            not isinstance(reusable_releases, list)
+            or len(reusable_releases) != len(set(reusable_releases))
+            or any(
+                not isinstance(release, str)
+                or CONTROL_PLANE_TAG_RE.fullmatch(release) is None
+                for release in reusable_releases
+            )
+        ):
+            reject(
+                "repository-routing",
+                f"Registry entry {name} has invalid reusable admission release policy.",
+            )
         if entry["contract_version"] != read_json(INPUT_SCHEMA)["properties"]["contract_version"]["const"]:
             reject("repository-routing", f"Registry entry {name} has an unsupported contract_version.")
         validate_conformance(name, entry, required=False)
@@ -365,6 +402,29 @@ def _existing_admissions(repository: str, issue: str, delivery_id: str) -> list[
     return admissions
 
 
+def _admission_matches_for_reuse(
+    existing: dict[str, Any],
+    current: dict[str, Any],
+    accepted_releases: set[str],
+) -> bool:
+    if set(existing) != ADMISSION_BINDING_FIELDS:
+        return False
+    if any(existing.get(field) != current.get(field) for field in ADMISSION_CORE_FIELDS):
+        return False
+    release = existing.get("control_plane_release")
+    activation_revision = existing.get("activation_revision")
+    activation_sha256 = existing.get("activation_sha256")
+    return (
+        isinstance(release, str)
+        and release in accepted_releases
+        and CONTROL_PLANE_TAG_RE.fullmatch(release) is not None
+        and isinstance(activation_revision, str)
+        and SHA_RE.fullmatch(activation_revision) is not None
+        and isinstance(activation_sha256, str)
+        and DIGEST_RE.fullmatch(activation_sha256) is not None
+    )
+
+
 def dispatch() -> None:
     try:
         execution = json.loads(os.environ["EXECUTION_INPUT"])
@@ -448,13 +508,34 @@ def dispatch() -> None:
         if not isinstance(posted_id, int):
             raise ValueError("Admission response did not identify the created journal comment")
         owned = [item["binding"] for item in existing if item["author"] == author]
-        if any(item != binding for item in owned):
+        if len(owned) > 1:
             _github_json(
                 f"repos/{issue_match.group(1)}/issues/comments/{posted_id}",
                 "--method", "DELETE",
             )
-            reject("authorization", "Conflicting admission journal exists for this delivery.", correlation_id)
+            reject(
+                "authorization",
+                "Ambiguous admission journal exists for this delivery.",
+                correlation_id,
+            )
         if owned:
+            accepted_releases = set(
+                entry["idempotency"]["reusable_admission_releases"]
+            )
+            if not _admission_matches_for_reuse(
+                owned[0],
+                binding,
+                accepted_releases,
+            ):
+                _github_json(
+                    f"repos/{issue_match.group(1)}/issues/comments/{posted_id}",
+                    "--method", "DELETE",
+                )
+                reject(
+                    "authorization",
+                    "Conflicting or unsupported admission journal exists for this delivery.",
+                    correlation_id,
+                )
             _github_json(
                 f"repos/{issue_match.group(1)}/issues/comments/{posted_id}",
                 "--method", "DELETE",
