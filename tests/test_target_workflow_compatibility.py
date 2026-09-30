@@ -461,7 +461,11 @@ def test_network_fetch_is_mocked_for_success(tmp_path):
     ):
         report = checker.verify_registry(entries, "fake-token")
     fetch.assert_called_once_with("org/repo", ".github/workflows/codex-execute.yml", "codex-adapter-v2.0.0", "fake-token")
-    receiver_check.assert_called_once_with("0123456789abcdef0123456789abcdef01234567", "fake-token")
+    receiver_check.assert_called_once_with(
+        "0123456789abcdef0123456789abcdef01234567",
+        "fake-token",
+        set(),
+    )
     report_check.assert_called_once_with(
         "org/repo",
         "codex-adapter-v2.0.0",
@@ -769,6 +773,37 @@ def test_issue_to_codex_cannot_be_registered(tmp_path):
     path = registry(tmp_path, {"org/repo": entry(workflow_ref="org/repo/.github/workflows/issue-to-codex.yml@codex-adapter-v2.0.0")})
     with pytest.raises(checker.CompatibilityError, match="obsolete workflow_ref"):
         checker.load_registry(path)
+
+
+def test_reusable_admission_policy_rejects_unhashable_entries(tmp_path):
+    value = entry()
+    value["idempotency"]["reusable_admission_releases"] = [{}]
+    path = registry(tmp_path, {"org/repo": value})
+    with pytest.raises(checker.CompatibilityError, match="reusable admission release policy"):
+        checker.load_registry(path)
+
+
+def test_reusable_admission_policy_is_forwarded_to_receiver_verification(tmp_path):
+    value = entry()
+    value["idempotency"]["reusable_admission_releases"] = ["ai-sdlc-v3.0.1"]
+    entries = checker.load_registry(registry(tmp_path, {"org/repo": value}))
+    with (
+        patch.object(checker, "fetch_tag_commit", return_value="2" * 40),
+        patch.object(checker, "fetch_workflow", return_value=CANONICAL),
+        patch.object(
+            checker,
+            "verify_receiver_at_ref",
+            return_value="CODEX_RESULT_TOKEN",
+        ) as receiver_check,
+        patch.object(checker, "verify_conformance_report"),
+    ):
+        report = checker.verify_registry(entries, "fake-token")
+    assert report[0]["result"] == "pass"
+    receiver_check.assert_called_once_with(
+        "0123456789abcdef0123456789abcdef01234567",
+        "fake-token",
+        {"ai-sdlc-v3.0.1"},
+    )
 
 
 def test_draft_only_must_remain_true(tmp_path):
