@@ -73,6 +73,7 @@ def entry(repo: str = "org/repo", **changes):
             "requires_fail_closed_reuse": True,
             "requires_create_race_requery": True,
             "terminal_reuse_status": "duplicate-reused",
+            "reusable_admission_releases": [],
         },
     }
     value.update(changes)
