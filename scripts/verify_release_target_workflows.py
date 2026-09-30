@@ -26,9 +26,15 @@ def _missing_ref_error(exc: checker.CompatibilityError) -> bool:
     return "HTTP 404:" in message or "HTTP 422:" in message
 
 
-def verify_release_receiver_at_ref(receiver_ref: str, token: str | None) -> str:
+def verify_release_receiver_at_ref(
+    receiver_ref: str,
+    token: str | None,
+    reusable_admission_releases: set[str] | None = None,
+) -> str:
     try:
-        return _REMOTE_VERIFY_RECEIVER(receiver_ref, token)
+        return _REMOTE_VERIFY_RECEIVER(
+            receiver_ref, token, reusable_admission_releases
+        )
     except checker.CompatibilityError as exc:
         manifest = json.loads((ROOT / "release/release-manifest.json").read_text(encoding="utf-8"))
         candidate_state = (
@@ -56,12 +62,21 @@ def verify_release_receiver_at_ref(receiver_ref: str, token: str | None) -> str:
             "local release-candidate receiver does not self-pin the exact manifest tag"
         )
     checker.verify_receiver_action(action_path.read_text(encoding="utf-8"))
-    checker.verify_receiver_bundle_policy(
+    accepted_admission_releases = checker.verify_receiver_bundle_policy(
         receiver_script_path.read_text(encoding="utf-8"),
         trust_path.read_bytes(),
         compatibility_path.read_bytes(),
         receiver_ref,
     )
+    if reusable_admission_releases:
+        if accepted_admission_releases is None:
+            raise checker.CompatibilityError(
+                "target allows cross-release admission reuse but receiver has no compatibility policy"
+            )
+        if not reusable_admission_releases <= accepted_admission_releases:
+            raise checker.CompatibilityError(
+                "target reusable admission releases exceed the candidate receiver allowlist"
+            )
     if not schema_path.is_file():
         raise checker.CompatibilityError("local release-candidate result schema is missing")
     secret_name = checker.receiver_declared_secret(source)
