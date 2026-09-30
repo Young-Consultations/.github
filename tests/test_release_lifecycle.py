@@ -14,7 +14,7 @@ def test_current_candidate_release_is_structurally_coherent():
 def test_candidate_release_passes_candidate_gate():
     assert validate_release.validate() == []
     assert validate_release.validate(require_candidate_ready=True) == []
-    assert validate_release.validate(require_candidate_ready=True) == [
+    assert validate_release.validate(require_publishable=True) == [
         "publishable release must declare tag_published true"
     ]
 
