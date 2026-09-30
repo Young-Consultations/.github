@@ -1,8 +1,9 @@
 {
   "policy_format_version": 1,
-  "receiver_release": "ai-sdlc-v3.0.2",
+  "receiver_release": "ai-sdlc-v3.0.3",
   "accepted_admission_releases": [
     "ai-sdlc-v3.0.1",
-    "ai-sdlc-v3.0.2"
+    "ai-sdlc-v3.0.2",
+    "ai-sdlc-v3.0.3"
   ]
 }
