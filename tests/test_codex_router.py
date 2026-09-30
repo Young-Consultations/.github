@@ -366,7 +366,7 @@ def test_admission_lookup_reads_later_comment_pages(monkeypatch):
     monkeypatch.setattr(codex_router, "_github_json", lambda *args: pages)
     assert codex_router._existing_admissions(
         "Young-Consultations/portfolio-tasks", "42", "delivery-42"
-    ) == [{"author": "mightyjoe909", "binding": binding}]
+    ) == [{"author": "mightyjoe909", "binding": binding, "comment_id": None}]
 
 
 def test_admission_lookup_ignores_comments_without_a_user_object(monkeypatch):
@@ -399,14 +399,38 @@ def test_dispatch_uses_canonical_json_transport_for_every_repository(
     registry = json.loads(open("config/codex-repositories.json", encoding="utf-8").read())
     workflow_ref = registry["repositories"][repository]["workflow_ref"]
     calls = []
+    slurp_calls = 0
+    current_binding = {
+        **{key: execution[key] for key in (
+            "contract_version",
+            "delivery_id",
+            "correlation_id",
+            "source_issue",
+            "target_repository",
+        )},
+        "control_plane_release": "ai-sdlc-v3.0.0",
+        "activation_revision": "a" * 40,
+        "activation_sha256": "b" * 64,
+    }
 
     monkeypatch.setenv("EXECUTION_INPUT", json.dumps(execution))
     monkeypatch.setenv("WORKFLOW_REF", workflow_ref)
     monkeypatch.delenv("GITHUB_OUTPUT", raising=False)
     def fake_run(cmd, **kwargs):
+        nonlocal slurp_calls
         calls.append((cmd, kwargs))
         if "--slurp" in cmd:
-            return subprocess.CompletedProcess(cmd, 0, stdout="[[]]")
+            slurp_calls += 1
+            if slurp_calls == 1:
+                return subprocess.CompletedProcess(cmd, 0, stdout="[[]]")
+            comment = {
+                "id": 101,
+                "body": _admission_marker(current_binding),
+                "user": {"login": "router-app[bot]"},
+            }
+            return subprocess.CompletedProcess(
+                cmd, 0, stdout=json.dumps([[comment]])
+            )
         if cmd[1] == "api" and "POST" in cmd:
             return subprocess.CompletedProcess(
                 cmd, 0, stdout='{"id":101,"user":{"login":"router-app[bot]"}}'
@@ -443,10 +467,34 @@ def test_portfolio_tasks_dispatch_command_matches_workflow_interface(monkeypatch
     )
     monkeypatch.delenv("GITHUB_OUTPUT", raising=False)
     commands = []
+    slurp_calls = 0
+    current_binding = {
+        **{key: execution[key] for key in (
+            "contract_version",
+            "delivery_id",
+            "correlation_id",
+            "source_issue",
+            "target_repository",
+        )},
+        "control_plane_release": "ai-sdlc-v3.0.0",
+        "activation_revision": "a" * 40,
+        "activation_sha256": "b" * 64,
+    }
     def fake_run(cmd, **kwargs):
+        nonlocal slurp_calls
         commands.append(cmd)
         if "--slurp" in cmd:
-            return subprocess.CompletedProcess(cmd, 0, stdout="[[]]")
+            slurp_calls += 1
+            if slurp_calls == 1:
+                return subprocess.CompletedProcess(cmd, 0, stdout="[[]]")
+            comment = {
+                "id": 101,
+                "body": _admission_marker(current_binding),
+                "user": {"login": "router-app[bot]"},
+            }
+            return subprocess.CompletedProcess(
+                cmd, 0, stdout=json.dumps([[comment]])
+            )
         if cmd[1] == "api" and "POST" in cmd:
             return subprocess.CompletedProcess(
                 cmd, 0, stdout='{"id":101,"user":{"login":"router-app[bot]"}}'
@@ -484,23 +532,48 @@ def _binding_for(execution, release):
     }
 
 
+def _posted_binding(execution, release="ai-sdlc-v3.0.3"):
+    return {
+        "contract_version": execution["contract_version"],
+        "delivery_id": execution["delivery_id"],
+        "correlation_id": execution["correlation_id"],
+        "source_issue": execution["source_issue"],
+        "target_repository": execution["target_repository"],
+        "control_plane_release": release,
+        "activation_revision": "a" * 40,
+        "activation_sha256": "b" * 64,
+    }
+
+
+def _journal_comment(comment_id, binding, author="router-app[bot]"):
+    return {
+        "id": comment_id,
+        "body": _admission_marker(binding),
+        "user": {"login": author},
+    }
+
+
 def test_dispatch_reuses_compatible_predecessor_admission(monkeypatch):
     repository = "Young-Consultations/consulting-playbook"
     monkeypatch.setenv("CONTROL_PLANE_RELEASE", "ai-sdlc-v3.0.3")
     execution = execution_for(repository, "documentation")
     registry = json.loads(Path("config/codex-repositories.json").read_text())
     workflow_ref = registry["repositories"][repository]["workflow_ref"]
-    existing = _binding_for(execution, "ai-sdlc-v3.0.1")
+    prior = _binding_for(execution, "ai-sdlc-v3.0.1")
+    posted_binding = _posted_binding(execution)
     api_calls = []
     workflow_calls = []
+    reads = 0
 
     def fake_api(*args):
+        nonlocal reads
         api_calls.append(args)
         if "--slurp" in args:
-            return [[{
-                "body": _admission_marker(existing),
-                "user": {"login": "router-app[bot]"},
-            }]]
+            reads += 1
+            comments = [_journal_comment(50, prior)]
+            if reads > 1:
+                comments.append(_journal_comment(101, posted_binding))
+            return [comments]
         if "--method" in args and "POST" in args:
             return {"id": 101, "user": {"login": "router-app[bot]"}}
         if "--method" in args and "DELETE" in args:
@@ -522,9 +595,55 @@ def test_dispatch_reuses_compatible_predecessor_admission(monkeypatch):
 
     codex_router.dispatch()
 
+    assert reads == 2
     assert any("--method" in call and "DELETE" in call for call in api_calls)
     assert len(workflow_calls) == 1
     assert workflow_calls[0][:4] == ["gh", "workflow", "run", "codex-execute.yml"]
+
+
+def test_dispatch_preserves_same_release_reuse_without_cross_release_allowlist(
+    monkeypatch,
+):
+    repository = "Young-Consultations/portfolio-tasks"
+    execution = execution_for(repository, "repository-maintenance")
+    registry = json.loads(Path("config/codex-repositories.json").read_text())
+    assert registry["repositories"][repository]["idempotency"]["reusable_admission_releases"] == []
+    workflow_ref = registry["repositories"][repository]["workflow_ref"]
+    prior = _posted_binding(execution, "ai-sdlc-v3.0.0")
+    workflow_calls = []
+    reads = 0
+
+    def fake_api(*args):
+        nonlocal reads
+        if "--slurp" in args:
+            reads += 1
+            comments = [_journal_comment(50, prior)]
+            if reads > 1:
+                comments.append(_journal_comment(101, prior))
+            return [comments]
+        if "--method" in args and "POST" in args:
+            return {"id": 101, "user": {"login": "router-app[bot]"}}
+        if "--method" in args and "DELETE" in args:
+            return None
+        pytest.fail(f"unexpected GitHub API call: {args}")
+
+    monkeypatch.setattr(codex_router, "_github_json", fake_api)
+    monkeypatch.setattr(
+        codex_router.subprocess,
+        "run",
+        lambda cmd, **kwargs: (
+            workflow_calls.append(cmd)
+            or subprocess.CompletedProcess(cmd, 0, stdout="")
+        ),
+    )
+    monkeypatch.setenv("EXECUTION_INPUT", json.dumps(execution))
+    monkeypatch.setenv("WORKFLOW_REF", workflow_ref)
+    monkeypatch.delenv("GITHUB_OUTPUT", raising=False)
+
+    codex_router.dispatch()
+
+    assert reads == 2
+    assert len(workflow_calls) == 1
 
 
 @pytest.mark.parametrize(
@@ -542,16 +661,20 @@ def test_dispatch_rejects_unsupported_or_conflicting_existing_admission(
     execution = execution_for(repository, "documentation")
     registry = json.loads(Path("config/codex-repositories.json").read_text())
     workflow_ref = registry["repositories"][repository]["workflow_ref"]
-    existing = _binding_for(execution, "ai-sdlc-v3.0.1")
-    existing.update(existing_binding)
+    prior = _binding_for(execution, "ai-sdlc-v3.0.1")
+    prior.update(existing_binding)
+    posted_binding = _posted_binding(execution)
     workflow_calls = []
+    reads = 0
 
     def fake_api(*args):
+        nonlocal reads
         if "--slurp" in args:
-            return [[{
-                "body": _admission_marker(existing),
-                "user": {"login": "router-app[bot]"},
-            }]]
+            reads += 1
+            comments = [_journal_comment(50, prior)]
+            if reads > 1:
+                comments.append(_journal_comment(101, posted_binding))
+            return [comments]
         if "--method" in args and "POST" in args:
             return {"id": 101, "user": {"login": "router-app[bot]"}}
         if "--method" in args and "DELETE" in args:
@@ -574,6 +697,7 @@ def test_dispatch_rejects_unsupported_or_conflicting_existing_admission(
     with pytest.raises(SystemExit):
         codex_router.dispatch()
 
+    assert reads == 2
     assert workflow_calls == []
 
 
@@ -583,15 +707,67 @@ def test_dispatch_rejects_multiple_router_owned_admissions(monkeypatch):
     execution = execution_for(repository, "documentation")
     registry = json.loads(Path("config/codex-repositories.json").read_text())
     workflow_ref = registry["repositories"][repository]["workflow_ref"]
-    existing = _binding_for(execution, "ai-sdlc-v3.0.1")
-    marker = _admission_marker(existing)
+    prior = _binding_for(execution, "ai-sdlc-v3.0.1")
+    posted_binding = _posted_binding(execution)
     workflow_calls = []
+    reads = 0
 
     def fake_api(*args):
+        nonlocal reads
         if "--slurp" in args:
+            reads += 1
+            comments = [
+                _journal_comment(50, prior),
+                _journal_comment(51, prior),
+            ]
+            if reads > 1:
+                comments.append(_journal_comment(101, posted_binding))
+            return [comments]
+        if "--method" in args and "POST" in args:
+            return {"id": 101, "user": {"login": "router-app[bot]"}}
+        if "--method" in args and "DELETE" in args:
+            return None
+        pytest.fail(f"unexpected GitHub API call: {args}")
+
+    monkeypatch.setattr(codex_router, "_github_json", fake_api)
+    monkeypatch.setattr(
+        codex_router.subprocess,
+        "run",
+        lambda cmd, **kwargs: (
+            workflow_calls.append(cmd)
+            or subprocess.CompletedProcess(cmd, 0, stdout="")
+        ),
+    )
+    monkeypatch.setenv("EXECUTION_INPUT", json.dumps(execution))
+    monkeypatch.setenv("WORKFLOW_REF", workflow_ref)
+    monkeypatch.delenv("GITHUB_OUTPUT", raising=False)
+
+    with pytest.raises(SystemExit):
+        codex_router.dispatch()
+
+    assert reads == 2
+    assert workflow_calls == []
+
+
+def test_dispatch_rejects_concurrent_admission_creation(monkeypatch):
+    repository = "Young-Consultations/consulting-playbook"
+    monkeypatch.setenv("CONTROL_PLANE_RELEASE", "ai-sdlc-v3.0.3")
+    execution = execution_for(repository, "documentation")
+    registry = json.loads(Path("config/codex-repositories.json").read_text())
+    workflow_ref = registry["repositories"][repository]["workflow_ref"]
+    posted_binding = _posted_binding(execution)
+    workflow_calls = []
+    reads = 0
+
+    def fake_api(*args):
+        nonlocal reads
+        if "--slurp" in args:
+            reads += 1
+            if reads == 1:
+                return [[]]
             return [[
-                {"body": marker, "user": {"login": "router-app[bot]"}},
-                {"body": marker, "user": {"login": "router-app[bot]"}},
+                _journal_comment(101, posted_binding),
+                _journal_comment(102, posted_binding),
             ]]
         if "--method" in args and "POST" in args:
             return {"id": 101, "user": {"login": "router-app[bot]"}}
@@ -615,6 +791,47 @@ def test_dispatch_rejects_multiple_router_owned_admissions(monkeypatch):
     with pytest.raises(SystemExit):
         codex_router.dispatch()
 
+    assert reads == 2
+    assert workflow_calls == []
+
+
+def test_dispatch_rejects_unproven_post_create_journal_read(monkeypatch):
+    repository = "Young-Consultations/consulting-playbook"
+    monkeypatch.setenv("CONTROL_PLANE_RELEASE", "ai-sdlc-v3.0.3")
+    execution = execution_for(repository, "documentation")
+    registry = json.loads(Path("config/codex-repositories.json").read_text())
+    workflow_ref = registry["repositories"][repository]["workflow_ref"]
+    workflow_calls = []
+    reads = 0
+
+    def fake_api(*args):
+        nonlocal reads
+        if "--slurp" in args:
+            reads += 1
+            return [[]]
+        if "--method" in args and "POST" in args:
+            return {"id": 101, "user": {"login": "router-app[bot]"}}
+        if "--method" in args and "DELETE" in args:
+            return None
+        pytest.fail(f"unexpected GitHub API call: {args}")
+
+    monkeypatch.setattr(codex_router, "_github_json", fake_api)
+    monkeypatch.setattr(
+        codex_router.subprocess,
+        "run",
+        lambda cmd, **kwargs: (
+            workflow_calls.append(cmd)
+            or subprocess.CompletedProcess(cmd, 0, stdout="")
+        ),
+    )
+    monkeypatch.setenv("EXECUTION_INPUT", json.dumps(execution))
+    monkeypatch.setenv("WORKFLOW_REF", workflow_ref)
+    monkeypatch.delenv("GITHUB_OUTPUT", raising=False)
+
+    with pytest.raises(SystemExit):
+        codex_router.dispatch()
+
+    assert reads == 2
     assert workflow_calls == []
 
 
