@@ -288,7 +288,7 @@ def test_receiver_verification_rejects_reuse_outside_receiver_allowlist():
         checker.verify_receiver_at_ref(
             current_receiver_release(),
             None,
-            {"ai-sdlc-v3.0.3"},
+            {"ai-sdlc-v3.0.4"},
         )
 
 
