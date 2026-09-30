@@ -198,13 +198,14 @@ organization-secret metadata audit repair.
 
 Historical 2.4.3 replacement evidence remains quarantined as incident history.
 Do not infer current readiness, rollback safety, or activation from older tags.
-Publication and live consumption are separate: portfolio-tasks currently consumes
-`ai-sdlc-v3.0.1`. The sender allowlist is already cut over to the App-bot
-identity; the remaining path is pass deployed 3.0.2 Runtime Preflight and
-immutable REAL preflight, then advance the consumer pin from 3.0.1 to 3.0.2.
-The already-admitted #159 delivery is an explicit compatibility exception and
-must preserve its existing 3.0.1 admission/delivery identity during authorized
-recovery; unrelated terminal delivery identities remain non-reusable.
+Publication and live consumption are separate evidence gates. Portfolio-tasks
+now consumes published `ai-sdlc-v3.0.2` after deployed Runtime Preflight
+36640642872 and immutable REAL preflight 36640734704 passed. #159 was then
+reconciled successfully while preserving its original trusted 3.0.1
+admission/delivery identity. That state exposed DEF-0086 before another Codex
+call: published 3.0.2 cannot reuse the preserved predecessor admission on an
+unchanged authorized retry. Unpublished 3.0.3 is the corrective candidate.
+Unrelated terminal delivery identities remain non-reusable.
 
 Explicitly excluded are exactly-once transport, autonomous approval, automatic
 merge, release or deployment automation authority, production operation,
@@ -257,12 +258,14 @@ git diff --check
 ```
 
 `python scripts/validate_release.py` verifies structural release coherence.
-Published control-plane compatibility state is `ai-sdlc-v3.0.2` at reviewed
-PR #101 merge commit `eae81af30eb8f1e2cf51a30b1e5a6d7dbd76bc6e`; the manifest
-records `tag_published: true` with that exact `tag_commit_sha`. The source
-consumer still selects 3.0.1. Do not describe 3.0.2 as source-adopted or
-REAL-accepted until deployed Runtime Preflight, immutable REAL preflight, the
-portfolio consumer PR, and live terminal/redelivery gates complete.
+Published control-plane compatibility state remains `ai-sdlc-v3.0.2` at
+reviewed PR #101 merge commit
+`eae81af30eb8f1e2cf51a30b1e5a6d7dbd76bc6e`, and portfolio-tasks now
+consumes 3.0.2. The current branch is an unpublished 3.0.3 candidate:
+`tag_published: false` and `tag_commit_sha: null`. Do not describe 3.0.3 as
+published, source-adopted, or REAL-accepted until candidate merge/tag,
+publication attestation, deployed Runtime Preflight, immutable REAL preflight,
+the portfolio consumer PR, and live terminal/redelivery gates complete.
 
 During any future pre-publication candidate window,
 `verify_release_target_workflows.py` delegates to normal remote verification
@@ -405,6 +408,30 @@ is edited. Keep historical behavior in Git history, release records, or ADRs;
 do not maintain multiple active policies or compatibility paths in this index.
 
 
+## 3.0.3 candidate cross-release admission reuse repair
+
+DEF-0086 was discovered after successful #159 reconciliation proved that the
+source could preserve its original trusted 3.0.1 admission across the 3.0.2
+cutover. The published 3.0.2 router would still reject that admission on
+unchanged retry because it regenerated current release/activation evidence and
+required exact binding equality.
+
+The unpublished 3.0.3 candidate preserves the durable admission instead.
+Same-release exact-binding reuse remains unconditional; cross-release reuse is
+allowed only by target-bound immutable policy and must be accepted by the exact
+pinned receiver compatibility policy. Admission journal creation is re-read
+after POST so concurrent or ambiguous router-owned markers fail closed before
+dispatch.
+
+The candidate manifest records `ai-sdlc-v3.0.3`,
+`tag_published: false`, and `tag_commit_sha: null`. The matching immutable
+target is `codex-adapter-v3.0.3` at
+`f11852c7f563df16ea4afa9ab75bf766242e7327`.
+
+This section describes candidate architecture only. Current deployed runtime and
+source consumption remain 3.0.2 until the normal immutable release,
+publication-attestation, preflight, and source-adoption sequence completes.
+
 ## 3.0.2 published receiver compatibility repair
 
 REAL #159 exposed DEF-0073 after the result-writer credential prerequisites
@@ -426,11 +453,14 @@ reviewed predecessor needed to recover the already-admitted #159 delivery, and
 accepts 3.0.2 for new admissions after source adoption. Unsupported release
 combinations remain fail-closed.
 
-Portfolio-tasks currently consumes 3.0.1. Publication alone does not authorize
-cost-bearing REAL execution or prove source adoption. Require deployed 3.0.2
-Runtime Preflight, immutable REAL preflight, repository-local consumer repin,
-then controlled REAL terminal projection and unchanged same-delivery redelivery
-before closing DEF-0073 / #100 or the older redelivery acceptance defect.
+Portfolio-tasks now consumes 3.0.2 after the required deployed preflights.
+Source reconciliation run 36666315992 then preserved #159's original trusted
+3.0.1 admission and cleared the queued state without fabricating a terminal
+result. That recovery exposed DEF-0086 at the router's cross-release admission
+reuse boundary. The 3.0.3 candidate must publish, pass deployed Runtime
+Preflight and immutable REAL preflight, and be source-adopted before #159 is
+reauthorized. Controlled REAL terminal projection and unchanged same-delivery
+redelivery remain required before closing the applicable acceptance defects.
 
 ## 3.0.1 published Runtime Preflight organization-secret repair
 
@@ -502,32 +532,45 @@ portfolio-tasks consumer adoption, and controlled same-delivery redelivery must
 prove one managed draft, no second Codex execution, one trusted receiver effect,
 and one source projection before #83 / DEF-0064 can close.
 
-## 3.0.1 current source-consumer and acceptance state
+## 3.0.2 current source-consumer and 3.0.3 candidate state
 
-Portfolio-tasks currently consumes `ai-sdlc-v3.0.1` through
-`.github/workflows/route-approved-task.yml`. That source adoption is distinct
-from the current published control-plane compatibility release, which is 3.0.2.
+Portfolio-tasks currently consumes `ai-sdlc-v3.0.2` through its reviewed
+source router pin. That cutover followed deployed Runtime Preflight 36640642872
+and immutable REAL preflight 36640734704.
 
 The earlier 2.4.5 path remains immutable initial-live-path evidence from REAL
 #154. REAL #156 exposed the result-journal identity defect that drove the 3.0.0
-App credential repair. REAL #159 later proved the result-writer prerequisite
-path healthy but exposed DEF-0073 when the 3.0.0 receiver rejected a valid
-3.0.1 admission. The 3.0.2 release repairs that compatibility boundary.
+App credential repair. REAL #159 exposed DEF-0073 at the receiver; published
+3.0.2 repaired that compatibility boundary.
 
-Do not describe 3.0.2 as source-adopted or REAL-accepted until deployed 3.0.2
-Runtime Preflight, immutable REAL preflight, the portfolio consumer repin from
-3.0.1 to 3.0.2, one corrected terminal projection for #159, and unchanged
-same-delivery redelivery all succeed.
+After source adoption, reconciliation run 36666315992 cleared #159's queued
+state while preserving the original trusted 3.0.1 admission for logical
+delivery `task-b72eaf2503fc3d27c82f8921e8cfbfff`. Inspection before
+reauthorization exposed DEF-0086: the 3.0.2 router would regenerate current
+release/activation evidence and reject the preserved predecessor admission.
 
-Historical 2.4.5 target evidence remains
-`codex-adapter-v2.4.5` at
-`4f062ca73acfc3458f0d690bf1c7687bafd0a8eb`. Fresh human-approved issue #154
-proved that earlier path could prepare the sandbox, invoke Codex, pass
-validation/tests, publish one managed draft PR, deliver the canonical result,
-and project it back to the source. Published 2.4.4 remains immutable historical
-evidence but is not an execution-safe rollback for cost-bearing implementation
-because REAL #151 proved its publication transport could lose successful Codex
-work.
+The resolved 3.0.3 architecture treats the first trusted admission as durable
+evidence for the logical delivery. Exact same-release full-binding reuse remains
+unconditional. Cross-release reuse requires exact
+contract/delivery/correlation/source/target identity plus an immutable
+target-bound `reusable_admission_releases` policy. Target compatibility must
+prove that policy is a subset of the exact pinned receiver compatibility
+allowlist. The router re-queries after creating its identity marker and fails
+closed on concurrent, ambiguous, malformed, conflicting, or unsupported
+admission state before target dispatch.
+
+The matching immutable target is `codex-adapter-v3.0.3` at
+`f11852c7f563df16ea4afa9ab75bf766242e7327`, with conformance adapter
+revision
+`sha256:3932def5d016b7db11869a0520087aeedcd092799e61dc8617be8bb2f020be3f`
+and report SHA-256
+`a739cd3dde3c05121fbfc5360495880e265b76448b504936b8583b5efa972ec8`.
+
+Do not reauthorize #159 until 3.0.3 candidate merge/tag, publication attestation,
+deployed Runtime Preflight, immutable REAL preflight, and portfolio source
+repin complete. Then require one corrected terminal projection followed by an
+unchanged retry that returns `duplicate-reused` before Codex with no second
+visible effect.
 
 The broader organization-level cost-bearing prerequisite policy remains owned
 by issue #77 and is not silently expanded by 3.0.2.
