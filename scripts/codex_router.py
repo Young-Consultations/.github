@@ -520,6 +520,22 @@ def dispatch() -> None:
         )
         before_owned = [item for item in existing_before if item["author"] == author]
         after_owned = [item for item in existing_after if item["author"] == author]
+        posted_records = [
+            item for item in after_owned if item.get("comment_id") == posted_id
+        ]
+        if (
+            len(posted_records) != 1
+            or posted_records[0].get("binding") != binding
+        ):
+            _github_json(
+                f"repos/{issue_match.group(1)}/issues/comments/{posted_id}",
+                "--method", "DELETE",
+            )
+            reject(
+                "authorization",
+                "Admission journal re-query did not prove the created marker.",
+                correlation_id,
+            )
         before_ids = {
             item["comment_id"]
             for item in before_owned
