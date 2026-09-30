@@ -225,7 +225,7 @@ receiver binding.
 
 ## Deployment/governance gates
 
-### Published 3.0.2 state and current 3.0.1 source-consumer path
+### Published 3.0.2 state and current 3.0.2 source-consumer path
 
 The current published control-plane compatibility release is
 `ai-sdlc-v3.0.2`, attested to reviewed PR #101 merge commit
@@ -247,9 +247,9 @@ identity defect that drove the 3.0.0 App credential repair. REAL #159 then
 proved the result-writer prerequisite path healthy but exposed DEF-0073 when
 the 3.0.0 receiver rejected a valid 3.0.1 admission.
 
-Full REAL acceptance remains incomplete. After this 3.0.2 publication
+Full REAL acceptance remains incomplete. The next corrective candidate is 3.0.3 for DEF-0086: it preserves the trusted predecessor admission on unchanged retry and requires target-bound reuse policy to remain a subset of the pinned receiver allowlist. After this 3.0.2 publication
 attestation, deployed Runtime Preflight and immutable REAL preflight must pass
-before portfolio-tasks advances from 3.0.1 to 3.0.2. Then the unchanged #159
+after portfolio-tasks advanced from 3.0.1 to 3.0.2. The unchanged #159
 delivery must reach one corrected terminal projection and same-delivery
 redelivery must prove `duplicate-reused` without a second Codex execution,
 managed draft, receiver forwarding effect, or source projection.
