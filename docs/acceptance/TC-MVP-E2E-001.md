@@ -3,8 +3,8 @@
 **Status:** Approved next-MVP acceptance design
 **Owner:** `Young-Consultations/.github`
 **Published baseline:** `ai-sdlc-v3.0.2` / `ai-sdlc-contract/v2`
-**Current source-consumer pin:** `ai-sdlc-v3.0.1`
-**Current live acceptance state:** REAL #154 proved the earlier initial path; REAL #156 exposed result-writer identity defect #83 during redelivery; REAL #159 proved the GitHub App result-writer prerequisite path healthy but exposed DEF-0073 when the 3.0.0 receiver rejected a valid 3.0.1 admission. Published 3.0.2 repairs that compatibility boundary with immutable `codex-adapter-v3.0.2`. Deployed 3.0.2 Runtime Preflight, immutable REAL preflight, source repin to 3.0.2, corrected #159 terminal projection, and unchanged same-delivery redelivery remain pending
+**Current source-consumer pin:** `ai-sdlc-v3.0.2`
+**Current live acceptance state:** REAL #154 proved the earlier initial path; REAL #156 exposed result-writer identity defect #83 during redelivery; REAL #159 exposed DEF-0073 at the receiver, which published 3.0.2 repaired. Deployed 3.0.2 Runtime Preflight and immutable REAL preflight passed, portfolio-tasks adopted 3.0.2, and #159 was reconciled while preserving its original trusted 3.0.1 admission. That recovery state exposed DEF-0086: published 3.0.2 cannot reuse the predecessor admission on unchanged authorized retry. Unpublished 3.0.3 plus immutable `codex-adapter-v3.0.3` is the current corrective candidate. #159 remains blocked until 3.0.3 publication, preflights, source repin, corrected terminal projection, and unchanged same-delivery redelivery complete
 **Initial enabled target:** `Young-Consultations/consulting-playbook`
 
 > **Historical 2.4.5 completion addendum:** REAL issue #151 exposed the 2.4.4 target publication-transport defect after successful Codex execution. The immutable repair is `codex-adapter-v2.4.5` (`4f062ca73acfc3458f0d690bf1c7687bafd0a8eb`) with conformance report SHA256 `8a7e3479a8768050b7621cec4d7663d8ab60d266291cb2d1027886200799c2fc`. Control-plane release `ai-sdlc-v2.4.5` resolves to `afe09d320268581bc83021cbfc80bf2a0f0bff91`; publication attestation merged, deployed Runtime Preflight run 36277959203 and immutable REAL preflight run 36278028013 passed, portfolio-tasks advanced to 2.4.5, and fresh issue #154 completed the live path through target run 36279165335 and managed draft PR #66. See [2.4.5 release procedure](../releases/2.4.5.md).
@@ -21,7 +21,7 @@
 > `codex-adapter-v3.0.0`. No new REAL execution is allowed until deployed 3.0.1 Runtime Preflight and immutable REAL preflight pass. See
 > [3.0.1 release procedure](../releases/3.0.1.md).
 >
-> **3.0.2 receiver-compatibility addendum:** REAL #159 passed the dedicated
+> **Historical 3.0.2 receiver-compatibility addendum:** REAL #159 passed the dedicated
 > result-writer token mint, App identity, and bounded delivery-prerequisite
 > checks, then exposed DEF-0073 when the immutable 3.0.0 receiver forced the
 > admission's `control_plane_release` to equal the receiver implementation
@@ -33,6 +33,18 @@
 > 3.0.1 admission for #159 recovery and 3.0.2 admissions for new work after
 > source cutover. Portfolio-tasks currently consumes 3.0.1. See
 > [3.0.2 release procedure](../releases/3.0.2.md).
+>
+> **3.0.3 cross-release admission-reuse addendum:** After 3.0.2 publication,
+> deployed preflights, source adoption, and successful #159 reconciliation,
+> the source retained its original 3.0.1 admission but the 3.0.2 router would
+> reject that binding as conflicting on unchanged retry. DEF-0086 resolves this
+> by preserving exactly one trusted durable admission for the logical delivery.
+> Exact same-release reuse remains unconditional; predecessor reuse is allowed
+> only by immutable target-bound policy and must be accepted by the pinned
+> receiver compatibility policy. The matching target is immutable
+> `codex-adapter-v3.0.3` at
+> `f11852c7f563df16ea4afa9ab75bf766242e7327`. See
+> [3.0.3 release procedure](../releases/3.0.3.md).
 >
 ## Purpose
 
@@ -85,15 +97,14 @@ The SIM harness shall:
 3. run the exact target-owned adapter from that immutable commit;
 4. inject deterministic fake Codex and publication effects at the target's existing effect/provider seam;
 5. preserve canonical `execution-input/v2` and `execution-result/v2` semantics;
-6. pass target-produced results through the 3.0.2 control-plane receiver implementation with an in-memory journal/forwarding effect seam while preserving the immutable target adapter's reviewed 3.0.2 receiver pin and compatibility policy;
+6. pass target-produced results through the 3.0.3 control-plane receiver implementation with an in-memory journal/forwarding effect seam while preserving the immutable target adapter's reviewed 3.0.3 receiver pin and compatibility policy;
 7. exercise successful implement behavior, managed-draft reuse, equivalent `draft-pr-created -> duplicate-reused` receiver no-op behavior, and conflicting duplicate-result rejection;
 8. assert zero real Codex, branch, commit, push, PR, merge, release, deployment, production, or secret-output effects;
-9. emit machine-readable release-comparison evidence for the 3.0.2 validation
-   harness with `published_baseline: 3.0.1` and
-   `candidate_release: 3.0.2`, record the exact `codex-adapter-v3.0.2`
+9. emit machine-readable release-comparison evidence for the 3.0.3 validation
+   harness with `published_baseline: 3.0.2` and
+   `candidate_release: 3.0.3`, record the exact `codex-adapter-v3.0.3`
    identity, keep `real_acceptance_satisfied: false`, and record that the
-   3.0.2 control-plane tag is published and attested. The field name
-   `candidate_release` is retained by the harness even after publication.
+   3.0.3 control-plane tag is unpublished during candidate validation.
 
 For retry evidence, `duplicate-reused` is accepted without another source projection only when it describes the same stable managed-draft effect as the prior successful result. A different branch, pull request, validation/test outcome, failure category, or any other non-approved result transition remains ambiguous and fails closed.
 
@@ -119,102 +130,90 @@ No alternate control-plane dispatch path is permitted.
 
 Before the human approval action, the acceptance workflow shall fail closed unless:
 
-- `ai-sdlc-v3.0.2` has been reviewed, published, and attested on `main`;
+- `ai-sdlc-v3.0.3` has been reviewed, published, and attested on `main`;
 - the published 2.4.4 tag remains unchanged as immutable historical evidence and is not treated as an execution-safe rollback for cost-bearing implementation;
 - `consulting-playbook` is the sole enabled target;
-- the registry identifies exact immutable `codex-adapter-v3.0.2` commit
-  `3bde0dc760088b9af21454a0f70ed498dae043a7`, conformance adapter revision
-  `sha256:1af153a276e2a3a87f6dd274a0aae111f09350a6a4995d874bd0014174e0ee04`,
+- the registry identifies exact immutable `codex-adapter-v3.0.3` commit
+  `f11852c7f563df16ea4afa9ab75bf766242e7327`, conformance adapter revision
+  `sha256:3932def5d016b7db11869a0520087aeedcd092799e61dc8617be8bb2f020be3f`,
   and report SHA-256
-  `f7251f7ac3ceb46c350106b9d3190f52be71ffd0b57a0faca5dffe2d847074e6`;
+  `a739cd3dde3c05121fbfc5360495880e265b76448b504936b8583b5efa972ec8`;
 - fresh `TC-MVP-E2E-001-SIM` evidence passes and explicitly does not claim REAL acceptance;
 - the selected task is harmless, deterministic, documentation-only where permitted, and within target policy;
 - the intended publication boundary is draft-only;
 - required source, router, target, publication, and receiver credentials have been human-reviewed and are available through their existing owners;
-- `AI_SDLC_RESULT_WRITER_PRIVATE_KEY` is an organization Actions secret with `selected` visibility restricted to the enabled consulting target; Runtime Preflight proves that exact storage-scope binding without reading the value; the App is installed only on `portfolio-tasks`; and the immutable target invokes the reviewed 3.0.2 receiver interface, which accepts only `RESULT_WRITER_PRIVATE_KEY` to mint a fresh short-lived installation token;
+- `AI_SDLC_RESULT_WRITER_PRIVATE_KEY` is an organization Actions secret with `selected` visibility restricted to the enabled consulting target; Runtime Preflight proves that exact storage-scope binding without reading the value; the App is installed only on `portfolio-tasks`; and the immutable target invokes the reviewed 3.0.3 receiver interface, which accepts only `RESULT_WRITER_PRIVATE_KEY` to mint a fresh short-lived installation token;
 - the result-delivery token authenticates as reviewed `ai-sdlc-result-writer[bot]`, distinct from every admission author; `portfolio-tasks` repository variable `PORTFOLIO_RESULT_SENDERS` exactly equals that immutable result-author allowlist; and the source reserves the credential-probe dispatch event for no-op capability verification.
-- the 3.0.2 receiver compatibility policy is bound to the immutable receiver
-  bundle and explicitly includes `ai-sdlc-v3.0.1` for recovery of the existing
-  #159 admission plus `ai-sdlc-v3.0.2` for new admissions; unsupported
-  release combinations remain fail-closed.
+- the 3.0.3 receiver compatibility policy is bound to the immutable receiver
+  bundle and explicitly includes `ai-sdlc-v3.0.1`, `ai-sdlc-v3.0.2`, and
+  `ai-sdlc-v3.0.3`; the consulting target's cross-release reuse set is the
+  same reviewed set and target compatibility proves it is a subset of the
+  receiver allowlist; unsupported release combinations remain fail-closed.
 
 The organization REAL preflight itself performs no Codex invocation, branch creation, commit, push, PR creation, result forwarding, source mutation, merge, release, deployment, settings change, or production operation. After dispatch and before any cost-bearing Codex invocation, the selected target must run the control-plane-owned result-credential capability preflight. That bounded preflight creates and deletes one marker comment on the source issue to prove issue-write/cleanup access and GitHub-authored identity, then emits the dedicated no-op repository-dispatch event to prove forwarding access. No probe comment may remain afterward.
 
-### Historical evidence and current 3.0.2 coordination
+### Historical evidence and current 3.0.3 coordination
 
-The historical 2.4.5 sequence remains initial-live-path evidence:
+The earlier 2.4.5, 3.0.0, 3.0.1, and 3.0.2 sequences remain immutable evidence.
 
-1. `codex-adapter-v2.4.5` and `ai-sdlc-v2.4.5` were published.
-2. Runtime Preflight and immutable REAL preflight passed.
-3. portfolio-tasks advanced to 2.4.5.
-4. Fresh issue #154 completed the live path and produced managed draft PR #66.
+Published 3.0.2 repaired DEF-0073, passed deployed Runtime Preflight
+36640642872 and immutable REAL preflight 36640734704, and was adopted by
+portfolio-tasks. Source reconciliation run 36666315992 then cleared #159's
+queued state while preserving its original trusted 3.0.1 admission and logical
+delivery/correlation identity
+`task-b72eaf2503fc3d27c82f8921e8cfbfff`.
 
-REAL #156 then proved target-side managed-draft reuse but exposed #83, driving
-the 3.0.0 GitHub App result-writer repair. The 3.0.1 control-plane patch fixed
-organization-secret metadata preflight, and portfolio-tasks subsequently
-advanced to 3.0.1.
-
-REAL #159 is the current recovery/acceptance delivery. Its fixed logical
-delivery/correlation identity is
-`task-b72eaf2503fc3d27c82f8921e8cfbfff`. A target attempt proved the
-result-writer credential path healthy but exposed DEF-0073 at the receiver.
-Published 3.0.2 and immutable `codex-adapter-v3.0.2` repair that boundary.
+That state exposed DEF-0086 before another Codex call: the 3.0.2 router would
+regenerate current-release admission evidence and reject the preserved
+predecessor admission.
 
 Current sequence:
 
-1. merge the 3.0.2 publication attestation;
-2. run deployed 3.0.2 Runtime Preflight from `main`;
-3. run immutable REAL preflight against 3.0.2 and
-   `codex-adapter-v3.0.2`;
-4. update portfolio-tasks from the current 3.0.1 router pin to 3.0.2 through a
-   reviewed repository-local PR;
-5. reconcile #159 after the prior failed target attempt if its source lifecycle
-   still requires recovery;
-6. re-authorize the unchanged #159 issue without editing its body and preserve
-   the existing 3.0.1 admission/delivery identity;
-7. require one corrected terminal receiver/source projection; and
-8. re-authorize the unchanged delivery once more to prove
-   `duplicate-reused` before Codex, with no second Codex execution, managed
-   draft, receiver forwarding effect, or source projection.
+1. complete the 3.0.3 candidate and exact-head zero-effect gates;
+2. merge the reviewed candidate and create immutable `ai-sdlc-v3.0.3` at the
+   exact merge commit;
+3. merge a separate publication-attestation PR;
+4. run deployed 3.0.3 Runtime Preflight;
+5. run immutable 3.0.3 REAL readiness preflight;
+6. update portfolio-tasks from 3.0.2 to 3.0.3 through a reviewed source PR;
+7. reauthorize the unchanged #159 issue without editing its body or replacing
+   its 3.0.1 admission;
+8. require one corrected terminal receiver/source projection through immutable
+   `codex-adapter-v3.0.3`; and
+9. reauthorize the unchanged delivery once more to prove `duplicate-reused`
+   before Codex with no second branch, managed draft, receiver forwarding
+   effect, or source projection.
 
-Do not close #100 / DEF-0073 or #83 / DEF-0064 until their applicable REAL
-evidence is preserved.
+Do not close #103 / DEF-0086, #100 / DEF-0073, or #83 / DEF-0064 until their
+applicable REAL evidence is preserved.
 
 
 ### REAL execution procedure
 
-After the 3.0.2 publication attestation, deployed Runtime Preflight, immutable
-REAL preflight, and source consumer repin to 3.0.2 are green:
+After 3.0.3 publication attestation, deployed Runtime Preflight, immutable REAL
+preflight, and portfolio source repin to 3.0.3 are green:
 
 1. use existing portfolio issue #159 without modifying its body;
-2. verify its existing admission marker remains bound to
+2. verify its single durable admission remains bound to
    `ai-sdlc-v3.0.1`, delivery/correlation
    `task-b72eaf2503fc3d27c82f8921e8cfbfff`, source
    `Young-Consultations/portfolio-tasks#159`, and target
    `Young-Consultations/consulting-playbook`;
-3. reconcile the latest failed target attempt first if the source issue remains
-   in a queued/nonterminal lifecycle state;
-4. an authorized human reapplies the unchanged approval action that triggers
-   the normal production-shaped source route;
-5. the 3.0.2 router preserves the logical delivery/correlation identity and
-   dispatches immutable `codex-adapter-v3.0.2`;
-6. the target independently revalidates caller, contract, target, task type,
+3. an authorized human reapplies the unchanged approval action;
+4. the 3.0.3 router proves exactly one trusted durable admission, reuses the
+   predecessor admission through the target-bound compatibility policy, and
+   dispatches immutable `codex-adapter-v3.0.3`;
+5. the target independently revalidates caller, contract, target, task type,
    mode, deterministic branch ownership, draft-only policy, and all bounded
-   cost-bearing prerequisites before any Codex invocation;
-7. target execution, validation/tests, and managed draft publication complete,
-   then the 3.0.2 receiver accepts the preserved 3.0.1 admission through its
-   immutable compatibility policy;
-8. portfolio-tasks receives exactly one correlated terminal projection;
-9. reapply the unchanged approval a second time for the same logical delivery;
-10. the target finds the existing managed draft and returns
-    `duplicate-reused` before Codex;
-11. the receiver accepts the equivalent visible effect as an idempotent no-op;
-    and
-12. verify there is no second Codex execution, branch, managed draft, receiver
+   cost-bearing prerequisites before Codex;
+6. target execution, validation/tests, and managed draft publication complete,
+   then the 3.0.3 receiver accepts the preserved 3.0.1 admission;
+7. portfolio-tasks receives exactly one correlated terminal projection;
+8. reapply the unchanged approval for the same logical delivery;
+9. the target finds the existing managed draft and returns
+   `duplicate-reused` before Codex; and
+10. verify there is no second Codex execution, branch, managed draft, receiver
     forwarding effect, or source terminal projection.
-
-Historical issue #154 evidence proves the earlier initial route only. It does
-not substitute for this 3.0.2 #159 recovery and same-delivery acceptance.
 
 
 ### REAL evidence
