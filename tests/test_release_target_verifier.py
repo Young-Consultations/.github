@@ -15,7 +15,11 @@ def _manifest_tag() -> str:
 def test_remote_receiver_verification_takes_precedence(monkeypatch: pytest.MonkeyPatch) -> None:
     calls: list[tuple[str, str | None]] = []
 
-    def succeeds(receiver_ref: str, token: str | None) -> str:
+    def succeeds(
+        receiver_ref: str,
+        token: str | None,
+        reusable_admission_releases: set[str] | None = None,
+    ) -> str:
         calls.append((receiver_ref, token))
         return "CODEX_RESULT_TOKEN"
 
@@ -30,7 +34,11 @@ def test_missing_published_manifest_tag_fails_closed(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    def missing(receiver_ref: str, token: str | None) -> None:
+    def missing(
+        receiver_ref: str,
+        token: str | None,
+        reusable_admission_releases: set[str] | None = None,
+    ) -> None:
         raise release_checker.checker.CompatibilityError(
             "GitHub evidence is unavailable (tag): HTTP 422: Unprocessable Entity"
         )
@@ -56,7 +64,11 @@ def test_exact_missing_manifest_tag_uses_reviewed_local_candidate(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    def missing(receiver_ref: str, token: str | None) -> None:
+    def missing(
+        receiver_ref: str,
+        token: str | None,
+        reusable_admission_releases: set[str] | None = None,
+    ) -> None:
         raise release_checker.checker.CompatibilityError(
             "GitHub evidence is unavailable (tag): HTTP 422: Unprocessable Entity"
         )
@@ -125,7 +137,11 @@ def test_exact_missing_manifest_tag_uses_reviewed_local_candidate(
 
 
 def test_missing_non_manifest_receiver_tag_still_fails_closed(monkeypatch: pytest.MonkeyPatch) -> None:
-    def missing(receiver_ref: str, token: str | None) -> None:
+    def missing(
+        receiver_ref: str,
+        token: str | None,
+        reusable_admission_releases: set[str] | None = None,
+    ) -> None:
         raise release_checker.checker.CompatibilityError(
             "GitHub evidence is unavailable (tag): HTTP 422: Unprocessable Entity"
         )
@@ -136,7 +152,11 @@ def test_missing_non_manifest_receiver_tag_still_fails_closed(monkeypatch: pytes
 
 
 def test_non_missing_manifest_receiver_failure_still_fails_closed(monkeypatch: pytest.MonkeyPatch) -> None:
-    def incompatible(receiver_ref: str, token: str | None) -> None:
+    def incompatible(
+        receiver_ref: str,
+        token: str | None,
+        reusable_admission_releases: set[str] | None = None,
+    ) -> None:
         raise release_checker.checker.CompatibilityError("result receiver inputs are incompatible")
 
     monkeypatch.setattr(release_checker, "_REMOTE_VERIFY_RECEIVER", incompatible)
@@ -157,7 +177,11 @@ def test_local_receiver_fallback_requires_explicit_unpublished_candidate_state(
     tag_published: bool,
     tag_commit_sha: str,
 ) -> None:
-    def missing(receiver_ref: str, token: str | None) -> None:
+    def missing(
+        receiver_ref: str,
+        token: str | None,
+        reusable_admission_releases: set[str] | None = None,
+    ) -> None:
         raise release_checker.checker.CompatibilityError(
             "GitHub evidence is unavailable (tag): HTTP 404: Not Found"
         )
