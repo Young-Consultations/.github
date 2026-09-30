@@ -66,7 +66,6 @@ def test_enabled_consulting_target_declares_cross_release_admission_reuse():
     assert policy["reusable_admission_releases"] == [
         "ai-sdlc-v3.0.1",
         "ai-sdlc-v3.0.2",
-        "ai-sdlc-v3.0.3",
     ]
 
 
