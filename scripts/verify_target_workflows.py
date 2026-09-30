@@ -228,12 +228,12 @@ def load_registry(path: Path = REGISTRY) -> dict[str, dict[str, Any]]:
         reusable_releases = idempotency.get("reusable_admission_releases")
         if (
             not isinstance(reusable_releases, list)
-            or len(reusable_releases) != len(set(reusable_releases))
             or any(
                 not isinstance(release, str)
                 or CONTROL_PLANE_RELEASE_RE.fullmatch(release) is None
                 for release in reusable_releases
             )
+            or len(reusable_releases) != len(set(reusable_releases))
         ):
             raise CompatibilityError(
                 f"{repository}: reusable admission release policy is invalid"
@@ -550,7 +550,7 @@ def verify_receiver_bundle_policy(
     policy_raw: bytes,
     compatibility_raw: bytes | None,
     receiver_release: str,
-) -> None:
+) -> set[str] | None:
     if 'TRUST_POLICY = ROOT / "config/codex-result-trust.json"' not in script:
         raise CompatibilityError("result receiver does not load control-plane trust policy")
     has_compatibility_policy = (
@@ -583,7 +583,7 @@ def verify_receiver_bundle_policy(
             raise CompatibilityError(
                 "historical result receiver unexpectedly carries a release compatibility policy"
             )
-        return
+        return None
     if compatibility_raw is None:
         raise CompatibilityError(
             "result receiver declares but does not bundle release compatibility policy"
@@ -623,6 +623,7 @@ def verify_receiver_bundle_policy(
         raise CompatibilityError(
             "result receiver compatibility policy is not a reviewed fail-closed allowlist"
         )
+    return set(accepted)
 
 
 def verify_interface(source: str) -> str:
@@ -734,7 +735,11 @@ def fetch_tag_commit(repository: str, tag: str, token: str | None = None) -> str
     raise CompatibilityError("adapter tag does not resolve to a commit")
 
 
-def verify_receiver_at_ref(receiver_ref: str, token: str | None) -> str:
+def verify_receiver_at_ref(
+    receiver_ref: str,
+    token: str | None,
+    reusable_admission_releases: set[str] | None = None,
+) -> str:
     receiver_commit = fetch_ref_commit("Young-Consultations/.github", receiver_ref, token)
     source = fetch_workflow(
         "Young-Consultations/.github",
@@ -777,9 +782,18 @@ def verify_receiver_at_ref(receiver_ref: str, token: str | None) -> str:
             action_ref,
             token,
         )
-    verify_receiver_bundle_policy(
+    accepted_admission_releases = verify_receiver_bundle_policy(
         receiver_script, policy_raw, compatibility_raw, action_ref
     )
+    if reusable_admission_releases:
+        if accepted_admission_releases is None:
+            raise CompatibilityError(
+                "target allows cross-release admission reuse but receiver has no compatibility policy"
+            )
+        if not reusable_admission_releases <= accepted_admission_releases:
+            raise CompatibilityError(
+                "target reusable admission releases exceed the pinned receiver allowlist"
+            )
     fetch_content(
         "Young-Consultations/.github",
         "contracts/execution-result.schema.json",
@@ -943,7 +957,11 @@ def verify_registry(
             source = fetch_workflow(workflow_repository, path, ref, token)
             row["transport_interface"] = verify_interface(source)
             receiver_ref, supplied_secret = receiver_call_binding(source)
-            required_secret = verify_receiver_at_ref(receiver_ref, token)
+            required_secret = verify_receiver_at_ref(
+                receiver_ref,
+                token,
+                set(entry["idempotency"]["reusable_admission_releases"]),
+            )
             if supplied_secret != required_secret:
                 raise CompatibilityError(
                     "target receiver credential does not match the immutable receiver bundle"
