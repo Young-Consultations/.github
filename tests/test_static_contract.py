@@ -41,7 +41,7 @@ def test_registry_json_syntax_and_required_fields():
     } == {"Young-Consultations/consulting-playbook"}
     expected_adapter_refs = {
         "Young-Consultations/.github": "codex-adapter-v2.3.1",
-        "Young-Consultations/consulting-playbook": "codex-adapter-v3.0.2",
+        "Young-Consultations/consulting-playbook": "codex-adapter-v3.0.3",
         "Young-Consultations/portfolio-tasks": "codex-adapter-v2.3.2",
         "Young-Consultations/slugger": "codex-adapter-v2.3.2",
     }
@@ -66,6 +66,7 @@ def test_enabled_consulting_target_declares_cross_release_admission_reuse():
     assert policy["reusable_admission_releases"] == [
         "ai-sdlc-v3.0.1",
         "ai-sdlc-v3.0.2",
+        "ai-sdlc-v3.0.3",
     ]
 
 
