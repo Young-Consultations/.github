@@ -465,6 +465,159 @@ def test_portfolio_tasks_dispatch_command_matches_workflow_interface(monkeypatch
     assert commands[-1][8::2] == ["-f", "-f"]
 
 
+def _admission_marker(binding):
+    return "<!-- ai-sdlc-admission:v2 " + json.dumps(
+        binding, separators=(",", ":"), sort_keys=True
+    ) + " -->"
+
+
+def _binding_for(execution, release):
+    return {
+        "contract_version": execution["contract_version"],
+        "delivery_id": execution["delivery_id"],
+        "correlation_id": execution["correlation_id"],
+        "source_issue": execution["source_issue"],
+        "target_repository": execution["target_repository"],
+        "control_plane_release": release,
+        "activation_revision": "c" * 40,
+        "activation_sha256": "d" * 64,
+    }
+
+
+def test_dispatch_reuses_compatible_predecessor_admission(monkeypatch):
+    repository = "Young-Consultations/consulting-playbook"
+    monkeypatch.setenv("CONTROL_PLANE_RELEASE", "ai-sdlc-v3.0.3")
+    execution = execution_for(repository, "documentation")
+    registry = json.loads(Path("config/codex-repositories.json").read_text())
+    workflow_ref = registry["repositories"][repository]["workflow_ref"]
+    existing = _binding_for(execution, "ai-sdlc-v3.0.1")
+    api_calls = []
+    workflow_calls = []
+
+    def fake_api(*args):
+        api_calls.append(args)
+        if "--slurp" in args:
+            return [[{
+                "body": _admission_marker(existing),
+                "user": {"login": "router-app[bot]"},
+            }]]
+        if "--method" in args and "POST" in args:
+            return {"id": 101, "user": {"login": "router-app[bot]"}}
+        if "--method" in args and "DELETE" in args:
+            return None
+        pytest.fail(f"unexpected GitHub API call: {args}")
+
+    monkeypatch.setattr(codex_router, "_github_json", fake_api)
+    monkeypatch.setattr(
+        codex_router.subprocess,
+        "run",
+        lambda cmd, **kwargs: (
+            workflow_calls.append(cmd)
+            or subprocess.CompletedProcess(cmd, 0, stdout="")
+        ),
+    )
+    monkeypatch.setenv("EXECUTION_INPUT", json.dumps(execution))
+    monkeypatch.setenv("WORKFLOW_REF", workflow_ref)
+    monkeypatch.delenv("GITHUB_OUTPUT", raising=False)
+
+    codex_router.dispatch()
+
+    assert any("--method" in call and "DELETE" in call for call in api_calls)
+    assert len(workflow_calls) == 1
+    assert workflow_calls[0][:4] == ["gh", "workflow", "run", "codex-execute.yml"]
+
+
+@pytest.mark.parametrize(
+    "existing_binding",
+    [
+        {"control_plane_release": "ai-sdlc-v2.4.5"},
+        {"target_repository": "Young-Consultations/slugger"},
+    ],
+)
+def test_dispatch_rejects_unsupported_or_conflicting_existing_admission(
+    monkeypatch, existing_binding,
+):
+    repository = "Young-Consultations/consulting-playbook"
+    monkeypatch.setenv("CONTROL_PLANE_RELEASE", "ai-sdlc-v3.0.3")
+    execution = execution_for(repository, "documentation")
+    registry = json.loads(Path("config/codex-repositories.json").read_text())
+    workflow_ref = registry["repositories"][repository]["workflow_ref"]
+    existing = _binding_for(execution, "ai-sdlc-v3.0.1")
+    existing.update(existing_binding)
+    workflow_calls = []
+
+    def fake_api(*args):
+        if "--slurp" in args:
+            return [[{
+                "body": _admission_marker(existing),
+                "user": {"login": "router-app[bot]"},
+            }]]
+        if "--method" in args and "POST" in args:
+            return {"id": 101, "user": {"login": "router-app[bot]"}}
+        if "--method" in args and "DELETE" in args:
+            return None
+        pytest.fail(f"unexpected GitHub API call: {args}")
+
+    monkeypatch.setattr(codex_router, "_github_json", fake_api)
+    monkeypatch.setattr(
+        codex_router.subprocess,
+        "run",
+        lambda cmd, **kwargs: (
+            workflow_calls.append(cmd)
+            or subprocess.CompletedProcess(cmd, 0, stdout="")
+        ),
+    )
+    monkeypatch.setenv("EXECUTION_INPUT", json.dumps(execution))
+    monkeypatch.setenv("WORKFLOW_REF", workflow_ref)
+    monkeypatch.delenv("GITHUB_OUTPUT", raising=False)
+
+    with pytest.raises(SystemExit):
+        codex_router.dispatch()
+
+    assert workflow_calls == []
+
+
+def test_dispatch_rejects_multiple_router_owned_admissions(monkeypatch):
+    repository = "Young-Consultations/consulting-playbook"
+    monkeypatch.setenv("CONTROL_PLANE_RELEASE", "ai-sdlc-v3.0.3")
+    execution = execution_for(repository, "documentation")
+    registry = json.loads(Path("config/codex-repositories.json").read_text())
+    workflow_ref = registry["repositories"][repository]["workflow_ref"]
+    existing = _binding_for(execution, "ai-sdlc-v3.0.1")
+    marker = _admission_marker(existing)
+    workflow_calls = []
+
+    def fake_api(*args):
+        if "--slurp" in args:
+            return [[
+                {"body": marker, "user": {"login": "router-app[bot]"}},
+                {"body": marker, "user": {"login": "router-app[bot]"}},
+            ]]
+        if "--method" in args and "POST" in args:
+            return {"id": 101, "user": {"login": "router-app[bot]"}}
+        if "--method" in args and "DELETE" in args:
+            return None
+        pytest.fail(f"unexpected GitHub API call: {args}")
+
+    monkeypatch.setattr(codex_router, "_github_json", fake_api)
+    monkeypatch.setattr(
+        codex_router.subprocess,
+        "run",
+        lambda cmd, **kwargs: (
+            workflow_calls.append(cmd)
+            or subprocess.CompletedProcess(cmd, 0, stdout="")
+        ),
+    )
+    monkeypatch.setenv("EXECUTION_INPUT", json.dumps(execution))
+    monkeypatch.setenv("WORKFLOW_REF", workflow_ref)
+    monkeypatch.delenv("GITHUB_OUTPUT", raising=False)
+
+    with pytest.raises(SystemExit):
+        codex_router.dispatch()
+
+    assert workflow_calls == []
+
+
 def test_dispatch_rejects_invalid_execution_without_running_gh(monkeypatch):
     execution = execution_for("Young-Consultations/portfolio-tasks", "automation")
     execution["parallel_safe"] = "false"
