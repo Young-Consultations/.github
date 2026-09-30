@@ -269,6 +269,29 @@ def test_live_receiver_bundle_requires_nonempty_control_plane_trust():
     )
 
 
+def test_receiver_verification_rejects_reuse_outside_receiver_allowlist():
+    def local_workflow(repository, path, ref, token):
+        return (ROOT / path).read_text(encoding="utf-8")
+
+    def local_content(repository, path, ref, token):
+        return (ROOT / path).read_bytes()
+
+    with (
+        patch.object(checker, "fetch_ref_commit", return_value="1" * 40),
+        patch.object(checker, "fetch_workflow", side_effect=local_workflow),
+        patch.object(checker, "fetch_content", side_effect=local_content),
+        pytest.raises(
+            checker.CompatibilityError,
+            match="reusable admission releases exceed",
+        ),
+    ):
+        checker.verify_receiver_at_ref(
+            current_receiver_release(),
+            None,
+            {"ai-sdlc-v3.0.3"},
+        )
+
+
 def test_historical_receiver_without_compatibility_policy_remains_verifiable():
     script = (ROOT / "scripts/codex_result_receiver.py").read_text()
     historical = script.replace(
