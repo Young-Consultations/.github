@@ -124,9 +124,9 @@ required for a given registered repository.
 ## Current compatibility update
 
 Published `ai-sdlc-v3.0.3` is the current control-plane compatibility release
-at reviewed PR #104 merge commit `f3229bfa4a06da963cae7c390c6075b4f6c12f7b`. Portfolio-tasks still consumes
-published 3.0.2, so publication and source adoption remain separate evidence
-gates.
+at reviewed PR #104 merge commit `f3229bfa4a06da963cae7c390c6075b4f6c12f7b`.
+Portfolio-tasks now consumes published 3.0.3 through merged PR #163 at
+`580eaf3cd88774014d645d3c3ca3718b39b38ce0`.
 
 3.0.3 repairs #103 / consulting-playbook DEF-0086 by preserving durable
 predecessor admission evidence across authorized unchanged retries rather than
@@ -152,14 +152,16 @@ depend on the predecessor allowlist.
 
 Before publication, Contract Tests, Target Compatibility, and TC-MVP-E2E-001
 SIM passed on the exact reviewed PR #104 head. Lightweight
-`ai-sdlc-v3.0.3` now resolves exactly to `f3229bfa4a06da963cae7c390c6075b4f6c12f7b`. After this publication
-attestation merges, deployed Runtime Preflight and immutable REAL preflight must
-pass before portfolio-tasks advances from 3.0.2 to 3.0.3.
+`ai-sdlc-v3.0.3` resolves exactly to
+`f3229bfa4a06da963cae7c390c6075b4f6c12f7b`. After publication attestation,
+deployed Runtime Preflight 36867504568 and immutable REAL readiness preflight
+36867939797 passed before portfolio-tasks adopted 3.0.3.
 
-#159 must not be reauthorized before that source cutover. Full acceptance still
-requires one corrected terminal projection through the preserved 3.0.1
-admission followed by unchanged same-delivery `duplicate-reused` before Codex
-and no second visible effect.
+Fresh #159 then completed the required live acceptance sequence. First target
+run 36911342397 produced one managed draft PR #82 and source run 36911478182
+recorded one terminal projection. Unchanged reroute 36913373900 and target run
+36913463403 preserved the same delivery/branch/PR and returned
+`duplicate-reused` before Codex with no second receiver/source visible effect.
 
 Published 3.0.2, 3.0.1, and 3.0.0 remain immutable predecessor evidence.
 
