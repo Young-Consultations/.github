@@ -175,7 +175,7 @@ without implementation evidence.
 `TC-MVP-E2E-001` is one acceptance architecture with two modes, not two
 execution paths. `TC-MVP-E2E-001-SIM` resolves and executes the exact immutable
 adapter of the sole enabled target through deterministic fake Codex/publication
-effects and passes target-produced results through the current control-plane receiver logic using in-memory journal/forwarding effects. Published 3.0.2 binds the enabled consulting target to immutable `codex-adapter-v3.0.2`, whose target workflow pins the 3.0.2 credential preflight and receiver. The receiver uses an immutable compatibility allowlist so the already-admitted 3.0.1 delivery for #159 remains valid without requiring source and receiver release strings to be equal. `TC-MVP-E2E-001-REAL` uses the
+effects and passes target-produced results through the current control-plane receiver logic using in-memory journal/forwarding effects. Published 3.0.3 binds the enabled consulting target to immutable `codex-adapter-v3.0.3`, whose target workflow pins the 3.0.3 credential preflight and receiver. The receiver accepts the reviewed 3.0.1, 3.0.2, and 3.0.3 admission releases, and target compatibility constrains cross-release admission reuse to that pinned receiver policy. Portfolio-tasks still consumes 3.0.2 pending deployed 3.0.3 preflights and source repin. `TC-MVP-E2E-001-REAL` uses the
 existing source, router, target, receiver, and source-projection path after a
 non-mutating preflight. The REAL execution trigger remains the existing
 authorized-human `status:approved` action in `portfolio-tasks`; the control
@@ -187,14 +187,14 @@ Historical compatibility evidence remains immutable. The 2.3.2 compatibility
 unit at commit `5738ace3ee90dde11336f8f8099e64e5645f7139` and the 2.4.0 receiver
 retry correction explain earlier contract evolution, but they are not the
 current control-plane release. The current published control-plane compatibility
-release is `ai-sdlc-v3.0.2` at reviewed PR #101 merge commit
-`eae81af30eb8f1e2cf51a30b1e5a6d7dbd76bc6e`. It preserves
+release is `ai-sdlc-v3.0.3` at reviewed PR #104 merge commit
+`f3229bfa4a06da963cae7c390c6075b4f6c12f7b`. It preserves
 `ai-sdlc-contract/v2`, the resolved idempotent
 `draft-pr-created -> duplicate-reused` receiver semantics, and the dedicated
-GitHub App result-writer credential interface introduced by 3.0.0. The 3.0.2
-PATCH repairs receiver release-composition validation through an immutable
-receiver-owned allowlist; 3.0.1 remains immutable predecessor evidence for the
-organization-secret metadata audit repair.
+GitHub App result-writer credential interface introduced by 3.0.0. The 3.0.3
+PATCH repairs cross-release admission reuse while preserving the 3.0.2
+receiver-compatibility repair and 3.0.1 organization-secret metadata repair as
+immutable predecessor evidence.
 
 Historical 2.4.3 replacement evidence remains quarantined as incident history.
 Do not infer current readiness, rollback safety, or activation from older tags.
