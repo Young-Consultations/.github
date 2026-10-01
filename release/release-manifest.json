@@ -1,8 +1,8 @@
 {
   "release_version": "3.0.3",
   "tag": "ai-sdlc-v3.0.3",
-  "tag_published": false,
-  "tag_commit_sha": null,
+  "tag_published": true,
+  "tag_commit_sha": "f3229bfa4a06da963cae7c390c6075b4f6c12f7b",
   "contract_package_version": "3.0.3",
   "contract_payload_version": "ai-sdlc-contract/v2",
   "schema_version": "ai-sdlc-contract/v2",
