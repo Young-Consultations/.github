@@ -14,8 +14,7 @@ deprecation, and rollback procedures](docs/releases.md).
 
 The published [`ai-sdlc-v3.0.3` release](docs/releases/3.0.3.md) is the
 current control-plane compatibility baseline at reviewed PR #104 merge commit
-`f3229bfa4a06da963cae7c390c6075b4f6c12f7b`. Portfolio-tasks still consumes published 3.0.2, so publication
-is not source cutover.
+`f3229bfa4a06da963cae7c390c6075b4f6c12f7b`. Portfolio-tasks now consumes published 3.0.3 through merged PR #163 at `580eaf3cd88774014d645d3c3ca3718b39b38ce0`.
 
 The matching immutable target is `codex-adapter-v3.0.3` at
 `f11852c7f563df16ea4afa9ab75bf766242e7327`. The target conformance adapter
@@ -32,12 +31,13 @@ the pinned receiver's compatibility allowlist. Ambiguous, malformed,
 conflicting, concurrent, or unsupported admission state fails closed before
 target dispatch.
 
-Publication does not authorize #159. After this attestation merges, deployed
-3.0.3 Runtime Preflight and immutable REAL preflight must pass before
-portfolio-tasks advances from 3.0.2 to 3.0.3. Only then may the unchanged #159
-delivery be reauthorized
-to prove one corrected terminal projection followed by `duplicate-reused`
-before Codex with no second receiver/source effect.
+Post-publication acceptance is complete. Deployed 3.0.3 Runtime Preflight
+36867504568 and immutable REAL readiness preflight 36867939797 passed before
+portfolio source adoption. Fresh #159 then produced one corrected terminal
+projection through target run 36911342397 and source run 36911478182; unchanged
+redelivery through source run 36913373900 and target run 36913463403 returned
+`duplicate-reused` for the same delivery/branch/PR #82 before Codex with no
+second receiver/source visible effect.
 
 ## AI-SDLC contract validation
 
