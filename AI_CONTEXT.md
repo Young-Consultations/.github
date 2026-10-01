@@ -458,10 +458,10 @@ Portfolio-tasks now consumes 3.0.2 after the required deployed preflights.
 Source reconciliation run 36666315992 then preserved #159's original trusted
 3.0.1 admission and cleared the queued state without fabricating a terminal
 result. That recovery exposed DEF-0086 at the router's cross-release admission
-reuse boundary. The 3.0.3 candidate must publish, pass deployed Runtime
-Preflight and immutable REAL preflight, and be source-adopted before #159 is
-reauthorized. Controlled REAL terminal projection and unchanged same-delivery
-redelivery remain required before closing the applicable acceptance defects.
+reuse boundary. Published 3.0.3 must pass deployed Runtime Preflight and
+immutable REAL preflight and be source-adopted before #159 is reauthorized.
+Controlled REAL terminal projection and unchanged same-delivery redelivery
+remain required before closing the applicable acceptance defects.
 
 ## 3.0.1 published Runtime Preflight organization-secret repair
 
