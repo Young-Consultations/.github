@@ -123,14 +123,14 @@ required for a given registered repository.
 
 ## Current compatibility update
 
-Published `ai-sdlc-v3.0.2` remains the current deployed compatibility release
-and portfolio-tasks currently consumes 3.0.2. The enabled published target is
-immutable `codex-adapter-v3.0.2`.
+Published `ai-sdlc-v3.0.3` is the current control-plane compatibility release
+at reviewed PR #104 merge commit `f3229bfa4a06da963cae7c390c6075b4f6c12f7b`. Portfolio-tasks still consumes
+published 3.0.2, so publication and source adoption remain separate evidence
+gates.
 
-Unpublished `ai-sdlc-v3.0.3` is the corrective candidate for #103 /
-consulting-playbook DEF-0086. The candidate preserves durable predecessor
-admission evidence across authorized unchanged retries rather than regenerating
-release/activation evidence from the current router.
+3.0.3 repairs #103 / consulting-playbook DEF-0086 by preserving durable
+predecessor admission evidence across authorized unchanged retries rather than
+regenerating release/activation evidence from the current router.
 
 The matching immutable target is `codex-adapter-v3.0.3` at
 `f11852c7f563df16ea4afa9ab75bf766242e7327`, with adapter revision
@@ -138,7 +138,7 @@ The matching immutable target is `codex-adapter-v3.0.3` at
 and report SHA-256
 `a739cd3dde3c05121fbfc5360495880e265b76448b504936b8583b5efa972ec8`.
 
-For this candidate, the reviewed receiver/admission compatibility set is:
+For published 3.0.3, the reviewed receiver/admission compatibility set is:
 
 - `ai-sdlc-v3.0.1`, required to preserve #159's original durable admission;
 - `ai-sdlc-v3.0.2`, required for deliveries admitted after the previous source
@@ -150,11 +150,11 @@ reuse, and release-aware target verification must prove that set is a subset of
 the exact pinned receiver allowlist. Same-release exact-binding reuse does not
 depend on the predecessor allowlist.
 
-Candidate readiness requires Contract Tests, Target Compatibility, and
-TC-MVP-E2E-001 SIM on the exact PR head. After candidate merge, create
-`ai-sdlc-v3.0.3` at the exact reviewed merge commit, then merge a separate
-publication-attestation PR. Deployed Runtime Preflight and immutable REAL
-preflight must pass before portfolio-tasks advances from 3.0.2 to 3.0.3.
+Before publication, Contract Tests, Target Compatibility, and TC-MVP-E2E-001
+SIM passed on the exact reviewed PR #104 head. Lightweight
+`ai-sdlc-v3.0.3` now resolves exactly to `f3229bfa4a06da963cae7c390c6075b4f6c12f7b`. After this publication
+attestation merges, deployed Runtime Preflight and immutable REAL preflight must
+pass before portfolio-tasks advances from 3.0.2 to 3.0.3.
 
 #159 must not be reauthorized before that source cutover. Full acceptance still
 requires one corrected terminal projection through the preserved 3.0.1

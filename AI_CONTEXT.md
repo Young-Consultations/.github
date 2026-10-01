@@ -175,7 +175,7 @@ without implementation evidence.
 `TC-MVP-E2E-001` is one acceptance architecture with two modes, not two
 execution paths. `TC-MVP-E2E-001-SIM` resolves and executes the exact immutable
 adapter of the sole enabled target through deterministic fake Codex/publication
-effects and passes target-produced results through the current control-plane receiver logic using in-memory journal/forwarding effects. Published 3.0.2 binds the enabled consulting target to immutable `codex-adapter-v3.0.2`, whose target workflow pins the 3.0.2 credential preflight and receiver. The receiver uses an immutable compatibility allowlist so the already-admitted 3.0.1 delivery for #159 remains valid without requiring source and receiver release strings to be equal. `TC-MVP-E2E-001-REAL` uses the
+effects and passes target-produced results through the current control-plane receiver logic using in-memory journal/forwarding effects. Published 3.0.3 binds the enabled consulting target to immutable `codex-adapter-v3.0.3`, whose target workflow pins the 3.0.3 credential preflight and receiver. The receiver accepts the reviewed 3.0.1, 3.0.2, and 3.0.3 admission releases, and target compatibility constrains cross-release admission reuse to that pinned receiver policy. Portfolio-tasks still consumes 3.0.2 pending deployed 3.0.3 preflights and source repin. `TC-MVP-E2E-001-REAL` uses the
 existing source, router, target, receiver, and source-projection path after a
 non-mutating preflight. The REAL execution trigger remains the existing
 authorized-human `status:approved` action in `portfolio-tasks`; the control
@@ -187,25 +187,28 @@ Historical compatibility evidence remains immutable. The 2.3.2 compatibility
 unit at commit `5738ace3ee90dde11336f8f8099e64e5645f7139` and the 2.4.0 receiver
 retry correction explain earlier contract evolution, but they are not the
 current control-plane release. The current published control-plane compatibility
-release is `ai-sdlc-v3.0.2` at reviewed PR #101 merge commit
-`eae81af30eb8f1e2cf51a30b1e5a6d7dbd76bc6e`. It preserves
+release is `ai-sdlc-v3.0.3` at reviewed PR #104 merge commit
+`f3229bfa4a06da963cae7c390c6075b4f6c12f7b`. It preserves
 `ai-sdlc-contract/v2`, the resolved idempotent
 `draft-pr-created -> duplicate-reused` receiver semantics, and the dedicated
-GitHub App result-writer credential interface introduced by 3.0.0. The 3.0.2
-PATCH repairs receiver release-composition validation through an immutable
-receiver-owned allowlist; 3.0.1 remains immutable predecessor evidence for the
-organization-secret metadata audit repair.
+GitHub App result-writer credential interface introduced by 3.0.0. The 3.0.3
+PATCH repairs cross-release admission reuse while preserving the 3.0.2
+receiver-compatibility repair and 3.0.1 organization-secret metadata repair as
+immutable predecessor evidence.
 
 Historical 2.4.3 replacement evidence remains quarantined as incident history.
 Do not infer current readiness, rollback safety, or activation from older tags.
-Publication and live consumption are separate evidence gates. Portfolio-tasks
-now consumes published `ai-sdlc-v3.0.2` after deployed Runtime Preflight
-36640642872 and immutable REAL preflight 36640734704 passed. #159 was then
+Publication and live consumption are separate evidence gates. Published
+`ai-sdlc-v3.0.3` is the current control-plane compatibility release at
+reviewed PR #104 merge commit `f3229bfa4a06da963cae7c390c6075b4f6c12f7b`; portfolio-tasks still consumes
+published 3.0.2. Deployed 3.0.2 Runtime Preflight 36640642872 and immutable
+REAL preflight 36640734704 passed before that source cutover. #159 was then
 reconciled successfully while preserving its original trusted 3.0.1
 admission/delivery identity. That state exposed DEF-0086 before another Codex
 call: published 3.0.2 cannot reuse the preserved predecessor admission on an
-unchanged authorized retry. Unpublished 3.0.3 is the corrective candidate.
-Unrelated terminal delivery identities remain non-reusable.
+unchanged authorized retry. Published 3.0.3 is the corrective control-plane
+release, but deployed 3.0.3 preflight, source adoption, and REAL acceptance
+remain pending. Unrelated terminal delivery identities remain non-reusable.
 
 Explicitly excluded are exactly-once transport, autonomous approval, automatic
 merge, release or deployment automation authority, production operation,
@@ -258,14 +261,12 @@ git diff --check
 ```
 
 `python scripts/validate_release.py` verifies structural release coherence.
-Published control-plane compatibility state remains `ai-sdlc-v3.0.2` at
-reviewed PR #101 merge commit
-`eae81af30eb8f1e2cf51a30b1e5a6d7dbd76bc6e`, and portfolio-tasks now
-consumes 3.0.2. The current branch is an unpublished 3.0.3 candidate:
-`tag_published: false` and `tag_commit_sha: null`. Do not describe 3.0.3 as
-published, source-adopted, or REAL-accepted until candidate merge/tag,
-publication attestation, deployed Runtime Preflight, immutable REAL preflight,
-the portfolio consumer PR, and live terminal/redelivery gates complete.
+Published control-plane compatibility state is `ai-sdlc-v3.0.3` at reviewed
+PR #104 merge commit `f3229bfa4a06da963cae7c390c6075b4f6c12f7b`. The manifest records
+`tag_published: true` with that exact `tag_commit_sha`. Portfolio-tasks still
+consumes 3.0.2. Do not describe 3.0.3 as source-adopted or REAL-accepted until
+deployed Runtime Preflight, immutable REAL preflight, the portfolio consumer PR,
+and live terminal/redelivery gates complete.
 
 During any future pre-publication candidate window,
 `verify_release_target_workflows.py` delegates to normal remote verification
@@ -408,7 +409,7 @@ is edited. Keep historical behavior in Git history, release records, or ADRs;
 do not maintain multiple active policies or compatibility paths in this index.
 
 
-## 3.0.3 candidate cross-release admission reuse repair
+## 3.0.3 published cross-release admission reuse repair
 
 DEF-0086 was discovered after successful #159 reconciliation proved that the
 source could preserve its original trusted 3.0.1 admission across the 3.0.2
@@ -416,21 +417,21 @@ cutover. The published 3.0.2 router would still reject that admission on
 unchanged retry because it regenerated current release/activation evidence and
 required exact binding equality.
 
-The unpublished 3.0.3 candidate preserves the durable admission instead.
-Same-release exact-binding reuse remains unconditional; cross-release reuse is
-allowed only by target-bound immutable policy and must be accepted by the exact
-pinned receiver compatibility policy. Admission journal creation is re-read
-after POST so concurrent or ambiguous router-owned markers fail closed before
-dispatch.
+Published 3.0.3 preserves the durable admission instead. Same-release
+exact-binding reuse remains unconditional; cross-release reuse is allowed only
+by target-bound immutable policy and must be accepted by the exact pinned
+receiver compatibility policy. Admission journal creation is re-read after POST
+so concurrent or ambiguous router-owned markers fail closed before dispatch.
 
-The candidate manifest records `ai-sdlc-v3.0.3`,
-`tag_published: false`, and `tag_commit_sha: null`. The matching immutable
-target is `codex-adapter-v3.0.3` at
+The published manifest records `ai-sdlc-v3.0.3`,
+`tag_published: true`, and
+`tag_commit_sha: f3229bfa4a06da963cae7c390c6075b4f6c12f7b`. The matching immutable target is
+`codex-adapter-v3.0.3` at
 `f11852c7f563df16ea4afa9ab75bf766242e7327`.
 
-This section describes candidate architecture only. Current deployed runtime and
-source consumption remain 3.0.2 until the normal immutable release,
-publication-attestation, preflight, and source-adoption sequence completes.
+Publication is not source adoption. Portfolio-tasks remains on 3.0.2 until
+deployed 3.0.3 Runtime Preflight, immutable REAL preflight, and the reviewed
+source-consumer repin complete.
 
 ## 3.0.2 published receiver compatibility repair
 
@@ -457,10 +458,10 @@ Portfolio-tasks now consumes 3.0.2 after the required deployed preflights.
 Source reconciliation run 36666315992 then preserved #159's original trusted
 3.0.1 admission and cleared the queued state without fabricating a terminal
 result. That recovery exposed DEF-0086 at the router's cross-release admission
-reuse boundary. The 3.0.3 candidate must publish, pass deployed Runtime
-Preflight and immutable REAL preflight, and be source-adopted before #159 is
-reauthorized. Controlled REAL terminal projection and unchanged same-delivery
-redelivery remain required before closing the applicable acceptance defects.
+reuse boundary. Published 3.0.3 must pass deployed Runtime Preflight and
+immutable REAL preflight and be source-adopted before #159 is reauthorized.
+Controlled REAL terminal projection and unchanged same-delivery redelivery
+remain required before closing the applicable acceptance defects.
 
 ## 3.0.1 published Runtime Preflight organization-secret repair
 
@@ -532,7 +533,7 @@ portfolio-tasks consumer adoption, and controlled same-delivery redelivery must
 prove one managed draft, no second Codex execution, one trusted receiver effect,
 and one source projection before #83 / DEF-0064 can close.
 
-## 3.0.2 current source-consumer and 3.0.3 candidate state
+## 3.0.2 current source-consumer and published 3.0.3 state
 
 Portfolio-tasks currently consumes `ai-sdlc-v3.0.2` through its reviewed
 source router pin. That cutover followed deployed Runtime Preflight 36640642872
@@ -566,11 +567,11 @@ revision
 and report SHA-256
 `a739cd3dde3c05121fbfc5360495880e265b76448b504936b8583b5efa972ec8`.
 
-Do not reauthorize #159 until 3.0.3 candidate merge/tag, publication attestation,
-deployed Runtime Preflight, immutable REAL preflight, and portfolio source
-repin complete. Then require one corrected terminal projection followed by an
-unchanged retry that returns `duplicate-reused` before Codex with no second
-visible effect.
+Published 3.0.3 is attested at `f3229bfa4a06da963cae7c390c6075b4f6c12f7b`, but do not reauthorize #159 until
+this publication attestation, deployed Runtime Preflight, immutable REAL
+preflight, and portfolio source repin complete. Then require one corrected
+terminal projection followed by an unchanged retry that returns
+`duplicate-reused` before Codex with no second visible effect.
 
 The broader organization-level cost-bearing prerequisite policy remains owned
 by issue #77 and is not silently expanded by 3.0.2.
