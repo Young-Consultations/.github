@@ -221,7 +221,7 @@ The acceptance record must preserve links or immutable identities for:
 
 - source issue and exact approved revision;
 - task ID, delivery ID, attempt identity where available, and correlation ID;
-- published corrective `ai-sdlc-v3.0.2` control-plane identity and its attested tag commit, plus immutable `codex-adapter-v3.0.2` and its reviewed 3.0.2 receiver pin;
+- published corrective `ai-sdlc-v3.0.3` control-plane identity and its attested tag commit `f3229bfa4a06da963cae7c390c6075b4f6c12f7b`, plus immutable `codex-adapter-v3.0.3` at `f11852c7f563df16ea4afa9ab75bf766242e7327` and its reviewed 3.0.3 receiver pin; preserve 3.0.2 only as predecessor/source-consumer context until cutover;
 - enabled target and registered immutable adapter commit;
 - portfolio admission/router workflow run;
 - target workflow run;
