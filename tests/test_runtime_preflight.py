@@ -11,8 +11,8 @@ def test_current_runtime_record_is_generated_from_authoritative_state():
     assert path.read_text(encoding="utf-8") == generate_current_runtime.render()
     value = json.loads(path.read_text(encoding="utf-8"))
     assert value["release_state"] == "published"
-    assert value["control_plane"]["tag"] == "ai-sdlc-v3.0.2"
-    assert value["control_plane"]["tag_commit_sha"] == "eae81af30eb8f1e2cf51a30b1e5a6d7dbd76bc6e"
+    assert value["control_plane"]["tag"] == "ai-sdlc-v3.0.3"
+    assert value["control_plane"]["tag_commit_sha"] == "f3229bfa4a06da963cae7c390c6075b4f6c12f7b"
     assert value["activation"]["enabled_targets"] == [
         "Young-Consultations/consulting-playbook"
     ]
