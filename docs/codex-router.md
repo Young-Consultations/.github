@@ -60,11 +60,12 @@ untrusted lookalike comments are never admission authority.
 The published [3.0.2 release](releases/3.0.2.md) is the current
 control-plane compatibility release. Its immutable tag resolves to reviewed
 PR #101 merge commit
-`eae81af30eb8f1e2cf51a30b1e5a6d7dbd76bc6e`. The portfolio source consumer
-currently invokes the published 3.0.1 router and must not advance to 3.0.2
-until deployed 3.0.2 Runtime Preflight and immutable REAL preflight pass.
+`eae81af30eb8f1e2cf51a30b1e5a6d7dbd76bc6e`. The portfolio source consumer now invokes published 3.0.2 after deployed
+Runtime Preflight 36640642872 and immutable REAL preflight 36640734704 passed.
+Unpublished 3.0.3 is the next corrective candidate for DEF-0086 and must not be
+source-adopted until its own publication and preflight gates pass.
 
-The enabled consulting target is immutable `codex-adapter-v3.0.2` at
+The current published consulting target is immutable `codex-adapter-v3.0.2` at
 `3bde0dc760088b9af21454a0f70ed498dae043a7`. Release 3.0.2 repairs
 DEF-0073 through a receiver-owned compatibility allowlist that permits the
 already-admitted 3.0.1 #159 delivery while rejecting unreviewed release
@@ -235,3 +236,10 @@ sequenceDiagram
   Target->>Pub: finds existing managed draft PR
   Target->>Result: duplicate-reused terminal no-op
 ```
+
+
+The 3.0.3 candidate binds immutable `codex-adapter-v3.0.3` at
+`f11852c7f563df16ea4afa9ab75bf766242e7327`. Its router preserves exactly one
+trusted durable admission across compatible release retries; exact same-release
+reuse remains unconditional, while predecessor reuse is target-bound policy and
+must be accepted by the pinned receiver allowlist.

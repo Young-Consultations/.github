@@ -30,7 +30,8 @@
         "requires_preflight": true,
         "requires_fail_closed_reuse": true,
         "requires_create_race_requery": true,
-        "terminal_reuse_status": "duplicate-reused"
+        "terminal_reuse_status": "duplicate-reused",
+        "reusable_admission_releases": []
       }
     },
     "Young-Consultations/slugger": {
@@ -63,11 +64,12 @@
         "requires_preflight": true,
         "requires_fail_closed_reuse": true,
         "requires_create_race_requery": true,
-        "terminal_reuse_status": "duplicate-reused"
+        "terminal_reuse_status": "duplicate-reused",
+        "reusable_admission_releases": []
       }
     },
     "Young-Consultations/consulting-playbook": {
-      "workflow_ref": "Young-Consultations/consulting-playbook/.github/workflows/codex-execute.yml@codex-adapter-v3.0.2",
+      "workflow_ref": "Young-Consultations/consulting-playbook/.github/workflows/codex-execute.yml@codex-adapter-v3.0.3",
       "allowed_task_types": [
         "automation",
         "documentation",
@@ -82,10 +84,10 @@
         "fixture_set": "TC-MVP-CI-001",
         "fixture_version": "2.3.0",
         "compatibility_sha": "e27b8a541afbd27b4be5606a19ffa43637ad312a",
-        "adapter_ref": "codex-adapter-v3.0.2",
-        "adapter_commit_sha": "3bde0dc760088b9af21454a0f70ed498dae043a7",
+        "adapter_ref": "codex-adapter-v3.0.3",
+        "adapter_commit_sha": "f11852c7f563df16ea4afa9ab75bf766242e7327",
         "report_path": ".ai-sdlc/conformance/tc-mvp-ci-001.json",
-        "report_sha256": "f7251f7ac3ceb46c350106b9d3190f52be71ffd0b57a0faca5dffe2d847074e6",
+        "report_sha256": "a739cd3dde3c05121fbfc5360495880e265b76448b504936b8583b5efa972ec8",
         "status": "pass",
         "activation_evidence_sufficient": true
       },
@@ -95,7 +97,12 @@
         "requires_preflight": true,
         "requires_fail_closed_reuse": true,
         "requires_create_race_requery": true,
-        "terminal_reuse_status": "duplicate-reused"
+        "terminal_reuse_status": "duplicate-reused",
+        "reusable_admission_releases": [
+          "ai-sdlc-v3.0.1",
+          "ai-sdlc-v3.0.2",
+          "ai-sdlc-v3.0.3"
+        ]
       }
     },
     "Young-Consultations/portfolio-tasks": {
@@ -128,7 +135,8 @@
         "requires_preflight": true,
         "requires_fail_closed_reuse": true,
         "requires_create_race_requery": true,
-        "terminal_reuse_status": "duplicate-reused"
+        "terminal_reuse_status": "duplicate-reused",
+        "reusable_admission_releases": []
       }
     }
   }

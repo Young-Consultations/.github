@@ -38,6 +38,18 @@ CONTROL_PLANE_TAG_RE = re.compile(
     r"(?:-[0-9A-Za-z]+(?:[.-][0-9A-Za-z]+)*)?"
 )
 ADMISSION_RE = re.compile(r"<!-- ai-sdlc-admission:v2 (\{[^\n]*\}) -->")
+ADMISSION_CORE_FIELDS = (
+    "contract_version",
+    "delivery_id",
+    "correlation_id",
+    "source_issue",
+    "target_repository",
+)
+ADMISSION_BINDING_FIELDS = set(ADMISSION_CORE_FIELDS) | {
+    "control_plane_release",
+    "activation_revision",
+    "activation_sha256",
+}
 FAILURE_CATEGORIES = {
     "contract-validation", "authorization", "dependency",
     "repository-routing", "publication", "unknown",
@@ -179,8 +191,33 @@ def validate_registry() -> dict[str, Any]:
         if not isinstance(entry["codex_environment"], str) or not entry["codex_environment"]:
             reject("repository-routing", f"Registry entry {name} has an invalid codex_environment.")
         idempotency = entry.get("idempotency")
-        if not isinstance(idempotency, dict) or idempotency.get("branch_identity") != "delivery_id" or idempotency.get("ownership_marker") != "ai-sdlc-delivery-id" or idempotency.get("requires_preflight") is not True or idempotency.get("requires_fail_closed_reuse") is not True or idempotency.get("requires_create_race_requery") is not True or idempotency.get("terminal_reuse_status") != "duplicate-reused":
-            reject("repository-routing", f"Registry entry {name} lacks required target idempotency policy.")
+        if (
+            not isinstance(idempotency, dict)
+            or idempotency.get("branch_identity") != "delivery_id"
+            or idempotency.get("ownership_marker") != "ai-sdlc-delivery-id"
+            or idempotency.get("requires_preflight") is not True
+            or idempotency.get("requires_fail_closed_reuse") is not True
+            or idempotency.get("requires_create_race_requery") is not True
+            or idempotency.get("terminal_reuse_status") != "duplicate-reused"
+        ):
+            reject(
+                "repository-routing",
+                f"Registry entry {name} lacks required target idempotency policy.",
+            )
+        reusable_releases = idempotency.get("reusable_admission_releases")
+        if (
+            not isinstance(reusable_releases, list)
+            or any(
+                not isinstance(release, str)
+                or CONTROL_PLANE_TAG_RE.fullmatch(release) is None
+                for release in reusable_releases
+            )
+            or len(reusable_releases) != len(set(reusable_releases))
+        ):
+            reject(
+                "repository-routing",
+                f"Registry entry {name} has invalid reusable admission release policy.",
+            )
         if entry["contract_version"] != read_json(INPUT_SCHEMA)["properties"]["contract_version"]["const"]:
             reject("repository-routing", f"Registry entry {name} has an unsupported contract_version.")
         validate_conformance(name, entry, required=False)
@@ -361,8 +398,38 @@ def _existing_admissions(repository: str, issue: str, delivery_id: str) -> list[
             except json.JSONDecodeError:
                 continue
             if isinstance(value, dict) and value.get("delivery_id") == delivery_id:
-                admissions.append({"author": author, "binding": value})
+                comment_id = comment.get("id")
+                admissions.append(
+                    {
+                        "author": author,
+                        "binding": value,
+                        "comment_id": comment_id if isinstance(comment_id, int) else None,
+                    }
+                )
     return admissions
+
+
+def _admission_matches_for_reuse(
+    existing: dict[str, Any],
+    current: dict[str, Any],
+    accepted_releases: set[str],
+) -> bool:
+    if set(existing) != ADMISSION_BINDING_FIELDS:
+        return False
+    if any(existing.get(field) != current.get(field) for field in ADMISSION_CORE_FIELDS):
+        return False
+    release = existing.get("control_plane_release")
+    activation_revision = existing.get("activation_revision")
+    activation_sha256 = existing.get("activation_sha256")
+    return (
+        isinstance(release, str)
+        and release in accepted_releases
+        and CONTROL_PLANE_TAG_RE.fullmatch(release) is not None
+        and isinstance(activation_revision, str)
+        and SHA_RE.fullmatch(activation_revision) is not None
+        and isinstance(activation_sha256, str)
+        and DIGEST_RE.fullmatch(activation_sha256) is not None
+    )
 
 
 def dispatch() -> None:
@@ -433,7 +500,7 @@ def dispatch() -> None:
         "-f", f"concurrency_group={concurrency_group}",
     ]
     try:
-        existing = _existing_admissions(
+        existing_before = _existing_admissions(
             issue_match.group(1), issue_match.group(2), delivery_id,
         )
         posted = _github_json(
@@ -447,14 +514,80 @@ def dispatch() -> None:
             raise ValueError("Admission response did not identify the router credential")
         if not isinstance(posted_id, int):
             raise ValueError("Admission response did not identify the created journal comment")
-        owned = [item["binding"] for item in existing if item["author"] == author]
-        if any(item != binding for item in owned):
+
+        existing_after = _existing_admissions(
+            issue_match.group(1), issue_match.group(2), delivery_id,
+        )
+        before_owned = [item for item in existing_before if item["author"] == author]
+        after_owned = [item for item in existing_after if item["author"] == author]
+        posted_records = [
+            item for item in after_owned if item.get("comment_id") == posted_id
+        ]
+        if (
+            len(posted_records) != 1
+            or posted_records[0].get("binding") != binding
+        ):
             _github_json(
                 f"repos/{issue_match.group(1)}/issues/comments/{posted_id}",
                 "--method", "DELETE",
             )
-            reject("authorization", "Conflicting admission journal exists for this delivery.", correlation_id)
-        if owned:
+            reject(
+                "authorization",
+                "Admission journal re-query did not prove the created marker.",
+                correlation_id,
+            )
+        before_ids = {
+            item["comment_id"]
+            for item in before_owned
+            if isinstance(item.get("comment_id"), int)
+        }
+        concurrent = [
+            item
+            for item in after_owned
+            if item.get("comment_id") not in before_ids
+            and item.get("comment_id") != posted_id
+        ]
+        if concurrent:
+            _github_json(
+                f"repos/{issue_match.group(1)}/issues/comments/{posted_id}",
+                "--method", "DELETE",
+            )
+            reject(
+                "authorization",
+                "Concurrent admission journal creation is ambiguous for this delivery.",
+                correlation_id,
+            )
+        if len(before_owned) > 1:
+            _github_json(
+                f"repos/{issue_match.group(1)}/issues/comments/{posted_id}",
+                "--method", "DELETE",
+            )
+            reject(
+                "authorization",
+                "Ambiguous admission journal exists for this delivery.",
+                correlation_id,
+            )
+        if before_owned:
+            prior = before_owned[0]["binding"]
+            same_release_reuse = prior == binding
+            accepted_releases = set(
+                entry["idempotency"]["reusable_admission_releases"]
+            )
+            cross_release_reuse = _admission_matches_for_reuse(
+                prior,
+                binding,
+                accepted_releases,
+            )
+            if not same_release_reuse and not cross_release_reuse:
+                _github_json(
+                    f"repos/{issue_match.group(1)}/issues/comments/{posted_id}",
+                    "--method", "DELETE",
+                )
+                reject(
+                    "authorization",
+                    "Conflicting or unsupported admission journal exists for this delivery.",
+                    correlation_id,
+                )
             _github_json(
                 f"repos/{issue_match.group(1)}/issues/comments/{posted_id}",
                 "--method", "DELETE",

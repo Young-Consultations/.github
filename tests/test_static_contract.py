@@ -41,7 +41,7 @@ def test_registry_json_syntax_and_required_fields():
     } == {"Young-Consultations/consulting-playbook"}
     expected_adapter_refs = {
         "Young-Consultations/.github": "codex-adapter-v2.3.1",
-        "Young-Consultations/consulting-playbook": "codex-adapter-v3.0.2",
+        "Young-Consultations/consulting-playbook": "codex-adapter-v3.0.3",
         "Young-Consultations/portfolio-tasks": "codex-adapter-v2.3.2",
         "Young-Consultations/slugger": "codex-adapter-v2.3.2",
     }
@@ -57,6 +57,17 @@ def test_registry_json_syntax_and_required_fields():
         assert entry["conformance"]["adapter_ref"] == expected_ref, name
         assert entry["conformance"]["status"] == "pass", name
         assert entry["conformance"]["activation_evidence_sufficient"] is True, name
+        assert isinstance(entry["idempotency"]["reusable_admission_releases"], list), name
+
+
+def test_enabled_consulting_target_declares_cross_release_admission_reuse():
+    data = json.loads(Path("config/codex-repositories.json").read_text())
+    policy = data["repositories"]["Young-Consultations/consulting-playbook"]["idempotency"]
+    assert policy["reusable_admission_releases"] == [
+        "ai-sdlc-v3.0.1",
+        "ai-sdlc-v3.0.2",
+        "ai-sdlc-v3.0.3",
+    ]
 
 
 def test_activation_change_does_not_change_compatibility_contents(tmp_path):
@@ -87,6 +98,7 @@ def test_github_target_is_bounded_and_idempotent():
         "requires_fail_closed_reuse": True,
         "requires_create_race_requery": True,
         "terminal_reuse_status": "duplicate-reused",
+        "reusable_admission_releases": [],
     }
 
 

@@ -73,6 +73,7 @@ def entry(repo: str = "org/repo", **changes):
             "requires_fail_closed_reuse": True,
             "requires_create_race_requery": True,
             "terminal_reuse_status": "duplicate-reused",
+            "reusable_admission_releases": [],
         },
     }
     value.update(changes)
@@ -268,6 +269,29 @@ def test_live_receiver_bundle_requires_nonempty_control_plane_trust():
     )
 
 
+def test_receiver_verification_rejects_reuse_outside_receiver_allowlist():
+    def local_workflow(repository, path, ref, token):
+        return (ROOT / path).read_text(encoding="utf-8")
+
+    def local_content(repository, path, ref, token):
+        return (ROOT / path).read_bytes()
+
+    with (
+        patch.object(checker, "fetch_ref_commit", return_value="1" * 40),
+        patch.object(checker, "fetch_workflow", side_effect=local_workflow),
+        patch.object(checker, "fetch_content", side_effect=local_content),
+        pytest.raises(
+            checker.CompatibilityError,
+            match="reusable admission releases exceed",
+        ),
+    ):
+        checker.verify_receiver_at_ref(
+            current_receiver_release(),
+            None,
+            {"ai-sdlc-v3.0.4"},
+        )
+
+
 def test_historical_receiver_without_compatibility_policy_remains_verifiable():
     script = (ROOT / "scripts/codex_result_receiver.py").read_text()
     historical = script.replace(
@@ -460,7 +484,11 @@ def test_network_fetch_is_mocked_for_success(tmp_path):
     ):
         report = checker.verify_registry(entries, "fake-token")
     fetch.assert_called_once_with("org/repo", ".github/workflows/codex-execute.yml", "codex-adapter-v2.0.0", "fake-token")
-    receiver_check.assert_called_once_with("0123456789abcdef0123456789abcdef01234567", "fake-token")
+    receiver_check.assert_called_once_with(
+        "0123456789abcdef0123456789abcdef01234567",
+        "fake-token",
+        set(),
+    )
     report_check.assert_called_once_with(
         "org/repo",
         "codex-adapter-v2.0.0",
@@ -770,6 +798,37 @@ def test_issue_to_codex_cannot_be_registered(tmp_path):
         checker.load_registry(path)
 
 
+def test_reusable_admission_policy_rejects_unhashable_entries(tmp_path):
+    value = entry()
+    value["idempotency"]["reusable_admission_releases"] = [{}]
+    path = registry(tmp_path, {"org/repo": value})
+    with pytest.raises(checker.CompatibilityError, match="reusable admission release policy"):
+        checker.load_registry(path)
+
+
+def test_reusable_admission_policy_is_forwarded_to_receiver_verification(tmp_path):
+    value = entry()
+    value["idempotency"]["reusable_admission_releases"] = ["ai-sdlc-v3.0.1"]
+    entries = checker.load_registry(registry(tmp_path, {"org/repo": value}))
+    with (
+        patch.object(checker, "fetch_tag_commit", return_value="2" * 40),
+        patch.object(checker, "fetch_workflow", return_value=CANONICAL),
+        patch.object(
+            checker,
+            "verify_receiver_at_ref",
+            return_value="CODEX_RESULT_TOKEN",
+        ) as receiver_check,
+        patch.object(checker, "verify_conformance_report"),
+    ):
+        report = checker.verify_registry(entries, "fake-token")
+    assert report[0]["result"] == "pass"
+    receiver_check.assert_called_once_with(
+        "0123456789abcdef0123456789abcdef01234567",
+        "fake-token",
+        {"ai-sdlc-v3.0.1"},
+    )
+
+
 def test_draft_only_must_remain_true(tmp_path):
     path = registry(tmp_path, {"org/repo": entry(draft_pr_only=False)})
     with pytest.raises(checker.CompatibilityError, match="draft-only"):
@@ -828,7 +887,7 @@ def test_migrated_target_entries_use_v2_and_expected_paths():
     assert entries["Young-Consultations/consulting-playbook"]["contract_version"] == checker.CANONICAL_VERSION
     expected_refs = {
         "Young-Consultations/.github": "codex-adapter-v2.3.1",
-        "Young-Consultations/consulting-playbook": "codex-adapter-v3.0.2",
+        "Young-Consultations/consulting-playbook": "codex-adapter-v3.0.3",
         "Young-Consultations/portfolio-tasks": "codex-adapter-v2.3.2",
         "Young-Consultations/slugger": "codex-adapter-v2.3.2",
     }
