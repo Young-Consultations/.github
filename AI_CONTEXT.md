@@ -263,10 +263,13 @@ git diff --check
 `python scripts/validate_release.py` verifies structural release coherence.
 Published control-plane compatibility state is `ai-sdlc-v3.0.3` at reviewed
 PR #104 merge commit `f3229bfa4a06da963cae7c390c6075b4f6c12f7b`. The manifest records
-`tag_published: true` with that exact `tag_commit_sha`. Portfolio-tasks still
-consumes 3.0.2. Do not describe 3.0.3 as source-adopted or REAL-accepted until
-deployed Runtime Preflight, immutable REAL preflight, the portfolio consumer PR,
-and live terminal/redelivery gates complete.
+`tag_published: true` with that exact `tag_commit_sha`. Portfolio-tasks now
+consumes 3.0.3 through PR #163 at `580eaf3cd88774014d645d3c3ca3718b39b38ce0`.
+Deployed Runtime Preflight 36867504568, immutable REAL readiness preflight
+36867939797, first REAL target/receiver run 36911342397, source projection
+36911478182, and unchanged redelivery target run 36913463403 all passed. The
+second delivery returned `duplicate-reused` before Codex with no second
+receiver/source visible effect.
 
 During any future pre-publication candidate window,
 `verify_release_target_workflows.py` delegates to normal remote verification
