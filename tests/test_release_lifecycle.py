@@ -14,7 +14,7 @@ def test_current_published_release_is_structurally_coherent():
 def test_published_release_passes_publication_gate():
     assert validate_release.validate() == []
     assert validate_release.validate(require_publishable=True) == []
-    assert validate_release.validate(require_publishable=True) == [
+    assert validate_release.validate(require_candidate_ready=True) == [
         "candidate readiness requires an unpublished release without a tag commit"
     ]
 
