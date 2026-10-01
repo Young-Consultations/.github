@@ -12,16 +12,12 @@ package are released as one immutable compatibility unit. Current activation in
 that consumer compatibility unit. See [release, upgrade,
 deprecation, and rollback procedures](docs/releases.md).
 
-The published [`ai-sdlc-v3.0.2` release](docs/releases/3.0.2.md) remains
-the current deployed control-plane baseline at
-`eae81af30eb8f1e2cf51a30b1e5a6d7dbd76bc6e`. Portfolio-tasks has already
-adopted 3.0.2, and the enabled consulting target is immutable
-`codex-adapter-v3.0.2` at
-`3bde0dc760088b9af21454a0f70ed498dae043a7`.
+The published [`ai-sdlc-v3.0.3` release](docs/releases/3.0.3.md) is the
+current control-plane compatibility baseline at reviewed PR #104 merge commit
+`f3229bfa4a06da963cae7c390c6075b4f6c12f7b`. Portfolio-tasks still consumes published 3.0.2, so publication
+is not source cutover.
 
-The current pull request prepares unpublished
-[`ai-sdlc-v3.0.3`](docs/releases/3.0.3.md) for DEF-0086. Its matching
-immutable target is `codex-adapter-v3.0.3` at
+The matching immutable target is `codex-adapter-v3.0.3` at
 `f11852c7f563df16ea4afa9ab75bf766242e7327`. The target conformance adapter
 revision is
 `sha256:3932def5d016b7db11869a0520087aeedcd092799e61dc8617be8bb2f020be3f`
@@ -36,10 +32,10 @@ the pinned receiver's compatibility allowlist. Ambiguous, malformed,
 conflicting, concurrent, or unsupported admission state fails closed before
 target dispatch.
 
-This candidate does not authorize #159. After candidate merge, immutable
-`ai-sdlc-v3.0.3` tagging and publication attestation, deployed Runtime
-Preflight and immutable REAL preflight must pass before portfolio-tasks advances
-from 3.0.2 to 3.0.3. Only then may the unchanged #159 delivery be reauthorized
+Publication does not authorize #159. After this attestation merges, deployed
+3.0.3 Runtime Preflight and immutable REAL preflight must pass before
+portfolio-tasks advances from 3.0.2 to 3.0.3. Only then may the unchanged #159
+delivery be reauthorized
 to prove one corrected terminal projection followed by `duplicate-reused`
 before Codex with no second receiver/source effect.
 
