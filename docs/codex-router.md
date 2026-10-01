@@ -57,19 +57,20 @@ tokens are supported without calling the user-only `GET /user` endpoint. On
 redelivery, only an identical marker written by that same author is reused;
 untrusted lookalike comments are never admission authority.
 
-The published [3.0.2 release](releases/3.0.2.md) is the current
+The published [3.0.3 release](releases/3.0.3.md) is the current
 control-plane compatibility release. Its immutable tag resolves to reviewed
-PR #101 merge commit
-`eae81af30eb8f1e2cf51a30b1e5a6d7dbd76bc6e`. The portfolio source consumer now invokes published 3.0.2 after deployed
-Runtime Preflight 36640642872 and immutable REAL preflight 36640734704 passed.
-Unpublished 3.0.3 is the next corrective candidate for DEF-0086 and must not be
-source-adopted until its own publication and preflight gates pass.
+PR #104 merge commit
+`f3229bfa4a06da963cae7c390c6075b4f6c12f7b`. Portfolio-tasks still invokes
+published 3.0.2 after deployed Runtime Preflight 36640642872 and immutable REAL
+preflight 36640734704 passed; source adoption of 3.0.3 remains blocked until
+its deployed Runtime Preflight and immutable REAL preflight pass.
 
-The current published consulting target is immutable `codex-adapter-v3.0.2` at
-`3bde0dc760088b9af21454a0f70ed498dae043a7`. Release 3.0.2 repairs
-DEF-0073 through a receiver-owned compatibility allowlist that permits the
-already-admitted 3.0.1 #159 delivery while rejecting unreviewed release
-combinations. Release 3.0.1 remains immutable predecessor evidence for the
+The current published consulting target is immutable `codex-adapter-v3.0.3` at
+`f11852c7f563df16ea4afa9ab75bf766242e7327`. Release 3.0.3 repairs DEF-0086
+by preserving one trusted durable admission across reviewed compatible release
+retries. Its receiver compatibility policy accepts the reviewed 3.0.1, 3.0.2,
+and 3.0.3 admission releases while rejecting unreviewed combinations. Release
+3.0.2 remains immutable predecessor evidence for DEF-0073. Release 3.0.1 remains immutable predecessor evidence for the
 Runtime Preflight metadata repair; release 3.0.0 remains immutable predecessor
 evidence for the dedicated App private-key receiver interface. Published 2.4.5
 remains initial-live-path evidence and 2.4.4 is not an execution-safe rollback
@@ -238,7 +239,7 @@ sequenceDiagram
 ```
 
 
-The 3.0.3 candidate binds immutable `codex-adapter-v3.0.3` at
+Published 3.0.3 binds immutable `codex-adapter-v3.0.3` at
 `f11852c7f563df16ea4afa9ab75bf766242e7327`. Its router preserves exactly one
 trusted durable admission across compatible release retries; exact same-release
 reuse remains unconditional, while predecessor reuse is target-bound policy and
