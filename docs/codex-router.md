@@ -40,7 +40,7 @@ group. The target workflow applies the canonical group with
 ```yaml
 jobs:
   route:
-    uses: Young-Consultations/.github/.github/workflows/codex-router.yml@ai-sdlc-v3.0.1
+    uses: Young-Consultations/.github/.github/workflows/codex-router.yml@ai-sdlc-v3.0.3
     permissions:
       contents: read
       actions: read
@@ -60,10 +60,11 @@ untrusted lookalike comments are never admission authority.
 The published [3.0.3 release](releases/3.0.3.md) is the current
 control-plane compatibility release. Its immutable tag resolves to reviewed
 PR #104 merge commit
-`f3229bfa4a06da963cae7c390c6075b4f6c12f7b`. Portfolio-tasks still invokes
-published 3.0.2 after deployed Runtime Preflight 36640642872 and immutable REAL
-preflight 36640734704 passed; source adoption of 3.0.3 remains blocked until
-its deployed Runtime Preflight and immutable REAL preflight pass.
+`f3229bfa4a06da963cae7c390c6075b4f6c12f7b`. Portfolio-tasks now invokes
+published 3.0.3 through merged PR #163. Deployed Runtime Preflight 36867504568
+and immutable REAL readiness preflight 36867939797 passed before source
+adoption, and #159 subsequently completed terminal plus unchanged
+same-delivery redelivery acceptance.
 
 The current published consulting target is immutable `codex-adapter-v3.0.3` at
 `f11852c7f563df16ea4afa9ab75bf766242e7327`. Release 3.0.3 repairs DEF-0086
