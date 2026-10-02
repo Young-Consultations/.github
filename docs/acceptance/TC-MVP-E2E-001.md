@@ -155,7 +155,7 @@ Before the human approval action, the acceptance workflow shall fail closed unle
 
 The organization REAL preflight itself performs no Codex invocation, branch creation, commit, push, PR creation, result forwarding, source mutation, merge, release, deployment, settings change, or production operation. After dispatch and before any cost-bearing Codex invocation, the selected target must run the control-plane-owned result-credential capability preflight. That bounded preflight creates and deletes one marker comment on the source issue to prove issue-write/cleanup access and GitHub-authored identity, then emits the dedicated no-op repository-dispatch event to prove forwarding access. No probe comment may remain afterward.
 
-### Historical evidence and current 3.0.3 coordination
+### Historical evidence and completed 3.0.3 coordination
 
 The earlier 2.4.5, 3.0.0, 3.0.1, and 3.0.2 sequences remain immutable evidence.
 
@@ -170,22 +170,22 @@ That state exposed DEF-0086 before another Codex call: the 3.0.2 router would
 regenerate current-release admission evidence and reject the preserved
 predecessor admission.
 
-Current sequence:
+Completed sequence:
 
-1. merge the 3.0.3 publication-attestation PR;
-2. run deployed 3.0.3 Runtime Preflight;
-3. run immutable 3.0.3 REAL readiness preflight;
-4. update portfolio-tasks from 3.0.2 to 3.0.3 through a reviewed source PR;
-5. reauthorize the unchanged #159 issue without editing its body or replacing
-   its 3.0.1 admission;
-6. require one corrected terminal receiver/source projection through immutable
-   `codex-adapter-v3.0.3`; and
-7. reauthorize the unchanged delivery once more to prove `duplicate-reused`
-   before Codex with no second branch, managed draft, receiver forwarding
-   effect, or source projection.
+1. the 3.0.3 publication-attestation PR merged;
+2. deployed Runtime Preflight 36867504568 passed;
+3. immutable REAL readiness preflight 36867939797 passed;
+4. portfolio-tasks adopted 3.0.3 through reviewed PR #163;
+5. unchanged #159 preserved its original trusted 3.0.1 admission and stable
+   logical delivery;
+6. target/receiver run 36911342397 produced one corrected terminal result and
+   source run 36911478182 projected it exactly once; and
+7. unchanged reroute 36913373900 plus target/receiver run 36913463403 returned
+   `duplicate-reused` for the same branch and PR #82 before Codex, with no
+   second receiver/source visible effect.
 
-Do not close #103 / DEF-0086, #100 / DEF-0073, or #83 / DEF-0064 until their
-applicable REAL evidence is preserved.
+#100 / DEF-0073, #83 / DEF-0064, and #103 / DEF-0086 are resolved by the
+preserved REAL evidence.
 
 
 ### REAL execution procedure
