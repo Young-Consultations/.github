@@ -4,7 +4,7 @@
 **Payload version:** `ai-sdlc-contract/v2` (v3 is out of scope).
 **Payload compatibility baseline:** `ai-sdlc-contract/v2`, fixture `2.3.0`.
 **Current published control-plane compatibility release:** `ai-sdlc-v3.0.3`.
-**Current source-consumer pin:** `ai-sdlc-v3.0.2` pending deployed 3.0.3 preflights and reviewed 3.0.3 cutover.
+**Current source-consumer pin:** `ai-sdlc-v3.0.3` through reviewed portfolio-tasks PR #163.
 
 Published `ai-sdlc-v3.0.3` repairs DEF-0086 by preserving one trusted durable
 admission for an unchanged logical delivery across explicitly reviewed release
@@ -224,13 +224,14 @@ receiver binding.
 
 ## Deployment/governance gates
 
-### Published 3.0.3 state and current 3.0.2 source-consumer path
+### Published 3.0.3 state and completed source-consumer cutover
 
 The current published control-plane compatibility release is
 `ai-sdlc-v3.0.3`, attested to reviewed PR #104 merge commit
-`f3229bfa4a06da963cae7c390c6075b4f6c12f7b`. Portfolio-tasks currently
-consumes published `ai-sdlc-v3.0.2`; publication and source adoption remain
-separate evidence gates.
+`f3229bfa4a06da963cae7c390c6075b4f6c12f7b`. Portfolio-tasks now consumes
+published `ai-sdlc-v3.0.3` through merged PR #163 at
+`580eaf3cd88774014d645d3c3ca3718b39b38ce0`. Publication and source adoption
+remain separate evidence gates, and both are complete for 3.0.3.
 
 The 3.0.3 enabled consulting target is immutable
 `codex-adapter-v3.0.3` at
@@ -246,14 +247,16 @@ identity defect that drove the 3.0.0 App credential repair. REAL #159 then
 proved the result-writer prerequisite path healthy but exposed DEF-0073 when
 the 3.0.0 receiver rejected a valid 3.0.1 admission.
 
-Full REAL acceptance remains incomplete. Published 3.0.3 repairs DEF-0086 by
-preserving the trusted predecessor admission on unchanged retry and requiring
-target-bound reuse policy to remain a subset of the pinned receiver allowlist.
-Deployed 3.0.3 Runtime Preflight and immutable REAL preflight must pass before
-portfolio-tasks advances from 3.0.2 to 3.0.3. The unchanged #159 delivery must
-then reach one corrected terminal projection and same-delivery
-redelivery must prove `duplicate-reused` without a second Codex execution,
-managed draft, receiver forwarding effect, or source projection.
+Full REAL acceptance for the terminal/redelivery path is complete. Published
+3.0.3 repairs DEF-0086 by preserving the trusted predecessor admission on
+unchanged retry and requiring target-bound reuse policy to remain a subset of
+the pinned receiver allowlist. Deployed Runtime Preflight 36867504568 and
+immutable REAL readiness preflight 36867939797 passed before source adoption.
+Fresh #159 then produced one corrected terminal projection through target run
+36911342397 and source run 36911478182. Unchanged reroute 36913373900 and target
+run 36913463403 returned `duplicate-reused` for the same delivery/branch/PR
+#82 before Codex without a second receiver forwarding effect or source
+projection.
 
 Published 2.4.4 remains immutable historical evidence but is not an
 execution-safe rollback for cost-bearing implementation after REAL issue #151.
