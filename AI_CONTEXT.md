@@ -538,11 +538,13 @@ portfolio-tasks consumer adoption, and controlled same-delivery redelivery must
 prove one managed draft, no second Codex execution, one trusted receiver effect,
 and one source projection before #83 / DEF-0064 can close.
 
-## 3.0.2 current source-consumer and published 3.0.3 state
+## Historical 3.0.2 recovery and completed 3.0.3 source state
 
-Portfolio-tasks currently consumes `ai-sdlc-v3.0.2` through its reviewed
-source router pin. That cutover followed deployed Runtime Preflight 36640642872
-and immutable REAL preflight 36640734704.
+Portfolio-tasks previously consumed `ai-sdlc-v3.0.2` through its reviewed
+source router pin. That historical cutover followed deployed Runtime Preflight
+36640642872 and immutable REAL preflight 36640734704. Production now consumes
+published `ai-sdlc-v3.0.3` through merged PR #163 at
+`580eaf3cd88774014d645d3c3ca3718b39b38ce0`.
 
 The earlier 2.4.5 path remains immutable initial-live-path evidence from REAL
 #154. REAL #156 exposed the result-journal identity defect that drove the 3.0.0
@@ -572,11 +574,14 @@ revision
 and report SHA-256
 `a739cd3dde3c05121fbfc5360495880e265b76448b504936b8583b5efa972ec8`.
 
-Published 3.0.3 is attested at `f3229bfa4a06da963cae7c390c6075b4f6c12f7b`, but do not reauthorize #159 until
-this publication attestation, deployed Runtime Preflight, immutable REAL
-preflight, and portfolio source repin complete. Then require one corrected
-terminal projection followed by an unchanged retry that returns
-`duplicate-reused` before Codex with no second visible effect.
+Published 3.0.3 is attested at
+`f3229bfa4a06da963cae7c390c6075b4f6c12f7b`. Deployed Runtime Preflight
+36867504568, immutable REAL readiness preflight 36867939797, and portfolio
+source repin PR #163 completed before #159 was reauthorized. First target run
+36911342397 produced one corrected terminal projection through source run
+36911478182. The unchanged second route 36913373900 and target run 36913463403
+returned `duplicate-reused` for the same delivery/branch/PR #82 before Codex
+with no second receiver/source visible effect.
 
 The broader organization-level cost-bearing prerequisite policy remains owned
 by issue #77 and is not silently expanded by 3.0.2.
