@@ -268,7 +268,7 @@ consumes 3.0.3 through PR #163 at `580eaf3cd88774014d645d3c3ca3718b39b38ce0`.
 Deployed Runtime Preflight 36867504568, immutable REAL readiness preflight
 36867939797, first REAL target/receiver run 36911342397, source projection
 36911478182, and unchanged redelivery target run 36913463403 all passed. The
-second delivery returned `duplicate-reused` before Codex with no second
+redelivery returned `duplicate-reused` before Codex with no second
 receiver/source visible effect.
 
 During any future pre-publication candidate window,
