@@ -43,12 +43,12 @@ def evaluate_rulesets(rulesets: list[dict[str, Any]], policy: dict[str, Any]) ->
             continue
         if ruleset.get("enforcement") != required["enforcement"]:
             continue
-        include = (
-            ruleset.get("conditions", {})
-            .get("ref_name", {})
-            .get("include", [])
-        )
+        ref_condition = ruleset.get("conditions", {}).get("ref_name", {})
+        include = ref_condition.get("include", [])
+        exclude = ref_condition.get("exclude", [])
         if include_ref not in include:
+            continue
+        if not isinstance(exclude, list) or exclude:
             continue
         candidates.append(ruleset)
 
@@ -66,8 +66,12 @@ def evaluate_rulesets(rulesets: list[dict[str, Any]], policy: dict[str, Any]) ->
         if missing:
             errors.append(f"missing rule types: {', '.join(missing)}")
 
-        if required.get("require_no_bypass_actors") and ruleset.get("bypass_actors"):
-            errors.append("bypass actors are configured")
+        if required.get("require_no_bypass_actors"):
+            bypass_actors = ruleset.get("bypass_actors")
+            if not isinstance(bypass_actors, list):
+                errors.append("bypass actor state is unavailable or malformed")
+            elif bypass_actors:
+                errors.append("bypass actors are configured")
 
         pull_request_rule = next(
             (rule for rule in rules if isinstance(rule, dict) and rule.get("type") == "pull_request"),
