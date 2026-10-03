@@ -22,9 +22,19 @@ POLICY = {
 }
 
 
-def ruleset(*, enforcement="active", include=None, bypass=None, rule_types=None, thread_resolution=True):
+def ruleset(
+    *,
+    enforcement="active",
+    include=None,
+    exclude=None,
+    bypass=None,
+    include_bypass_field=True,
+    rule_types=None,
+    thread_resolution=True,
+):
     include = include or ["~DEFAULT_BRANCH"]
-    bypass = bypass or []
+    exclude = [] if exclude is None else exclude
+    bypass = [] if bypass is None else bypass
     rule_types = rule_types or ["pull_request", "deletion", "non_fast_forward"]
     rules = []
     for rule_type in rule_types:
@@ -39,14 +49,16 @@ def ruleset(*, enforcement="active", include=None, bypass=None, rule_types=None,
                 "allowed_merge_methods": ["merge", "squash", "rebase"],
             }
         rules.append(rule)
-    return {
+    result = {
         "name": "Default branch change control",
         "target": "branch",
         "enforcement": enforcement,
-        "conditions": {"ref_name": {"include": include, "exclude": []}},
+        "conditions": {"ref_name": {"include": include, "exclude": exclude}},
         "rules": rules,
-        "bypass_actors": bypass,
     }
+    if include_bypass_field:
+        result["bypass_actors"] = bypass
+    return result
 
 
 def test_compliant_ruleset_passes():
@@ -92,3 +104,34 @@ def test_review_thread_resolution_is_required():
 def test_one_complete_ruleset_is_sufficient_even_with_other_partial_rulesets():
     partial = ruleset(rule_types=["deletion", "non_fast_forward"])
     assert audit.evaluate_rulesets([partial, ruleset()], POLICY) == []
+
+
+def test_excluded_default_branch_fails():
+    errors = audit.evaluate_rulesets(
+        [ruleset(exclude=["refs/heads/main"])],
+        POLICY,
+    )
+    assert any("no active branch ruleset targets" in error for error in errors)
+
+
+def test_any_exclusion_fails_closed():
+    errors = audit.evaluate_rulesets(
+        [ruleset(exclude=["refs/heads/release/*"])],
+        POLICY,
+    )
+    assert any("no active branch ruleset targets" in error for error in errors)
+
+
+def test_missing_bypass_actor_state_fails():
+    errors = audit.evaluate_rulesets(
+        [ruleset(include_bypass_field=False)],
+        POLICY,
+    )
+    assert any("bypass actor state is unavailable or malformed" in error for error in errors)
+
+
+def test_malformed_bypass_actor_state_fails():
+    candidate = ruleset()
+    candidate["bypass_actors"] = None
+    errors = audit.evaluate_rulesets([candidate], POLICY)
+    assert any("bypass actor state is unavailable or malformed" in error for error in errors)
