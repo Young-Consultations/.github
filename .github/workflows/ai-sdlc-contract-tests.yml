@@ -12,6 +12,7 @@ on:
       - 'docs/**'
       - 'release/**'
       - 'scripts/validate_release.py'
+      - 'scripts/audit_default_branch_governance.py'
       - 'scripts/codex_router.py'
       - 'scripts/codex_target_adapter.py'
       - 'scripts/run_tc_mvp_ci_001.py'
@@ -193,7 +194,7 @@ jobs:
           set -euo pipefail
           find contracts -type f -name '*.json' -print0 | xargs -0 -n1 python -m json.tool >/dev/null
       - name: Run static security and integration-boundary tests
-        run: python -m pytest tests/test_static_contract.py tests/test_release_lifecycle.py --junitxml=reports/static.xml
+        run: python -m pytest tests/test_static_contract.py tests/test_release_lifecycle.py tests/test_default_branch_governance.py --junitxml=reports/static.xml
       - name: Validate coherent release manifest
         run: python scripts/validate_release.py
       - name: Enforce release readiness for candidate or published state

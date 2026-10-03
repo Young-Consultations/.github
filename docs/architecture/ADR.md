@@ -245,3 +245,32 @@ validation proves router workflow/action pin agreement; one generated runtime
 record and one credential-role manifest describe the candidate; boundary and
 payload changes remain deferred to v3. **Trace:** IF-01/IF-04/IF-05/IF-08;
 TC-MVP-E2E-001; ASR-001/003/005/008/009/012/013.
+
+
+## ADR-018 — Default branches reject direct implementation writes
+
+**Status:** Accepted for DEF-0056 remediation. **Context:** A GitHub connector
+implementation write omitted its branch parameter and committed directly to the
+`portfolio-tasks` default branch. Agent instructions alone cannot prevent that
+failure because the repository API accepts the write before repository-local
+code can intervene. GH-OR-002 already requires default branches to reject direct
+changes, and organization context assigns ruleset administration to repository
+or organization administrators. **Decision:** The authoritative prevention
+boundary is an active GitHub branch ruleset on every core AI-SDLC repository,
+targeting `~DEFAULT_BRANCH`, with no bypass actors, a required-pull-request
+rule, review-thread resolution, deletion protection, and non-fast-forward
+protection. Required approvals remain zero for this single-maintainer MVP
+control so the rule blocks direct writes without making self-owned pull requests
+unmergeable. Existing stronger status-check or review controls remain
+independent and must not be weakened. Repository code provides a read-only live
+settings audit and offline policy tests; it does not claim the control is
+implemented until GitHub reports compliant live rulesets. **Alternatives:**
+prompt-only branch checks; a repository-local pre-write script; automatic
+post-write revert; mandatory one-person approval. **Tradeoffs:** administrator
+configuration is required outside the repository and live audit depends on
+GitHub settings availability, but enforcement occurs at the only boundary that
+can reject an omitted-branch API write before mutation. **Consequences:**
+DEF-0056 remains open until live rulesets are applied and the audit passes; an
+API/read failure is noncompliance, direct default-branch implementation writes
+fail closed once configured, and normal pull-request merges remain allowed.
+**Trace:** GH-OR-002, GH-OR-003, GH-OR-008; DEF-0056; .github issue #80.
