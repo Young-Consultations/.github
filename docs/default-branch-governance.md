@@ -65,20 +65,33 @@ Run the offline unit tests:
 python -m pytest tests/test_default_branch_governance.py
 ```
 
-After an administrator applies the live rulesets, run:
+After an administrator applies the live rulesets, provide an audit credential
+as `GITHUB_TOKEN` and run:
 
 ```console
-python scripts/audit_default_branch_governance.py --json
+GITHUB_TOKEN=<protected-audit-credential> python scripts/audit_default_branch_governance.py --json
 ```
 
-The command reads the live repository rulesets and exits nonzero unless every
-repository has one active, no-bypass default-branch ruleset containing the
-required rules. API failures also fail closed.
+The credential must be able to read ruleset details for all four repositories
+and must be authorized strongly enough that GitHub returns the complete
+`bypass_actors` field. A repository-scoped workflow `GITHUB_TOKEN` is not
+sufficient evidence for this cross-repository audit. Use a protected fine-grained
+PAT or GitHub App installation credential covering all four repositories with
+the minimum GitHub administration permission required to read complete ruleset
+details. The audit performs only GET requests even if GitHub requires a broader
+administration permission to disclose bypass configuration.
 
-The manual
+The command exits nonzero unless every repository has one active, no-bypass
+default-branch ruleset containing the required rules. Missing or malformed
+bypass state, any default-branch ruleset exclusion, API failures, or inaccessible
+repositories all fail closed.
+
+Store the workflow credential as the protected repository or organization secret
+`DEFAULT_BRANCH_GOVERNANCE_TOKEN`. The manual
 [`Default Branch Governance Audit`](../.github/workflows/default-branch-governance-audit.yml)
-workflow runs the same check and preserves the GitHub Actions run as executable
-evidence.
+uses only that secret, installs the repository test dependencies, runs the
+offline regressions first, and then runs the same live read-only audit. Its
+GitHub Actions run is the executable closure evidence.
 
 ## DEF-0056 closure gate
 
