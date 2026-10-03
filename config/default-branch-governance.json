@@ -19,6 +19,7 @@
     ],
     "pull_request": {
       "required_review_thread_resolution": true
-    }
+    },
+    "require_empty_exclusions": true
   }
 }
