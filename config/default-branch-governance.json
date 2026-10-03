@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "scope": "Young-Consultations core AI-SDLC repositories",
+  "repositories": [
+    "Young-Consultations/.github",
+    "Young-Consultations/portfolio-tasks",
+    "Young-Consultations/consulting-playbook",
+    "Young-Consultations/slugger"
+  ],
+  "required_default_branch_ruleset": {
+    "target": "branch",
+    "enforcement": "active",
+    "include_ref": "~DEFAULT_BRANCH",
+    "require_no_bypass_actors": true,
+    "required_rule_types": [
+      "pull_request",
+      "deletion",
+      "non_fast_forward"
+    ],
+    "pull_request": {
+      "required_review_thread_resolution": true
+    }
+  }
+}
