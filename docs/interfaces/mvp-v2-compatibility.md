@@ -3,7 +3,7 @@
 **Normative status:** organization-owned baseline for consumer alignment.
 **Payload version:** `ai-sdlc-contract/v2` (v3 is out of scope).
 **Payload compatibility baseline:** `ai-sdlc-contract/v2`, fixture `2.3.0`.
-**Current published control-plane compatibility release:** `ai-sdlc-v3.0.3`.
+**Latest immutable control-plane tag, awaiting publication-attestation merge:** `ai-sdlc-v3.1.0` at `e9d11fc99fee73d247c93699f058ed64786bd4c0`.
 **Current source-consumer pin:** `ai-sdlc-v3.0.3` through reviewed portfolio-tasks PR #163.
 
 Published `ai-sdlc-v3.0.3` repairs DEF-0086 by preserving one trusted durable
@@ -67,10 +67,10 @@ second time. Any other non-identical result for the delivery, including a
 different managed branch/PR or an unapproved status transition, is rejected and
 represented as `ambiguous-rejected`.
 
-## Proposed 3.1.0 pre-execution terminal-result gate (not yet published)
+## Tagged 3.1.0 pre-execution terminal-result gate (deployment pending)
 
 Following [issue #111](https://github.com/Young-Consultations/.github/issues/111),
-the **3.1.0 candidate** adds an opt-in canonical execution-input/v2 binding to
+the immutable **3.1.0 release** adds an opt-in canonical execution-input/v2 binding to
 the organization result-credential preflight. The trusted journal, not the
 target's branch existence alone, determines whether a logical delivery has
 already returned a terminal result. Every bound preflight shall verify the
@@ -91,10 +91,12 @@ preflight classification is **not** proof for a new target consumer and must
 fail before GitHub target effects.
 
 This adds an optional action input/output, not a v2 schema change, and is
-classified as a SemVer MINOR candidate under `docs/releases.md`. The
+classified as a SemVer MINOR release under `docs/releases.md`. The
 historically published 3.0.3 behavior remains documented above and must not
-be reinterpreted by rewriting published tags. Compatible new target pins,
-versioned release evidence and deployment review precede REAL activation.
+be reinterpreted by rewriting published tags. The tagged 3.1.0 control-plane
+commit and independently reviewed target adapter are immutable; the separate
+publication attestation, source-consumer migration, deployed preflight and
+REAL authorization remain outstanding.
 
 ## Workflow compatibility matrix
 
@@ -253,9 +255,33 @@ receiver binding.
 
 ## Deployment/governance gates
 
-### Published 3.0.3 state and completed source-consumer cutover
+### Tagged 3.1.0 release and separate publication attestation
 
-The current published control-plane compatibility release is
+The reviewed control-plane release tag `ai-sdlc-v3.1.0` resolves to
+`e9d11fc99fee73d247c93699f058ed64786bd4c0`, following reviewed
+[.github PR #113](https://github.com/Young-Consultations/.github/pull/113).
+The immutable registered target `codex-adapter-v3.1.0` resolves to
+`4f15841efcba4883770b5e32c0582f733d73eb91`, with the
+29-scenario prepublication report SHA-256
+`f0a73ed1298e68beb2956c50488dc191fafb28b7b1cce74618e8fb488f076606`.
+The terminal receipt guard prevents a repeat cost-bearing execution after
+a trusted terminal failure and limits managed-draft recovery to identity-
+verified reuse. This release retains the `ai-sdlc-contract/v2` payload.
+
+Publication attestation is separate from the immutable tag. This attestation
+PR records `tag_published: true`, pins `tag_commit_sha` to the verified
+merge commit, and updates the generated runtime record. None of these
+metadata changes authorize deployment or a new cost-bearing call.
+The source-consumer pin remains `ai-sdlc-v3.0.3` until a separate
+reviewed migration; the independent stale target-content baseline defect
+[consulting-playbook #93](https://github.com/Young-Consultations/consulting-playbook/issues/93)
+must be assessed before REAL. The 3.0.3 terminal-redelivery defect
+[.github #111](https://github.com/Young-Consultations/.github/issues/111)
+is not accepted as closed on the strength of SIM evidence alone.
+
+### Historical published 3.0.3 state and completed source-consumer cutover
+
+The previously published control-plane compatibility release is
 `ai-sdlc-v3.0.3`, attested to reviewed PR #104 merge commit
 `f3229bfa4a06da963cae7c390c6075b4f6c12f7b`. Portfolio-tasks now consumes
 published `ai-sdlc-v3.0.3` through merged PR #163 at
@@ -276,8 +302,9 @@ identity defect that drove the 3.0.0 App credential repair. REAL #159 then
 proved the result-writer prerequisite path healthy but exposed DEF-0073 when
 the 3.0.0 receiver rejected a valid 3.0.1 admission.
 
-Full REAL acceptance for the terminal/redelivery path is complete. Published
-3.0.3 repairs DEF-0086 by preserving the trusted predecessor admission on
+Full historical REAL acceptance for the 3.0.3 predecessor-admission recovery
+path is complete, **not** for the newly discovered terminal-failure retry defect
+#111. Published 3.0.3 repairs DEF-0086 by preserving the trusted predecessor admission on
 unchanged retry and requiring target-bound reuse policy to remain a subset of
 the pinned receiver allowlist. Deployed Runtime Preflight 36867504568 and
 immutable REAL readiness preflight 36867939797 passed before source adoption.
