@@ -32,9 +32,9 @@ ACTIVATION = ROOT / "config/codex-activation.json"
 REGISTRY = ROOT / "config/codex-repositories.json"
 RELEASE_MANIFEST = ROOT / "release/release-manifest.json"
 REAL_TARGET = "Young-Consultations/consulting-playbook"
-PUBLISHED_BASELINE = "3.0.2"
-CANDIDATE_RELEASE = "3.0.3"
-TARGET_RECEIVER_RELEASE = "3.0.3"
+PUBLISHED_BASELINE = "3.0.3"
+CANDIDATE_RELEASE = "3.1.0"
+TARGET_RECEIVER_RELEASE = "3.1.0"
 TARGET_ROOT_ENV = "TC_MVP_E2E_TARGET_ROOT"
 COMMIT_SHA = re.compile(r"^[0-9a-f]{40}$")
 
@@ -329,9 +329,13 @@ def _managed(adapter: ModuleType, payload: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _run_target(adapter: ModuleType, payload: dict[str, Any], effects: FakeTargetEffects) -> dict[str, Any]:
+def _run_target(adapter: ModuleType, payload: dict[str, Any], effects: FakeTargetEffects,
+                *, prior_result_effect: str = "none") -> dict[str, Any]:
+    # Use actual target admission and delivery paths with a no-cost preflight
+    # classification. The target MUST refuse a missing legacy proof.
     return adapter.run_adapter(
-        json.dumps(payload), payload["concurrency_group"], "router-app", {"router-app"}, effects
+        json.dumps(payload), payload["concurrency_group"], "router-app", {"router-app"}, effects,
+        prior_result_effect=prior_result_effect,
     ).result
 
 
@@ -399,7 +403,8 @@ def run_sim(report_path: Path, target_root: Path | None = None) -> list[str]:
                 errors.append("SIM receiver/source projection did not accept exactly once")
 
             replay_effects = FakeTargetEffects(adapter, traps, found=[_managed(adapter, payload)])
-            replay = _run_target(adapter, payload, replay_effects)
+            replay = _run_target(adapter, payload, replay_effects,
+                                 prior_result_effect="managed-draft")
             if replay.get("execution_status") != "duplicate-reused":
                 errors.append("SIM duplicate delivery did not reuse managed draft")
             replay_counts = _fake_counts(replay_effects)
