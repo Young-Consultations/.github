@@ -2,9 +2,9 @@
 
 **Status:** Approved next-MVP acceptance design
 **Owner:** `Young-Consultations/.github`
-**Published baseline:** `ai-sdlc-v3.0.3` / `ai-sdlc-contract/v2`
+**Published and attested control-plane baseline:** `ai-sdlc-v3.1.0` / `ai-sdlc-contract/v2`, with target `codex-adapter-v3.1.0`.
 **Current source-consumer pin:** `ai-sdlc-v3.0.3`
-**Current live acceptance state:** REAL #154 proved the earlier initial path; REAL #156 exposed result-writer identity defect #83; REAL #159 exposed DEF-0073 and DEF-0086. Published and attested 3.0.3 at `f3229bfa4a06da963cae7c390c6075b4f6c12f7b` plus immutable `codex-adapter-v3.0.3` is the corrective composition. Deployed Runtime Preflight 36867504568 and immutable REAL readiness preflight 36867939797 passed, portfolio-tasks adopted 3.0.3 through PR #163, first #159 target run 36911342397 produced one managed draft PR #82 and source run 36911478182 projected one terminal result, and unchanged redelivery target run 36913463403 returned `duplicate-reused` for the same delivery/branch/PR before Codex with no second receiver/source visible effect. DEF-0073, DEF-0064, and DEF-0086 are resolved.
+**Current live acceptance state:** **3.1.0 REAL acceptance not yet established.** The following is historical predecessor-only acceptance: REAL #154 proved the earlier initial path; REAL #156 exposed result-writer identity defect #83; REAL #159 exposed DEF-0073 and DEF-0086. Published and attested 3.0.3 at `f3229bfa4a06da963cae7c390c6075b4f6c12f7b` plus immutable `codex-adapter-v3.0.3` is the corrective composition. Deployed Runtime Preflight 36867504568 and immutable REAL readiness preflight 36867939797 passed, portfolio-tasks adopted 3.0.3 through PR #163, first #159 target run 36911342397 produced one managed draft PR #82 and source run 36911478182 projected one terminal result, and unchanged redelivery target run 36913463403 returned `duplicate-reused` for the same delivery/branch/PR before Codex with no second receiver/source visible effect. DEF-0073, DEF-0064, and DEF-0086 are resolved.
 **Initial enabled target:** `Young-Consultations/consulting-playbook`
 
 > **Historical 2.4.5 completion addendum:** REAL issue #151 exposed the 2.4.4 target publication-transport defect after successful Codex execution. The immutable repair is `codex-adapter-v2.4.5` (`4f062ca73acfc3458f0d690bf1c7687bafd0a8eb`) with conformance report SHA256 `8a7e3479a8768050b7621cec4d7663d8ab60d266291cb2d1027886200799c2fc`. Control-plane release `ai-sdlc-v2.4.5` resolves to `afe09d320268581bc83021cbfc80bf2a0f0bff91`; publication attestation merged, deployed Runtime Preflight run 36277959203 and immutable REAL preflight run 36278028013 passed, portfolio-tasks advanced to 2.4.5, and fresh issue #154 completed the live path through target run 36279165335 and managed draft PR #66. See [2.4.5 release procedure](../releases/2.4.5.md).
@@ -49,6 +49,36 @@
 > acceptance sequence has completed. See
 > [3.0.3 release procedure](../releases/3.0.3.md).
 >
+## 3.1.0 post-tag publication and pending REAL acceptance
+
+The immutable control-plane `ai-sdlc-v3.1.0` tag resolves to reviewed
+merge commit `e9d11fc99fee73d247c93699f058ed64786bd4c0`;
+publication-attestation PR #114 records the same commit in `main`. The
+registered `codex-adapter-v3.1.0` target resolves to
+`4f15841efcba4883770b5e32c0582f733d73eb91`; its 29-case target
+report SHA-256 is
+`f0a73ed1298e68beb2956c50488dc191fafb28b7b1cce74618e8fb488f076606`.
+
+The [post-tag deterministic SIM run 39079058442](https://github.com/Young-Consultations/.github/actions/runs/39079058442)
+passed with zero prohibited real effects; REAL-readiness was skipped. The
+current 3.1.0 SIM binds `candidate_release: 3.1.0`, the immutable target
+adapter/receiver 3.1.0 identity, one trusted source admission, primary
+managed-draft publication, recovered reuse without another Codex call,
+receiver idempotency, and conflicting-result fail-closed evidence.
+`ai-sdlc-contract/v2` is unchanged.
+
+**Do not infer REAL acceptance from publication, static conformance or SIM.**
+The source-consumer remains on 3.0.3 until a separately reviewed 3.1.0
+repin. Before any new-delivery REAL acceptance, the merged attestation,
+deployed Runtime Preflight, independently verified source pin, no-cost REAL
+readiness preflight, and consulting-playbook stale content-baseline defect
+[#93](https://github.com/Young-Consultations/consulting-playbook/issues/93)
+assessment remain required. Never re-dispatch finalized terminal failure
+[issue #111](https://github.com/Young-Consultations/.github/issues/111)
+as a test. The detailed 3.0.3 receiver SIM and REAL recovery sequences below
+are **historical** DEF-0086 acceptance, not a current 3.1.0 live procedure
+or permission to replay that delivery.
+
 ## Purpose
 
 > **Historical 2.4.3 operating addendum:** At that stage, the 2.4.2 repair release was the published
