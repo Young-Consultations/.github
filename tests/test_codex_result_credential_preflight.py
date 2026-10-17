@@ -187,3 +187,39 @@ def test_preflight_rejects_malformed_bound_input(monkeypatch):
     monkeypatch.setattr(preflight, "GitHubJournal", lambda: journal)
     assert preflight.main() == 1
     assert not journal.forward_probes
+
+
+def test_malformed_trusted_terminal_markers_block_execution(monkeypatch):
+    for prefix in (RECEIPT, FORWARDED):
+        journal = ReceiptJournal()
+        journal.entries.append(
+            JournalComment(prefix + '{"delivery_id":"task-safe-delivery",} -->', "receiver-bot")
+        )
+        assert run_bound_preflight(monkeypatch, journal) == 1
+        assert journal.forward_probes == []
+
+
+def test_malformed_untrusted_terminal_markers_do_not_block(monkeypatch):
+    journal = ReceiptJournal()
+    journal.entries.append(
+        JournalComment(RECEIPT + '{"delivery_id":"task-safe-delivery",} -->', "attacker")
+    )
+    assert run_bound_preflight(monkeypatch, journal) == 0
+
+
+def test_recovered_managed_draft_has_distinct_canonical_digest(monkeypatch, tmp_path):
+    journal = ReceiptJournal("managed-draft")
+    record = {**INPUT_BINDING, "result_sha256": "c" * 64,
+              "effect_class": "managed-draft", "effect_sha256": "b" * 64}
+    journal.entries[2] = JournalComment(marker(FORWARDED, record), "receiver-bot")
+    monkeypatch.setenv("GITHUB_OUTPUT", str(tmp_path / "output"))
+    assert run_bound_preflight(monkeypatch, journal) == 0
+    assert "prior_effect_class=managed-draft" in (tmp_path / "output").read_text()
+
+
+def test_different_visible_effect_is_ambiguous(monkeypatch):
+    journal = ReceiptJournal("managed-draft")
+    record = {**INPUT_BINDING, "result_sha256": "c" * 64,
+              "effect_class": "managed-draft", "effect_sha256": "d" * 64}
+    journal.entries[2] = JournalComment(marker(FORWARDED, record), "receiver-bot")
+    assert run_bound_preflight(monkeypatch, journal) == 1
