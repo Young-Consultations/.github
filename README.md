@@ -12,32 +12,41 @@ package are released as one immutable compatibility unit. Current activation in
 that consumer compatibility unit. See [release, upgrade,
 deprecation, and rollback procedures](docs/releases.md).
 
-The published [`ai-sdlc-v3.0.3` release](docs/releases/3.0.3.md) is the
-current control-plane compatibility baseline at reviewed PR #104 merge commit
-`f3229bfa4a06da963cae7c390c6075b4f6c12f7b`. Portfolio-tasks now consumes published 3.0.3 through merged PR #163 at `580eaf3cd88774014d645d3c3ca3718b39b38ce0`.
+The attested [`ai-sdlc-v3.1.0` release](docs/releases/3.1.0.md) is the
+current immutable control-plane compatibility baseline, reviewed in
+[PR #113](https://github.com/Young-Consultations/.github/pull/113)
+and published at commit
+`e9d11fc99fee73d247c93699f058ed64786bd4c0`.
+Its separate publication-attestation PR #114 records this exact tag identity;
+publication does **not** establish deployed Runtime Preflight or REAL acceptance.
 
-The matching immutable target is `codex-adapter-v3.0.3` at
-`f11852c7f563df16ea4afa9ab75bf766242e7327`. The target conformance adapter
-revision is
-`sha256:3932def5d016b7db11869a0520087aeedcd092799e61dc8617be8bb2f020be3f`
-with report SHA-256
+The compatible immutable target `codex-adapter-v3.1.0` resolves to
+`4f15841efcba4883770b5e32c0582f733d73eb91`, with a tagged
+29-scenario conformance report SHA-256
+`f0a73ed1298e68beb2956c50488dc191fafb28b7b1cce74618e8fb488f076606`.
+The 3.1.0 release checks trusted terminal-result journal evidence **before**
+cost-bearing execution and permits prior managed-draft effects only through
+ownership-verified reuse. The existing `ai-sdlc-contract/v2` payloads remain
+unchanged.
+
+**Source-consumer migration is still pending.** The `portfolio-tasks` source
+continues to pin the previously published `ai-sdlc-v3.0.3` release through
+merged PR #163. A separate source repin, deployed Runtime Preflight and
+controlled new-identity REAL acceptance are required, and independent
+[consulting-playbook #93](https://github.com/Young-Consultations/consulting-playbook/issues/93)
+must be assessed first. Never re-run the finalized failed delivery from
+[.github issue #111](https://github.com/Young-Consultations/.github/issues/111).
+
+For historical evidence, [published 3.0.3](docs/releases/3.0.3.md) at
+`f3229bfa4a06da963cae7c390c6075b4f6c12f7b` repaired
+cross-release trusted admission reuse (DEF-0086). Its target adapter was
+`codex-adapter-v3.0.3` at
+`f11852c7f563df16ea4afa9ab75bf766242e7327`, with report SHA-256
 `a739cd3dde3c05121fbfc5360495880e265b76448b504936b8583b5efa972ec8`.
-
-3.0.3 preserves exactly one trusted durable admission for an unchanged logical
-delivery across a compatible release retry. Exact same-release admission reuse
-remains unconditional; predecessor reuse is allowed only by immutable
-target-bound policy, and target compatibility proves that policy is a subset of
-the pinned receiver's compatibility allowlist. Ambiguous, malformed,
-conflicting, concurrent, or unsupported admission state fails closed before
-target dispatch.
-
-Post-publication acceptance is complete. Deployed 3.0.3 Runtime Preflight
-36867504568 and immutable REAL readiness preflight 36867939797 passed before
-portfolio source adoption. Fresh #159 then produced one corrected terminal
-projection through target run 36911342397 and source run 36911478182; unchanged
-redelivery through source run 36913373900 and target run 36913463403 returned
-`duplicate-reused` for the same delivery/branch/PR #82 before Codex with no
-second receiver/source visible effect.
+Its historical deployed Runtime Preflight 36867504568, immutable REAL readiness
+preflight 36867939797 and REAL #159 retry acceptance establish that
+**previous specific admission-reuse path only**, not 3.1.0 REAL readiness or
+resolution of the later terminal-failure replay defect.
 
 ## AI-SDLC contract validation
 
