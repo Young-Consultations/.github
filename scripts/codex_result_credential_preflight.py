@@ -25,6 +25,7 @@ except ModuleNotFoundError:  # Imported as scripts.codex_result_credential_prefl
 
 
 _DIGEST = re.compile(r"^[0-9a-f]{64}$")
+_DELIVERY_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 _BINDING_FIELDS = ("contract_version", "delivery_id", "correlation_id", "source_issue", "target_repository")
 
 
@@ -61,11 +62,17 @@ def check_prior_result(journal, source_issue: str, repository: str, issue_number
         if not journal.trusted_author(comment.author, "result"):
             continue
         for prefix in (RECEIPT, FORWARDED):
-            if comment.body.count(prefix) != len(
-                parse_markers([comment], prefix, "result", journal)
+            parsed = parse_markers([comment], prefix, "result", journal)
+            if comment.body.count(prefix) != len(parsed) or any(
+                not isinstance(item.get("delivery_id"), str)
+                or _DELIVERY_ID.fullmatch(item["delivery_id"]) is None
+                for item in parsed
             ):
+                # A trusted terminal record without a valid delivery identity
+                # cannot be safely dismissed as belonging to another delivery.
                 raise ReceiverError(
-                    "unknown", "malformed trusted terminal journal evidence", ambiguous=True
+                    "unknown", "malformed or unbound trusted terminal journal evidence",
+                    ambiguous=True,
                 )
 
     admissions = [
