@@ -94,9 +94,10 @@ This adds an optional action input/output, not a v2 schema change, and is
 classified as a SemVer MINOR release under `docs/releases.md`. The
 historically published 3.0.3 behavior remains documented above and must not
 be reinterpreted by rewriting published tags. The tagged 3.1.0 control-plane
-commit and independently reviewed target adapter are immutable; the separate
-publication attestation, source-consumer migration, deployed preflight and
-REAL authorization remain outstanding.
+commit and independently reviewed target adapter are immutable;
+publication attestation is recorded in merged PR #114. The source-consumer
+migration, deployed Runtime Preflight and separately governed REAL
+authorization remain outstanding.
 
 ## Workflow compatibility matrix
 
