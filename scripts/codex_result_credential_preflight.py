@@ -113,7 +113,7 @@ def main() -> int:
         output_path = os.environ.get("GITHUB_OUTPUT")
         if output_path:
             with open(output_path, "a", encoding="utf-8") as output:
-                output.write(f"prior_effect_class={prior_effect}\\n")
+                output.write(f"prior_effect_class={prior_effect}\n")
     except (ReceiverError, OSError, subprocess.CalledProcessError) as exc:
         print(f"::error::{str(exc)[:300]}", file=sys.stderr)
         return 1
