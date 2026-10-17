@@ -67,6 +67,35 @@ second time. Any other non-identical result for the delivery, including a
 different managed branch/PR or an unapproved status transition, is rejected and
 represented as `ambiguous-rejected`.
 
+## Proposed 3.1.0 pre-execution terminal-result gate (not yet published)
+
+Following [issue #111](https://github.com/Young-Consultations/.github/issues/111),
+the **3.1.0 candidate** adds an opt-in canonical execution-input/v2 binding to
+the organization result-credential preflight. The trusted journal, not the
+target's branch existence alone, determines whether a logical delivery has
+already returned a terminal result. Every bound preflight shall verify the
+unique trusted admission, exact contract, delivery, correlation, source and
+target identity, and canonical validity of terminal marker delivery IDs before
+allowing a cost-bearing executor. A malformed, unbound, ambiguous or
+conflicting trusted terminal record shall fail closed; untrusted marker-shaped
+comments carry no authority.
+
+An existing `failed`, `rejected`, `ambiguous-rejected`, `verified` or other
+non-managed terminal receipt prevents a new model invocation under the
+same delivery ID. Recovery after terminal failure requires separately governed
+fresh authorization and identity. An existing trusted `managed-draft` receipt
+permits *only* target-owned matching open-draft reconciliation to
+`duplicate-reused`, including receipt-only forwarding recovery; never a new
+Codex invocation or branch replacement. A missing or legacy `not-checked`
+preflight classification is **not** proof for a new target consumer and must
+fail before GitHub target effects.
+
+This adds an optional action input/output, not a v2 schema change, and is
+classified as a SemVer MINOR candidate under `docs/releases.md`. The
+historically published 3.0.3 behavior remains documented above and must not
+be reinterpreted by rewriting published tags. Compatible new target pins,
+versioned release evidence and deployment review precede REAL activation.
+
 ## Workflow compatibility matrix
 
 | Interface / owner | Workflow | Required inputs | Required secret | Outputs | Consumer rule |

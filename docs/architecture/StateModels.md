@@ -25,6 +25,24 @@ stateDiagram-v2
 
 Terminal outcome variants include `succeeded`, `verified`, `duplicate-reused`, `ambiguous-rejected`, `cancelled`, `rejected`, and `failed` as supported by the active contract. Entry requires a schema-valid, identity-consistent result and required evidence. Terminal states cannot regress. Unknown/absent evidence remains awaiting, uncertain, or failed—not successful.
 
+### 3.1.0 candidate pre-execution journal guard
+
+The draft control-plane release introduces an explicit read-only trusted
+journal guard **before** any cost-bearing target executor operation. A unique
+trusted admission with **no** prior trusted result permits a new execution. A
+single managed-draft receipt permits only an independently verified open
+owned-draft `duplicate-reused` return; that also applies when receipt
+persistence succeeded but source forwarding did not. All other terminal
+receipts, malformed or conflicting trusted evidence, missing authorization
+bindings, and indeterminate probes reject with no new executor call.
+
+The journal is the authority for *terminal execution history*; a branch/PR
+snapshot only proves *managed-draft reuse*. A successful preflight check is
+necessary, not sufficient: the target shall recheck its ownership and current
+authorization before acting. A new delivery after terminal failure requires a
+fresh human-governed source identity. The diagram above describes outcomes,
+not blanket permission to rerun completed deliveries.
+
 ## Registration lifecycle
 
 ```mermaid

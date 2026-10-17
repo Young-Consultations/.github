@@ -7,19 +7,19 @@ from scripts import validate_release
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_current_published_release_is_structurally_coherent():
+def test_current_candidate_release_is_structurally_coherent():
     assert validate_release.validate() == []
 
 
-def test_published_release_passes_publication_gate():
+def test_candidate_release_blocks_publication_until_attested():
     assert validate_release.validate() == []
-    assert validate_release.validate(require_publishable=True) == []
-    assert validate_release.validate(require_candidate_ready=True) == [
-        "candidate readiness requires an unpublished release without a tag commit"
-    ]
+    assert "publishable release must declare tag_published true" in (
+        validate_release.validate(require_publishable=True)
+    )
+    assert validate_release.validate(require_candidate_ready=True) == []
 
 
-def test_published_release_requires_trusted_journal_authors(monkeypatch):
+def test_candidate_release_requires_trusted_journal_authors(monkeypatch):
     original_load = validate_release.load_json
 
     def without_result_authors(path):
@@ -30,15 +30,16 @@ def test_published_release_requires_trusted_journal_authors(monkeypatch):
 
     monkeypatch.setattr(validate_release, "load_json", without_result_authors)
     assert "release readiness must name trusted authors for every journal role" in (
-        validate_release.validate(require_publishable=True)
+        validate_release.validate(require_candidate_ready=True)
     )
 
 
-def test_mvp_fixture_targets_match_published_manifest():
+def test_mvp_fixture_targets_match_unpublished_candidate_manifest():
     manifest = json.loads((ROOT / "release/release-manifest.json").read_text(encoding="utf-8"))
     fixture = json.loads((ROOT / "tests/fixtures/mvp-v2/manifest.json").read_text(encoding="utf-8"))
-    assert manifest["release_version"] == "3.0.3"
-    assert manifest["tag_published"] is True
+    assert manifest["release_version"] == "3.1.0"
+    assert manifest["tag_published"] is False
+    assert manifest["tag_commit_sha"] is None
     assert "immutable_reference" not in fixture
     assert "immutable_reference" not in manifest
     assert sorted(fixture["targets"]) == manifest["supported_targets"]
@@ -78,20 +79,23 @@ def test_previous_known_good_is_published_2_4_4_commit():
     assert result.returncode == 0, result.stderr.decode()
 
 
-def test_published_tag_resolves_to_attested_merge_commit_and_preserves_3_0_2():
+def test_historical_published_3_0_3_tag_is_immutable_and_preserves_3_0_2():
     manifest = json.loads((ROOT / "release/release-manifest.json").read_text(encoding="utf-8"))
     assert "immutable_reference" not in manifest
-    assert manifest["tag"] == "ai-sdlc-v3.0.3"
-    assert manifest["tag_commit_sha"] == "f3229bfa4a06da963cae7c390c6075b4f6c12f7b"
+    assert manifest["tag"] == "ai-sdlc-v3.1.0"
+    assert manifest["tag_published"] is False
+    assert manifest["tag_commit_sha"] is None
+    historical_tag = "ai-sdlc-v3.0.3"
+    historical_sha = "f3229bfa4a06da963cae7c390c6075b4f6c12f7b"
     result = subprocess.run(
-        ["git", "rev-list", "-n", "1", manifest["tag"]],
+        ["git", "rev-list", "-n", "1", historical_tag],
         cwd=ROOT,
         capture_output=True,
         text=True,
         check=False,
     )
     assert result.returncode == 0, result.stderr
-    assert result.stdout.strip() == manifest["tag_commit_sha"]
+    assert result.stdout.strip() == historical_sha
     predecessor = subprocess.run(
         ["git", "rev-list", "-n", "1", "ai-sdlc-v3.0.2"],
         cwd=ROOT,
@@ -111,8 +115,8 @@ def test_manifest_paths_cannot_escape_the_repository(tmp_path):
     assert errors == ["current_runtime must be a safe repository-relative JSON path"]
 
 
-def test_patch_release_records_recovery_of_3_0_2():
+def test_minor_release_records_recovery_of_3_0_3():
     manifest = json.loads((ROOT / "release/release-manifest.json").read_text(encoding="utf-8"))
-    assert manifest["release_version"] == "3.0.3"
+    assert manifest["release_version"] == "3.1.0"
     assert manifest["previous_known_good"]["release_version"] == "2.4.4"
-    assert manifest["recovery_of"] == "3.0.2"
+    assert manifest["recovery_of"] == "3.0.3"
