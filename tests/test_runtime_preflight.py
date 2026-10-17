@@ -10,29 +10,33 @@ def test_current_runtime_record_is_generated_from_authoritative_state():
     path = Path("release/current-runtime.json")
     assert path.read_text(encoding="utf-8") == generate_current_runtime.render()
     value = json.loads(path.read_text(encoding="utf-8"))
-    assert value["release_state"] == "published"
-    assert value["control_plane"]["tag"] == "ai-sdlc-v3.0.3"
-    assert value["control_plane"]["tag_commit_sha"] == "f3229bfa4a06da963cae7c390c6075b4f6c12f7b"
+    assert value["release_state"] == "candidate"
+    assert value["control_plane"]["tag"] == "ai-sdlc-v3.1.0"
+    assert value["control_plane"]["tag_published"] is False
+    assert value["control_plane"]["tag_commit_sha"] is None
     assert value["activation"]["enabled_targets"] == [
         "Young-Consultations/consulting-playbook"
     ]
 
 
-def test_offline_published_preflight_is_safe_and_passes_for_sim():
-    result = subprocess.run(
+def test_unpublished_candidate_blocks_normal_runtime_and_allows_offline_candidate_audit():
+    blocked = subprocess.run(
         ["python3", "scripts/runtime_preflight.py", "--offline"],
-        check=False,
-        text=True,
-        capture_output=True,
+        check=False, text=True, capture_output=True,
+    )
+    assert blocked.returncode != 0
+    assert json.loads(blocked.stdout)["status"] == "FAIL"
+    result = subprocess.run(
+        ["python3", "scripts/runtime_preflight.py", "--offline", "--candidate"],
+        check=False, text=True, capture_output=True,
     )
     assert result.returncode == 0, result.stdout + result.stderr
     report = json.loads(result.stdout)
     assert report["status"] == "PASS"
     assert report["next_action"] == "run SIM"
-    assert report["release_state"] == "published"
+    assert report["release_state"] == "candidate"
     assert report["checks"][1] == {
-        "boundary": "release-publication",
-        "status": "PASS",
+        "boundary": "release-publication", "status": "CANDIDATE",
     }
 
 
