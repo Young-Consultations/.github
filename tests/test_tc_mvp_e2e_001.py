@@ -63,9 +63,9 @@ def test_sim_passes_without_real_effects(tmp_path: Path) -> None:
     assert payload["failures"] == []
 
 
-def test_control_plane_patch_requires_matching_candidate_receiver_pin() -> None:
+def test_control_plane_minor_candidate_requires_matching_receiver_pin() -> None:
     target_root = _target_root()
-    assert e2e.TARGET_RECEIVER_RELEASE == "3.0.3"
+    assert e2e.TARGET_RECEIVER_RELEASE == "3.1.0"
     assert e2e._target_receiver_pin_errors(target_root) == []
 
 
