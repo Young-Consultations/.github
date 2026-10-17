@@ -90,25 +90,31 @@ def check_prior_result(journal, source_issue: str, repository: str, issue_number
         if forwarded:
             raise ReceiverError("unknown", "delivery has forwarding without a trusted receipt", ambiguous=True)
         return "none"
-    if len(receipts) != 1 or len(forwarded) != 1:
+    if len(receipts) != 1 or len(forwarded) > 1:
         raise ReceiverError("unknown", "ambiguous terminal receipt state", ambiguous=True)
-    receipt, sent = receipts[0], forwarded[0]
-    for record in (receipt, sent):
+    receipt = receipts[0]
+    # A single recorded managed-draft receipt is enough to permit *only*
+    # target-owned draft reconciliation. If forwarding failed after recording
+    # this receipt, the existing receiver accepts an equivalent duplicate-reused
+    # outcome and can resume projection without a second model invocation.
+    for record in (receipt, *forwarded):
         if any(record.get(field) != value for field, value in expected.items()):
             raise ReceiverError("authorization", "terminal evidence identity mismatch")
         if not all(isinstance(record.get(key), str) and _DIGEST.fullmatch(record[key])
                    for key in ("result_sha256", "effect_sha256")):
             raise ReceiverError("unknown", "terminal evidence digest is malformed", ambiguous=True)
-    # Equivalent draft redelivery can forward a new canonical result digest
-    # after a receipt-only failure; its attested visible effect remains stable.
-    if any(receipt.get(key) != sent.get(key) for key in
-           ("effect_class", "effect_sha256")):
-        raise ReceiverError("unknown", "terminal result forwarding is inconsistent", ambiguous=True)
     if receipt.get("effect_class") != "managed-draft":
         raise ReceiverError(
             "authorization",
             "delivery already has a terminal result; new authorization is required",
         )
+    if forwarded:
+        sent = forwarded[0]
+        # Equivalent draft redelivery can forward a new canonical result digest
+        # after a receipt-only failure; its attested visible effect remains stable.
+        if any(receipt.get(key) != sent.get(key) for key in
+               ("effect_class", "effect_sha256")):
+            raise ReceiverError("unknown", "terminal result forwarding is inconsistent", ambiguous=True)
     return "managed-draft"
 
 
