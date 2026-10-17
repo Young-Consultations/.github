@@ -141,6 +141,35 @@ def test_nonmanaged_terminal_result_is_blocked(monkeypatch):
         assert not journal.forward_probes
 
 
+def test_managed_draft_receipt_without_forwarding_can_recover_without_codex(monkeypatch, tmp_path):
+    # Receiver's durable receipt can precede a failed source-forward call.
+    # Returning managed-draft allows only the target's owned-PR reuse path.
+    journal = ReceiptJournal("managed-draft")
+    journal.entries.pop()  # no forwarded marker
+    output = tmp_path / "result"
+    monkeypatch.setenv("GITHUB_OUTPUT", str(output))
+    assert run_bound_preflight(monkeypatch, journal) == 0
+    assert "prior_effect_class=managed-draft" in output.read_text()
+    assert journal.forward_probes == ["Young-Consultations/portfolio-tasks"]
+
+
+def test_nonmanaged_terminal_receipt_without_forwarding_still_blocks(monkeypatch):
+    for effect in ("failed", "rejected", "verified", "ambiguous-rejected"):
+        journal = ReceiptJournal(effect)
+        journal.entries.pop()
+        assert run_bound_preflight(monkeypatch, journal) == 1
+        assert journal.forward_probes == []
+
+
+def test_receipt_only_managed_draft_requires_valid_binding_and_digest(monkeypatch):
+    journal = ReceiptJournal("managed-draft")
+    journal.entries.pop()
+    receipt = {**INPUT_BINDING, "result_sha256": "not-a-digest",
+               "effect_class": "managed-draft", "effect_sha256": "b" * 64}
+    journal.entries[1] = JournalComment(marker(RECEIPT, receipt), "receiver-bot")
+    assert run_bound_preflight(monkeypatch, journal) == 1
+
+
 def test_managed_draft_is_only_permitted_for_owned_pr_reconciliation(monkeypatch, tmp_path):
     journal = ReceiptJournal("managed-draft")
     output = tmp_path / "output"
@@ -163,7 +192,7 @@ def test_duplicate_or_broken_journal_state_fails_closed(monkeypatch):
     assert run_bound_preflight(monkeypatch, journal) == 1
 
     journal = ReceiptJournal("managed-draft")
-    journal.entries.pop()
+    journal.entries.pop(1)  # forwarded marker without its receipt
     assert run_bound_preflight(monkeypatch, journal) == 1
 
     journal = ReceiptJournal()
