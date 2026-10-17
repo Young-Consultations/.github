@@ -123,7 +123,25 @@ required for a given registered repository.
 
 ## Current compatibility update
 
-Published `ai-sdlc-v3.0.3` is the current control-plane compatibility release
+Published and attested `ai-sdlc-v3.1.0` is the current immutable control-plane
+compatibility release at reviewed PR #113 merge commit
+`e9d11fc99fee73d247c93699f058ed64786bd4c0`; separate attestation PR #114
+records that identity on `main`. The matching reviewed target is immutable
+`codex-adapter-v3.1.0` at
+`4f15841efcba4883770b5e32c0582f733d73eb91`, with tagged 29-case
+zero-real-effect conformance report SHA-256
+`f0a73ed1298e68beb2956c50488dc191fafb28b7b1cce74618e8fb488f076606`.
+The receiver supports reviewed admissions 3.0.1, 3.0.2, 3.0.3, and 3.1.0;
+the new terminal-receipt preflight rejects re-execution after trusted terminal
+failure, limiting prior managed draft results to ownership-verified reuse.
+Release and attestation do **not** establish deployed Runtime Preflight, source
+adoption or REAL acceptance. The source consumer still pins 3.0.3, and
+independent consulting-playbook content-baseline defect #93 must be assessed
+before any new-identity REAL dispatch.
+
+### Historical 3.0.3 publication and source adoption
+
+Published `ai-sdlc-v3.0.3` remains immutable historical compatibility evidence
 at reviewed PR #104 merge commit `f3229bfa4a06da963cae7c390c6075b4f6c12f7b`.
 Portfolio-tasks now consumes published 3.0.3 through merged PR #163 at
 `580eaf3cd88774014d645d3c3ca3718b39b38ce0`.
