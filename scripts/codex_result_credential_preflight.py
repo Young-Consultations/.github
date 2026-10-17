@@ -53,6 +53,21 @@ def check_prior_result(journal, source_issue: str, repository: str, issue_number
         raise ReceiverError("authorization", "execution input does not match preflight source")
 
     comments = journal.comments(repository, issue_number)
+
+    # Receiver marker parsing intentionally ignores malformed JSON; pre-execution
+    # safety cannot treat unparseable *trusted* receipt evidence as absence.
+    # Check every trusted terminal-marker prefix, including orphan prefixes.
+    for comment in comments:
+        if not journal.trusted_author(comment.author, "result"):
+            continue
+        for prefix in (RECEIPT, FORWARDED):
+            if comment.body.count(prefix) != len(
+                parse_markers([comment], prefix, "result", journal)
+            ):
+                raise ReceiverError(
+                    "unknown", "malformed trusted terminal journal evidence", ambiguous=True
+                )
+
     admissions = [
         item for item in parse_markers(comments, ADMISSION, "admission", journal)
         if item.get("delivery_id") == expected["delivery_id"]
@@ -84,8 +99,10 @@ def check_prior_result(journal, source_issue: str, repository: str, issue_number
         if not all(isinstance(record.get(key), str) and _DIGEST.fullmatch(record[key])
                    for key in ("result_sha256", "effect_sha256")):
             raise ReceiverError("unknown", "terminal evidence digest is malformed", ambiguous=True)
+    # Equivalent draft redelivery can forward a new canonical result digest
+    # after a receipt-only failure; its attested visible effect remains stable.
     if any(receipt.get(key) != sent.get(key) for key in
-           ("result_sha256", "effect_class", "effect_sha256")):
+           ("effect_class", "effect_sha256")):
         raise ReceiverError("unknown", "terminal result forwarding is inconsistent", ambiguous=True)
     if receipt.get("effect_class") != "managed-draft":
         raise ReceiverError(
