@@ -236,6 +236,31 @@ def test_malformed_untrusted_terminal_markers_do_not_block(monkeypatch):
     assert run_bound_preflight(monkeypatch, journal) == 0
 
 
+
+def test_trusted_terminal_markers_must_have_valid_delivery_identity(monkeypatch):
+    for prefix in (RECEIPT, FORWARDED):
+        for invalid in (None, "", "with spaces", 42, "a" * 129):
+            journal = ReceiptJournal()
+            unbound = {**INPUT_BINDING, "result_sha256": "a" * 64,
+                       "effect_class": "failed", "effect_sha256": "b" * 64}
+            if invalid is None:
+                unbound.pop("delivery_id")
+            else:
+                unbound["delivery_id"] = invalid
+            journal.entries.append(JournalComment(marker(prefix, unbound), "receiver-bot"))
+            assert run_bound_preflight(monkeypatch, journal) == 1
+            assert journal.forward_probes == []
+
+
+def test_untrusted_terminal_marker_without_delivery_identity_is_ignored(monkeypatch):
+    journal = ReceiptJournal()
+    unbound = {**INPUT_BINDING, "result_sha256": "a" * 64,
+               "effect_class": "failed", "effect_sha256": "b" * 64}
+    unbound.pop("delivery_id")
+    journal.entries.append(JournalComment(marker(RECEIPT, unbound), "attacker"))
+    assert run_bound_preflight(monkeypatch, journal) == 0
+
+
 def test_recovered_managed_draft_has_distinct_canonical_digest(monkeypatch, tmp_path):
     journal = ReceiptJournal("managed-draft")
     record = {**INPUT_BINDING, "result_sha256": "c" * 64,
