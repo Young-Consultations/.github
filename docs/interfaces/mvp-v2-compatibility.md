@@ -3,7 +3,7 @@
 **Normative status:** organization-owned baseline for consumer alignment.
 **Payload version:** `ai-sdlc-contract/v2` (v3 is out of scope).
 **Payload compatibility baseline:** `ai-sdlc-contract/v2`, fixture `2.3.0`.
-**Latest immutable control-plane tag, awaiting publication-attestation merge:** `ai-sdlc-v3.1.0` at `e9d11fc99fee73d247c93699f058ed64786bd4c0`.
+**Current published and attested control-plane compatibility release:** `ai-sdlc-v3.1.0` at `e9d11fc99fee73d247c93699f058ed64786bd4c0` (PR #114 publication attestation).
 **Current source-consumer pin:** `ai-sdlc-v3.0.3` through reviewed portfolio-tasks PR #163.
 
 Published `ai-sdlc-v3.0.3` repairs DEF-0086 by preserving one trusted durable
@@ -268,10 +268,10 @@ The terminal receipt guard prevents a repeat cost-bearing execution after
 a trusted terminal failure and limits managed-draft recovery to identity-
 verified reuse. This release retains the `ai-sdlc-contract/v2` payload.
 
-Publication attestation is separate from the immutable tag. This attestation
-PR records `tag_published: true`, pins `tag_commit_sha` to the verified
-merge commit, and updates the generated runtime record. None of these
-metadata changes authorize deployment or a new cost-bearing call.
+Publication attestation is separate from the immutable tag. Merged PR #114
+records `tag_published: true`, pins `tag_commit_sha` to the verified
+release merge commit, and updates the generated published runtime record.
+None of these metadata changes authorize deployment or a new cost-bearing call.
 The source-consumer pin remains `ai-sdlc-v3.0.3` until a separate
 reviewed migration; the independent stale target-content baseline defect
 [consulting-playbook #93](https://github.com/Young-Consultations/consulting-playbook/issues/93)
