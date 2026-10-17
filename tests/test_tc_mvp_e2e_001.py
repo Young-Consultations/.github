@@ -71,8 +71,8 @@ def test_control_plane_minor_candidate_requires_matching_receiver_pin() -> None:
 
 def test_real_preflight_workflow_uses_current_control_plane_release_tag() -> None:
     source = Path(".github/workflows/tc-mvp-e2e-001.yml").read_text(encoding="utf-8")
-    assert "ref: refs/tags/ai-sdlc-v3.0.3" in source
-    assert "immutable ai-sdlc-v3.0.3 evidence" in source
+    assert "ref: refs/tags/ai-sdlc-v3.1.0" in source
+    assert "immutable ai-sdlc-v3.1.0 evidence" in source
 
 
 def test_target_identity_mismatch_fails_before_adapter_import(
