@@ -34,7 +34,10 @@ journal guard **before** any cost-bearing target executor operation. The
 compatible target implementation is immutable `codex-adapter-v3.1.0` at
 `4f15841efcba4883770b5e32c0582f733d73eb91`. Its tag and publication
 attestation do not establish source-consumer migration, deployed Runtime
-Preflight, or REAL acceptance; `portfolio-tasks` still pins 3.0.3. A unique
+Preflight, or REAL acceptance; `portfolio-tasks` still pins 3.0.3. The
+published 3.1.0 deployed preflight must independently inspect the source
+router job on `portfolio-tasks@main` and **reject** the old pin until its
+separately approved migration is merged. A unique
 trusted admission with **no** prior trusted result permits a new execution. A
 single managed-draft receipt permits only an independently verified open
 owned-draft `duplicate-reused` return; that also applies when receipt
