@@ -79,7 +79,12 @@ validated keys; changing their meaning is breaking.
    regenerates the runtime record, and passes
    `python scripts/validate_release.py --require-publishable`, remote immutable
    target verification, complete tests, protected-branch checks, and review.
-   Merge the attestation before deployed Runtime Preflight or REAL acceptance.
+   Merge the attestation before separately reviewed source migration and deployed
+   Runtime Preflight. A deployed preflight PASS must independently verify the
+   source `portfolio-tasks@main` router job pins the same attested immutable
+   control-plane release. While the source still pins a predecessor, the
+   deployed preflight must FAIL CLOSED. Candidate/SIM checks are not substitute
+   deployed evidence.
    Pre-tag candidate checks and approvals are the authorization to consume the
    immutable version; post-tag attestation proves the resulting identity.
 6. Consumers pin the router/receiver to that exact tag or, before tag approval,
