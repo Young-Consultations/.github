@@ -511,16 +511,18 @@ def test_missing_audit_token_reports_failed_credential_boundary(
         "remote_tag_commit",
         lambda tag: manifest["tag_commit_sha"],
     )
-    monkeypatch.setattr("sys.argv", ["runtime_preflight.py", "--candidate"])
+    # Exercise the published deployed mode. A missing audit token must
+    # independently fail both credential metadata and source-pin verification.
+    # Candidate mode is invalid for a published release and has its own test.
+    monkeypatch.setattr("sys.argv", ["runtime_preflight.py"])
 
     assert runtime_preflight.main() == 1
     report = json.loads(capsys.readouterr().out)
-    assert report["checks"][-1] == {
-        "boundary": "credential-metadata",
-        "status": "FAIL",
-    }
+    assert {"boundary": "credential-metadata", "status": "FAIL"} in report["checks"]
+    assert {"boundary": "deployed-source-router-pin", "status": "FAIL"} in report["checks"]
     assert report["failures"] == [
         "credentials: PREFLIGHT_AUDIT_TOKEN is unavailable",
+        "source-pin: audit token unavailable",
     ]
 
 
