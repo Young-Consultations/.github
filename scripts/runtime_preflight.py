@@ -172,15 +172,15 @@ def audit_result_sender_binding(audit_token: str) -> list[str]:
 SOURCE_ROUTER_WORKFLOW = ".github/workflows/route-approved-task.yml"
 SOURCE_ROUTER_REPOSITORY = "Young-Consultations/portfolio-tasks"
 ROUTER_USES_RE = re.compile(
-    r"^    uses: Young-Consultations/\\.github/\\.github/workflows/"
-    r"codex-router\\.yml@([^\\s#]+)\\s*$"
+    r"^    uses: Young-Consultations/\.github/\.github/workflows/"
+    r"codex-router\.yml@([^\s#]+)\s*$"
 )
 
 
 def audit_source_router_pin(expected_tag: str, audit_token: str) -> list[str]:
     """Fail closed when the deployed source still selects another control-plane release."""
     if not isinstance(expected_tag, str) or not re.fullmatch(
-        r"ai-sdlc-v[0-9]+\\.[0-9]+\\.[0-9]+", expected_tag
+        r"ai-sdlc-v[0-9]+\.[0-9]+\.[0-9]+", expected_tag
     ):
         return ["source-pin: invalid attested release tag"]
 
@@ -214,7 +214,7 @@ def audit_source_router_pin(expected_tag: str, audit_token: str) -> list[str]:
     start = job_starts[0]
     end = next((
         i for i in range(start + 1, len(lines))
-        if re.match(r"^  [a-zA-Z0-9_-]+:\\s*$", lines[i])
+        if re.match(r"^  [a-zA-Z0-9_-]+:\s*$", lines[i])
     ), len(lines))
     uses = [
         line for line in lines[start + 1:end]
