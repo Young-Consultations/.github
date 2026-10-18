@@ -290,9 +290,10 @@ The source consumer still pins 3.0.3 through PR #163, and its historical
 Runtime Preflight 36867504568, REAL readiness 36867939797 and
 REAL #159/receiver acceptance are not evidence of 3.1.0 REAL readiness.
 Before new cost-bearing execution, require separately reviewed source-pin
-migration, deployed 3.1.0 preflight, no-cost REAL-readiness verification,
-and assessment of the independent consulting-playbook #93 stale-content
-baseline risk. Never replay a finalized terminal delivery.
+migration, then deployed 3.1.0 preflight that checks the exact source
+router job pin on `portfolio-tasks@main` and fails closed while it still
+references 3.0.3, then no-cost REAL-readiness verification and assessment
+of the independent consulting-playbook #93 stale-content baseline risk. Never replay a finalized terminal delivery.
 
 During any future pre-publication candidate window,
 `verify_release_target_workflows.py` delegates to normal remote verification
