@@ -37,6 +37,10 @@ group. The target workflow applies the canonical group with
 
 ## Caller
 
+The following caller example remains the **currently deployed portfolio-tasks
+source pin** (3.0.3); it is not a recommendation to skip the separately reviewed
+3.1.0 source migration.
+
 ```yaml
 jobs:
   route:
@@ -57,20 +61,27 @@ tokens are supported without calling the user-only `GET /user` endpoint. On
 redelivery, only an identical marker written by that same author is reused;
 untrusted lookalike comments are never admission authority.
 
-The published [3.0.3 release](releases/3.0.3.md) is the current
-control-plane compatibility release. Its immutable tag resolves to reviewed
-PR #104 merge commit
-`f3229bfa4a06da963cae7c390c6075b4f6c12f7b`. Portfolio-tasks now invokes
-published 3.0.3 through merged PR #163. Deployed Runtime Preflight 36867504568
-and immutable REAL readiness preflight 36867939797 passed before source
-adoption, and #159 subsequently completed terminal plus unchanged
-same-delivery redelivery acceptance.
+The attested [3.1.0 release](releases/3.1.0.md) is the latest published
+control-plane compatibility unit at reviewed PR #113 merge commit
+`e9d11fc99fee73d247c93699f058ed64786bd4c0` and separate publication-
+attestation PR #114. The registered target for this release is immutable
+`codex-adapter-v3.1.0` at
+`4f15841efcba4883770b5e32c0582f733d73eb91`. The 3.1.0 preflight
+checks trusted terminal journal evidence before cost-bearing execution and
+permits prior managed draft results only through verified reuse. Deployed
+Runtime Preflight, source-consumer migration and REAL acceptance are **not
+complete**, and no replay of the failed delivery from issue #111 is authorized.
 
-The current published consulting target is immutable `codex-adapter-v3.0.3` at
-`f11852c7f563df16ea4afa9ab75bf766242e7327`. Release 3.0.3 repairs DEF-0086
-by preserving one trusted durable admission across reviewed compatible release
-retries. Its receiver compatibility policy accepts the reviewed 3.0.1, 3.0.2,
-and 3.0.3 admission releases while rejecting unreviewed combinations. Release
+Historical [3.0.3 release](releases/3.0.3.md) is immutable at reviewed PR #104
+merge commit `f3229bfa4a06da963cae7c390c6075b4f6c12f7b`.
+Portfolio-tasks still invokes 3.0.3 through merged PR #163. Its historical
+deployed Runtime Preflight 36867504568, REAL readiness preflight 36867939797
+and #159 unchanged redelivery acceptance prove the **older**
+predecessor-admission recovery (DEF-0086), not 3.1.0 REAL readiness.
+The historical 3.0.3 consulting target is `codex-adapter-v3.0.3` at
+`f11852c7f563df16ea4afa9ab75bf766242e7327`. Its receiver accepted
+reviewed admission releases 3.0.1, 3.0.2 and 3.0.3; the tagged 3.1.0 receiver
+extends that set to include 3.1.0 while preserving fail-closed bindings. Release
 3.0.2 remains immutable predecessor evidence for DEF-0073. Release 3.0.1 remains immutable predecessor evidence for the
 Runtime Preflight metadata repair; release 3.0.0 remains immutable predecessor
 evidence for the dedicated App private-key receiver interface. Published 2.4.5

@@ -31,6 +31,9 @@ jobs:
           persist-credentials: false
       - name: Verify generated runtime composition
         run: python3 scripts/generate_current_runtime.py --check
+      # Published-state preflight also verifies portfolio-tasks@main's
+      # exact immutable router ref using read-only PREFLIGHT_AUDIT_TOKEN;
+      # before separate source migration this deployed gate fails closed.
       - name: Check deployed configuration and credential names
         env:
           GH_TOKEN: ${{ github.token }}

@@ -1,3 +1,4 @@
+import base64
 import json
 import subprocess
 from pathlib import Path
@@ -10,34 +11,132 @@ def test_current_runtime_record_is_generated_from_authoritative_state():
     path = Path("release/current-runtime.json")
     assert path.read_text(encoding="utf-8") == generate_current_runtime.render()
     value = json.loads(path.read_text(encoding="utf-8"))
-    assert value["release_state"] == "candidate"
+    assert value["release_state"] == "published"
     assert value["control_plane"]["tag"] == "ai-sdlc-v3.1.0"
-    assert value["control_plane"]["tag_published"] is False
-    assert value["control_plane"]["tag_commit_sha"] is None
+    assert value["control_plane"]["tag_published"] is True
+    assert value["control_plane"]["tag_commit_sha"] == "e9d11fc99fee73d247c93699f058ed64786bd4c0"
     assert value["activation"]["enabled_targets"] == [
         "Young-Consultations/consulting-playbook"
     ]
 
 
-def test_unpublished_candidate_blocks_normal_runtime_and_allows_offline_candidate_audit():
-    blocked = subprocess.run(
-        ["python3", "scripts/runtime_preflight.py", "--offline"],
-        check=False, text=True, capture_output=True,
-    )
-    assert blocked.returncode != 0
-    assert json.loads(blocked.stdout)["status"] == "FAIL"
+def test_attested_published_release_passes_offline_runtime_publication_gate():
     result = subprocess.run(
-        ["python3", "scripts/runtime_preflight.py", "--offline", "--candidate"],
+        ["python3", "scripts/runtime_preflight.py", "--offline"],
         check=False, text=True, capture_output=True,
     )
     assert result.returncode == 0, result.stdout + result.stderr
     report = json.loads(result.stdout)
     assert report["status"] == "PASS"
     assert report["next_action"] == "run SIM"
-    assert report["release_state"] == "candidate"
+    assert report["release_state"] == "published"
     assert report["checks"][1] == {
-        "boundary": "release-publication", "status": "CANDIDATE",
+        "boundary": "release-publication", "status": "PASS",
     }
+
+
+
+
+def _source_workflow(tag: str, *, extra_job: bool = False) -> dict:
+    source = (
+        "jobs:\n"
+        + ("  unrelated:\n    uses: Young-Consultations/.github/"
+           ".github/workflows/codex-router.yml@ai-sdlc-v3.1.0\n" if extra_job else "")
+        + "  route:\n"
+        + "    needs: prepare\n"
+        + f"    uses: Young-Consultations/.github/.github/workflows/codex-router.yml@{tag}\n"
+        + "  summary:\n    runs-on: ubuntu-latest\n"
+    )
+    return {
+        "type": "file", "encoding": "base64",
+        "content": base64.b64encode(source.encode("utf-8")).decode("ascii"),
+    }
+
+
+def test_source_router_pin_checks_exact_main_route_job(monkeypatch):
+    expected_endpoint = (
+        "repos/Young-Consultations/portfolio-tasks/contents/"
+        ".github/workflows/route-approved-task.yml?ref=main"
+    )
+
+    def verified_api(endpoint, *, token=None):
+        assert endpoint == expected_endpoint
+        assert token == "audit-token"
+        return _source_workflow("ai-sdlc-v3.1.0")
+
+    monkeypatch.setattr(runtime_preflight, "api_one", verified_api)
+    assert runtime_preflight.audit_source_router_pin("ai-sdlc-v3.1.0", "audit-token") == []
+
+
+def test_source_router_pin_rejects_old_version_even_when_other_job_is_new(monkeypatch):
+    monkeypatch.setattr(
+        runtime_preflight, "api_one",
+        lambda *args, **kwargs: _source_workflow(
+            "ai-sdlc-v3.0.3", extra_job=True,
+        ),
+    )
+    errors = runtime_preflight.audit_source_router_pin(
+        "ai-sdlc-v3.1.0", "audit-token"
+    )
+    assert len(errors) == 1
+    assert errors[0].startswith("source-pin:")
+
+
+def test_source_router_pin_fails_closed_on_inaccessible_or_invalid_evidence(monkeypatch):
+    for value in (
+        {"type": "file", "encoding": "base64", "content": "!invalid!"},
+        {"type": "dir", "encoding": "base64", "content": "Z29vZA=="},
+        _source_workflow("ai-sdlc-v3.1.0".replace("3.1.0", "main")),
+    ):
+        monkeypatch.setattr(runtime_preflight, "api_one", lambda *a, **k: value)
+        # The mutable ref case must not be accepted; other malformed responses
+        # also fail closed without silently treating missing evidence as PASS.
+        assert runtime_preflight.audit_source_router_pin(
+            "ai-sdlc-v3.1.0", "audit-token"
+        )[0].startswith("source-pin:")
+    monkeypatch.setattr(
+        runtime_preflight, "api_one",
+        lambda *a, **k: (_ for _ in ()).throw(ValueError("not authorized")),
+    )
+    assert runtime_preflight.audit_source_router_pin(
+        "ai-sdlc-v3.1.0", "audit-token"
+    )[0].startswith("source-pin: cannot verify")
+
+
+def test_deployed_live_runtime_fails_before_cutover_and_accepts_exact_source_pin(
+    monkeypatch, capsys,
+):
+    monkeypatch.setenv("PREFLIGHT_AUDIT_TOKEN", "audit-token")
+    monkeypatch.setattr(runtime_preflight, "remote_tag_commit",
+                        lambda tag: "e9d11fc99fee73d247c93699f058ed64786bd4c0")
+    monkeypatch.setattr(runtime_preflight, "audit_credentials", lambda *a: [])
+    monkeypatch.setattr(runtime_preflight, "audit_result_sender_binding", lambda *a: [])
+    monkeypatch.setattr("sys.argv", ["runtime_preflight.py"])
+    monkeypatch.setattr(
+        runtime_preflight, "api_one",
+        lambda *a, **k: _source_workflow("ai-sdlc-v3.0.3"),
+    )
+    assert runtime_preflight.main() == 1
+    rejected = json.loads(capsys.readouterr().out)
+    assert rejected["status"] == "FAIL"
+    assert {"boundary": "deployed-source-router-pin", "status": "FAIL"} in rejected["checks"]
+    assert any(x.startswith("source-pin:") for x in rejected["failures"])
+    monkeypatch.setattr(
+        runtime_preflight, "api_one",
+        lambda *a, **k: _source_workflow("ai-sdlc-v3.1.0"),
+    )
+    assert runtime_preflight.main() == 0
+    accepted = json.loads(capsys.readouterr().out)
+    assert accepted["status"] == "PASS"
+    assert {"boundary": "deployed-source-router-pin", "status": "PASS"} in accepted["checks"]
+
+
+def test_published_runtime_does_not_use_candidate_bypass(monkeypatch, capsys):
+    monkeypatch.setattr("sys.argv", ["runtime_preflight.py", "--offline", "--candidate"])
+    assert runtime_preflight.main() != 0
+    report = json.loads(capsys.readouterr().out)
+    assert report["status"] == "FAIL"
+    assert any("cannot use candidate mode" in x for x in report["failures"])
 
 
 def test_credential_roles_cover_only_the_enabled_runtime_path():
@@ -412,16 +511,18 @@ def test_missing_audit_token_reports_failed_credential_boundary(
         "remote_tag_commit",
         lambda tag: manifest["tag_commit_sha"],
     )
-    monkeypatch.setattr("sys.argv", ["runtime_preflight.py", "--candidate"])
+    # Exercise the published deployed mode. A missing audit token must
+    # independently fail both credential metadata and source-pin verification.
+    # Candidate mode is invalid for a published release and has its own test.
+    monkeypatch.setattr("sys.argv", ["runtime_preflight.py"])
 
     assert runtime_preflight.main() == 1
     report = json.loads(capsys.readouterr().out)
-    assert report["checks"][-1] == {
-        "boundary": "credential-metadata",
-        "status": "FAIL",
-    }
+    assert {"boundary": "credential-metadata", "status": "FAIL"} in report["checks"]
+    assert {"boundary": "deployed-source-router-pin", "status": "FAIL"} in report["checks"]
     assert report["failures"] == [
         "credentials: PREFLIGHT_AUDIT_TOKEN is unavailable",
+        "source-pin: audit token unavailable",
     ]
 
 

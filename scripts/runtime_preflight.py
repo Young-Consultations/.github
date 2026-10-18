@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import argparse
+import base64
+import binascii
 import json
 import os
+import re
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -166,6 +169,67 @@ def audit_result_sender_binding(audit_token: str) -> list[str]:
     return []
 
 
+SOURCE_ROUTER_WORKFLOW = ".github/workflows/route-approved-task.yml"
+SOURCE_ROUTER_REPOSITORY = "Young-Consultations/portfolio-tasks"
+ROUTER_USES_RE = re.compile(
+    r"^    uses: Young-Consultations/\.github/\.github/workflows/"
+    r"codex-router\.yml@([^\s#]+)\s*$"
+)
+
+
+def audit_source_router_pin(expected_tag: str, audit_token: str) -> list[str]:
+    """Fail closed when the deployed source still selects another control-plane release."""
+    if not isinstance(expected_tag, str) or not re.fullmatch(
+        r"ai-sdlc-v[0-9]+\.[0-9]+\.[0-9]+", expected_tag
+    ):
+        return ["source-pin: invalid attested release tag"]
+
+    endpoint = (
+        f"repos/{SOURCE_ROUTER_REPOSITORY}/contents/"
+        f"{SOURCE_ROUTER_WORKFLOW}?ref=main"
+    )
+    try:
+        body = api_one(endpoint, token=audit_token)
+        if (
+            not isinstance(body, dict)
+            or body.get("type") != "file"
+            or body.get("encoding") != "base64"
+            or not isinstance(body.get("content"), str)
+        ):
+            raise ValueError("unexpected source workflow response")
+        encoded = "".join(body["content"].split())
+        source = base64.b64decode(encoded, validate=True).decode("utf-8")
+    except (
+        subprocess.CalledProcessError, json.JSONDecodeError,
+        UnicodeError, binascii.Error, ValueError, KeyError,
+    ) as exc:
+        return [f"source-pin: cannot verify source workflow on main: {exc}"]
+
+    # Identify only the actual route job's reusable-workflow call. Do not
+    # accept a correct ref in a comment or in an unrelated job as proof.
+    lines = source.splitlines()
+    job_starts = [i for i, line in enumerate(lines) if line == "  route:"]
+    if len(job_starts) != 1:
+        return ["source-pin: expected exactly one source route job"]
+    start = job_starts[0]
+    end = next((
+        i for i in range(start + 1, len(lines))
+        if re.match(r"^  [a-zA-Z0-9_-]+:\s*$", lines[i])
+    ), len(lines))
+    uses = [
+        line for line in lines[start + 1:end]
+        if line.startswith("    uses:")
+    ]
+    refs = [ROUTER_USES_RE.fullmatch(line) for line in uses]
+    if len(refs) != 1 or refs[0] is None or refs[0].group(1) != expected_tag:
+        return [
+            "source-pin: portfolio-tasks main route job must invoke "
+            f"the exact immutable {expected_tag} router; "
+            "an earlier/different pin is not deployed 3.1.0 evidence"
+        ]
+    return []
+
+
 def audit_credentials(roles: dict[str, Any], audit_token: str) -> list[str]:
     failures: list[str] = []
     for repository, expected in roles.items():
@@ -273,6 +337,11 @@ def main() -> int:
             ) else "FAIL",
         })
 
+    if args.candidate and runtime["release_state"] == "published":
+        failures.append(
+            "release: published runtime cannot use candidate mode to bypass source-pin audit"
+        )
+
     if not args.offline:
         audit_token = os.environ.get("PREFLIGHT_AUDIT_TOKEN")
         if not audit_token:
@@ -286,6 +355,19 @@ def main() -> int:
                 value.startswith("credentials:") for value in failures
             ) else "FAIL",
         })
+        if not args.candidate:
+            if not audit_token:
+                failures.append("source-pin: audit token unavailable")
+            else:
+                failures.extend(audit_source_router_pin(
+                    runtime["control_plane"]["tag"], audit_token
+                ))
+            checks.append({
+                "boundary": "deployed-source-router-pin",
+                "status": "FAIL" if any(
+                    value.startswith("source-pin:") for value in failures
+                ) else "PASS",
+            })
 
     result = {
         "status": "PASS" if not failures else "FAIL",

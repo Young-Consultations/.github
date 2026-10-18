@@ -25,10 +25,19 @@ stateDiagram-v2
 
 Terminal outcome variants include `succeeded`, `verified`, `duplicate-reused`, `ambiguous-rejected`, `cancelled`, `rejected`, and `failed` as supported by the active contract. Entry requires a schema-valid, identity-consistent result and required evidence. Terminal states cannot regress. Unknown/absent evidence remains awaiting, uncertain, or failed—not successful.
 
-### 3.1.0 candidate pre-execution journal guard
+### Published 3.1.0 pre-execution journal guard (deployment pending)
 
-The draft control-plane release introduces an explicit read-only trusted
-journal guard **before** any cost-bearing target executor operation. A unique
+The immutable `ai-sdlc-v3.1.0` release at reviewed merge commit
+`e9d11fc99fee73d247c93699f058ed64786bd4c0`, recorded by separate
+publication-attestation PR #114, introduces an explicit read-only trusted
+journal guard **before** any cost-bearing target executor operation. The
+compatible target implementation is immutable `codex-adapter-v3.1.0` at
+`4f15841efcba4883770b5e32c0582f733d73eb91`. Its tag and publication
+attestation do not establish source-consumer migration, deployed Runtime
+Preflight, or REAL acceptance; `portfolio-tasks` still pins 3.0.3. The
+published 3.1.0 deployed preflight must independently inspect the source
+router job on `portfolio-tasks@main` and **reject** the old pin until its
+separately approved migration is merged. A unique
 trusted admission with **no** prior trusted result permits a new execution. A
 single managed-draft receipt permits only an independently verified open
 owned-draft `duplicate-reused` return; that also applies when receipt
