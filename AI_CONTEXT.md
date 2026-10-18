@@ -175,7 +175,18 @@ without implementation evidence.
 `TC-MVP-E2E-001` is one acceptance architecture with two modes, not two
 execution paths. `TC-MVP-E2E-001-SIM` resolves and executes the exact immutable
 adapter of the sole enabled target through deterministic fake Codex/publication
-effects and passes target-produced results through the current control-plane receiver logic using in-memory journal/forwarding effects. Published 3.0.3 binds the enabled consulting target to immutable `codex-adapter-v3.0.3`, whose target workflow pins the 3.0.3 credential preflight and receiver. The receiver accepts the reviewed 3.0.1, 3.0.2, and 3.0.3 admission releases, and target compatibility constrains cross-release admission reuse to that pinned receiver policy. Portfolio-tasks consumes 3.0.3 through merged PR #163 after deployed Runtime Preflight 36867504568 and immutable REAL readiness preflight 36867939797 passed. `TC-MVP-E2E-001-REAL` uses the
+effects and passes target-produced results through the immutable control-plane
+receiver logic with in-memory journal/forwarding effects. Published and
+attested 3.1.0 binds the enabled consulting target to immutable
+`codex-adapter-v3.1.0` at
+`4f15841efcba4883770b5e32c0582f733d73eb91`, whose target workflow pins
+the 3.1.0 credential preflight and receiver. The receiver accepts only the
+reviewed 3.0.1, 3.0.2, 3.0.3, and 3.1.0 admission releases, and target
+compatibility constrains reuse to that exact immutable policy.
+Portfolio-tasks **still consumes 3.0.3** through merged PR #163. That
+historical path passed deployed Runtime Preflight 36867504568 and immutable
+REAL readiness preflight 36867939797, but those results are not 3.1.0
+deployment or acceptance evidence. `TC-MVP-E2E-001-REAL` uses the
 existing source, router, target, receiver, and source-projection path after a
 non-mutating preflight. The REAL execution trigger remains the existing
 authorized-human `status:approved` action in `portfolio-tasks`; the control
@@ -184,31 +195,37 @@ second execution engine. Passing SIM is required before REAL and never counts
 as REAL acceptance.
 
 Historical compatibility evidence remains immutable. The 2.3.2 compatibility
-unit at commit `5738ace3ee90dde11336f8f8099e64e5645f7139` and the 2.4.0 receiver
-retry correction explain earlier contract evolution, but they are not the
-current control-plane release. The current published control-plane compatibility
-release is `ai-sdlc-v3.0.3` at reviewed PR #104 merge commit
-`f3229bfa4a06da963cae7c390c6075b4f6c12f7b`. It preserves
-`ai-sdlc-contract/v2`, the resolved idempotent
-`draft-pr-created -> duplicate-reused` receiver semantics, and the dedicated
-GitHub App result-writer credential interface introduced by 3.0.0. The 3.0.3
-PATCH repairs cross-release admission reuse while preserving the 3.0.2
-receiver-compatibility repair and 3.0.1 organization-secret metadata repair as
-immutable predecessor evidence.
+unit at commit `5738ace3ee90dde11336f8f8099e64e5645f7139`, the 2.4.0
+receiver retry correction, and the 3.0.x repair sequence describe predecessor
+behavior, not the current release. The current published **and attested**
+control-plane compatibility release is `ai-sdlc-v3.1.0` at reviewed PR #113
+merge commit `e9d11fc99fee73d247c93699f058ed64786bd4c0`, recorded by
+publication-attestation PR #114. It preserves `ai-sdlc-contract/v2` and
+the dedicated result-writer GitHub App interface. Its additive optional
+pre-execution receipt input/output is a MINOR compatibility change. The
+trusted result journal prevents another cost-bearing Codex call for a
+terminally failed delivery and permits existing managed-draft effects only
+through identity/ownership-verified reuse. Missing, malformed, conflicting,
+or unbound journal evidence fails closed. Prior 3.0.3 was a PATCH repair of
+cross-release durable admission reuse (DEF-0086), not this new terminal-failure
+re-execution defect (#111).
 
 Historical 2.4.3 replacement evidence remains quarantined as incident history.
-Do not infer current readiness, rollback safety, or activation from older tags.
-Publication and live consumption are separate evidence gates. Published
-`ai-sdlc-v3.0.3` is the current control-plane compatibility release at
-reviewed PR #104 merge commit `f3229bfa4a06da963cae7c390c6075b4f6c12f7b`; portfolio-tasks consumes
-published 3.0.3 through PR #163. Deployed Runtime Preflight 36867504568 and
-immutable REAL readiness preflight 36867939797 passed before that source
-cutover. Fresh #159 then preserved its original trusted 3.0.1 admission and
+Do not infer readiness, rollback safety, or activation from older tags.
+Publication, live source consumption, and REAL acceptance are separate gates.
+The attested `ai-sdlc-v3.1.0` control-plane tag and immutable target adapter
+are **not yet** deployed by the `portfolio-tasks` source consumer, which
+continues to use published 3.0.3 through PR #163.
+The historical 3.0.3 deployed Runtime Preflight 36867504568 and immutable
+REAL readiness preflight 36867939797 passed before that earlier cutover.
+Historical REAL #159 then preserved its original trusted 3.0.1 admission and
 stable delivery identity, produced one managed draft PR #82 and one terminal
 source projection, and on unchanged redelivery returned `duplicate-reused`
-before Codex with no second receiver/source visible effect. DEF-0073,
-DEF-0064, and DEF-0086 are resolved. Unrelated terminal delivery identities
-remain non-reusable.
+before Codex with no second receiver/source effect. DEF-0073, DEF-0064,
+and DEF-0086 were resolved on that *specific* predecessor-admission path.
+Issue #111's later terminal-failure replay defect is **not** REAL-accepted
+merely by 3.1.0 publication or deterministic SIM. Do not replay the finalized
+delivery to test it.
 
 Explicitly excluded are exactly-once transport, autonomous approval, automatic
 merge, release or deployment automation authority, production operation,
@@ -261,15 +278,21 @@ git diff --check
 ```
 
 `python scripts/validate_release.py` verifies structural release coherence.
-Published control-plane compatibility state is `ai-sdlc-v3.0.3` at reviewed
-PR #104 merge commit `f3229bfa4a06da963cae7c390c6075b4f6c12f7b`. The manifest records
-`tag_published: true` with that exact `tag_commit_sha`. Portfolio-tasks now
-consumes 3.0.3 through PR #163 at `580eaf3cd88774014d645d3c3ca3718b39b38ce0`.
-Deployed Runtime Preflight 36867504568, immutable REAL readiness preflight
-36867939797, first REAL target/receiver run 36911342397, source projection
-36911478182, and unchanged redelivery target run 36913463403 all passed. The
-redelivery returned `duplicate-reused` before Codex with no second
-receiver/source visible effect.
+The current attested control-plane compatibility release is
+`ai-sdlc-v3.1.0` at reviewed PR #113 merge commit
+`e9d11fc99fee73d247c93699f058ed64786bd4c0`; the publication-attestation
+manifest records `tag_published: true` and this exact `tag_commit_sha`.
+The tagged consulting target is `codex-adapter-v3.1.0` at
+`4f15841efcba4883770b5e32c0582f733d73eb91`, with prepublication
+29-case report SHA-256
+`f0a73ed1298e68beb2956c50488dc191fafb28b7b1cce74618e8fb488f076606`.
+The source consumer still pins 3.0.3 through PR #163, and its historical
+Runtime Preflight 36867504568, REAL readiness 36867939797 and
+REAL #159/receiver acceptance are not evidence of 3.1.0 REAL readiness.
+Before new cost-bearing execution, require separately reviewed source-pin
+migration, deployed 3.1.0 preflight, no-cost REAL-readiness verification,
+and assessment of the independent consulting-playbook #93 stale-content
+baseline risk. Never replay a finalized terminal delivery.
 
 During any future pre-publication candidate window,
 `verify_release_target_workflows.py` delegates to normal remote verification
@@ -397,11 +420,14 @@ the pre-publication gap that led to this invariant.
   above: implementation is evidence, and compatibility/release changes follow
   the current approved release policy rather than accidental historical code.
 
-No unresolved architectural speculation is recorded here. The 2.4.5 release
-path is the current verified control-plane state. Separate unresolved governance
-work, including organization issue #77 for broader cost-bearing prerequisite
-safety and any future target-enablement decisions, remains outside this release
-record and must not be inferred from implementation artifacts.
+No unresolved architectural speculation is recorded here. The
+`ai-sdlc-v3.1.0` tag and its attested registry identify the current published
+control-plane compatibility composition, **not** a currently deployed source
+consumer or an accepted live test. Separate unresolved governance work,
+including organization issue #77 for broader cost-bearing prerequisite safety,
+independent consulting-playbook #93 content-baseline safety, and any future
+target-enablement decision, remains outside this release record and must not
+be inferred from implementation artifacts.
 
 ## Maintenance rule
 
@@ -411,6 +437,36 @@ interface policy changes. Recheck every relative link and command whenever it
 is edited. Keep historical behavior in Git history, release records, or ADRs;
 do not maintain multiple active policies or compatibility paths in this index.
 
+
+## 3.1.0 published terminal-result safety compatibility release
+
+The reviewed [PR #113](https://github.com/Young-Consultations/.github/pull/113)
+release tag `ai-sdlc-v3.1.0` resolves to control-plane merge commit
+`e9d11fc99fee73d247c93699f058ed64786bd4c0`. The separate
+publication-attestation PR #114 records the same identity in
+`release/release-manifest.json` and `release/current-runtime.json`.
+The enabled consulting target is immutable `codex-adapter-v3.1.0` at
+`4f15841efcba4883770b5e32c0582f733d73eb91`, with no-real-effect
+29-case conformance evidence recorded independently by immutable report SHA-256
+`f0a73ed1298e68beb2956c50488dc191fafb28b7b1cce74618e8fb488f076606`.
+The receiver owns reviewed admission compatibility with 3.0.1, 3.0.2,
+3.0.3 and 3.1.0; all other combinations reject unless separately reviewed.
+
+The target-side cost-bearing execution boundary now requires authenticated
+source-journal terminal-result evidence bound to the canonical execution input
+before Codex. An existing non-managed terminal result denies replay under the
+same delivery identity. A trusted managed-draft receipt permits only verified
+owned-draft reuse; a receipt-only case may reconcile forwarding without a
+second Codex call. Ambiguous, missing, untrusted or conflicting evidence does
+not grant execution permission. These are tagged implementation requirements
+and deterministic no-real-effect test results, **not** a completed 3.1.0 REAL
+acceptance claim.
+
+The live `portfolio-tasks` consumer still references 3.0.3. The reviewed
+source-consumer repin, deployed Runtime Preflight, no-cost REAL-readiness
+preflight, explicit approval of a **fresh** logical delivery, and assessment of
+independent consulting-playbook #93 must precede REAL acceptance. The failed
+terminal delivery associated with organization issue #111 must not be rerun.
 
 ## 3.0.3 published cross-release admission reuse repair
 
