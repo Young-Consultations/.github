@@ -41,3 +41,15 @@ Do not dispatch REAL or paid Codex, alter protected settings/secrets, move tags,
 - Current conformance report: https://github.com/Young-Consultations/consulting-playbook/blob/405981a9ca2ddca0020aa56e77d38e5a1d1b8daa/.ai-sdlc/conformance/tc-mvp-ci-001.json (29 passing scenario entries; zero prohibited real effects; `adapter_tag_published: false`).
 - Copilot review quota notice: https://github.com/Young-Consultations/.github/pull/116; cannot count as a completed reviewer approval.
 - No adapter tag was published and no active registry, manifest, or environment authorization changed in this increment.
+
+## Gate 1–4 evidence verification, 2026-10-23
+
+**Candidate identity (PASS):** consulting-playbook exact commit `405981a9ca2ddca0020aa56e77d38e5a1d1b8daa` confirmed from GitHub commit tree. GitHub Actions run [39612598899](https://github.com/Young-Consultations/consulting-playbook/actions/runs/39612598899) has the same head SHA and a successful `offline-conformance` job, including repository checks, exact shared oracle and no-effect evidence steps.
+
+**Pinned target blobs (PASS):** fetched `config/mvp-conformance-pin.json` at exact commit and recursively resolved its Git tree: 17/17 target-file blob SHAs match, no discrepancies. Pin format is v2, adapter revision and compatibility SHA match the committed conformance report.
+
+**Conformance evidence (PASS as recorded in exact-SHA CI):** committed `.ai-sdlc/conformance/tc-mvp-ci-001.json` has 29 passing scenario entries, no failures, and zero in all ten prohibited-effect counters. Report blob SHA `13e3e4edc8492ca442b4d77f92f5dae44fd753dc`. Report still declares `adapter_tag_published: false` and does not establish production readiness.
+
+**Compatibility (PENDING final decision):** compared candidate with immutable `codex-adapter-v3.1.0`; changes include new protected `CODEX_AUTHORIZED_CONTROL_PLANE_SHA` binding and fail-closed workflow SHA authorization, separate current-content checkout, candidate sandbox, and publication race safeguards. No `contracts/` schema paths appear among changed files. A reviewer must resolve whether the protected variable introduces a new required operational contract and whether PATCH is the correct SemVer level. The existing workflow still references `ai-sdlc-v3.1.0` receiver/preflight; new release coordination and controlled environment binding must be verified before deployment.
+
+**Outstanding evidence:** independently compute the exact committed report's SHA-256 from downloaded exact bytes and confirm the shared compatibility-file blobs against the referenced control-plane commit; complete interface/security compatibility decision. The supplied local ZIP snapshot is older than this candidate, so local tests from that ZIP are not accepted as exact-candidate evidence. No tag, registry, protected variable, or REAL execution has been changed.
