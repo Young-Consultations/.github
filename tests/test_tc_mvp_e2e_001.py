@@ -28,7 +28,8 @@ def test_sim_passes_without_real_effects(tmp_path: Path) -> None:
     assert payload["published_baseline"] == "3.0.3"
     assert payload["candidate_release"] == "4.0.0"
     assert e2e.TARGET_RECEIVER_RELEASE == "4.0.0"
-    assert payload["candidate_tag_published"] is True
+    manifest = json.loads((e2e.ROOT / "release/release-manifest.json").read_text(encoding="utf-8"))
+    assert payload["candidate_tag_published"] is manifest["tag_published"]
     assert payload["execution_provider"] == "fake"
     assert payload["dispatch_provider"] == "fake-in-process-target"
     assert payload["target"] == e2e.REAL_TARGET
