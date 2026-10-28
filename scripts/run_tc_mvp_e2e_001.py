@@ -33,8 +33,8 @@ REGISTRY = ROOT / "config/codex-repositories.json"
 RELEASE_MANIFEST = ROOT / "release/release-manifest.json"
 REAL_TARGET = "Young-Consultations/consulting-playbook"
 PUBLISHED_BASELINE = "3.0.3"
-CANDIDATE_RELEASE = "3.1.0"
-TARGET_RECEIVER_RELEASE = "3.1.0"
+CANDIDATE_RELEASE = "4.0.0"
+TARGET_RECEIVER_RELEASE = "4.0.0"
 TARGET_ROOT_ENV = "TC_MVP_E2E_TARGET_ROOT"
 COMMIT_SHA = re.compile(r"^[0-9a-f]{40}$")
 
@@ -268,6 +268,16 @@ class FakeTargetEffects:
         self.calls.codex_calls += 1
         if not instructions:
             raise ValueError("instructions must not be empty")
+
+    def prepare_content(self, delivery_id: str, timeout_seconds: float) -> None:
+        """Model the admitted content setup without Git/network effects."""
+        if not delivery_id or timeout_seconds <= 0:
+            raise ValueError("invalid simulated content preparation")
+
+    def verify_recovered_publication(self, branch: str, pr: str, timeout_seconds: float) -> None:
+        """Model recovery verification without reading or mutating remote state."""
+        if not branch or not pr or timeout_seconds <= 0:
+            raise ValueError("invalid simulated publication recovery")
 
     def has_candidate_changes(self, timeout_seconds: float) -> bool:
         """Model a nonempty Codex change without touching the checkout."""

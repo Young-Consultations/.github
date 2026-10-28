@@ -30,10 +30,12 @@ def verify_release_receiver_at_ref(
     receiver_ref: str,
     token: str | None,
     reusable_admission_releases: set[str] | None = None,
+    *, allow_disabled_legacy: bool = False,
 ) -> str:
     try:
         return _REMOTE_VERIFY_RECEIVER(
-            receiver_ref, token, reusable_admission_releases
+            receiver_ref, token, reusable_admission_releases,
+            **({"allow_disabled_legacy": True} if allow_disabled_legacy else {}),
         )
     except checker.CompatibilityError as exc:
         manifest = json.loads((ROOT / "release/release-manifest.json").read_text(encoding="utf-8"))

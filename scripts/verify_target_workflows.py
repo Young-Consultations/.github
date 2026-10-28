@@ -739,8 +739,30 @@ def verify_receiver_at_ref(
     receiver_ref: str,
     token: str | None,
     reusable_admission_releases: set[str] | None = None,
+    *, allow_disabled_legacy: bool = False,
 ) -> str:
     receiver_commit = fetch_ref_commit("Young-Consultations/.github", receiver_ref, token)
+    frozen = {
+        "ai-sdlc-v2.3.1": ("fa9f8caa4e1416528167c45cb03a2bad6b3c7867", "cf8e441d1cd2e49e818542ea54275382acb99733"),
+        "ai-sdlc-v2.3.2": ("5738ace3ee90dde11336f8f8099e64e5645f7139", "84e0f54967554b4425841d9057c5cd520e866032"),
+    }
+    if allow_disabled_legacy and receiver_ref in frozen:
+        commit, workflow_blob = frozen[receiver_ref]
+        if receiver_commit != commit or reusable_admission_releases:
+            raise CompatibilityError("disabled historical receiver identity or reuse policy changed")
+        # Historical validation only: fetch every executable/policy dependency
+        # at the frozen commit, never through a potentially moving tag.
+        expected = {
+            ".github/workflows/codex-result-receiver.yml": workflow_blob,
+            "actions/codex-result-receiver/action.yml": "f765135b1f7b88b43e83625999ea4d085dc86bc1",
+            "scripts/codex_result_receiver.py": "9803dc3dfe46f6201d01402e322e3b385f900f80",
+            "config/codex-result-trust.json": "69385cb554e248545f967d094108fbd1ce8b8573",
+            "contracts/execution-result.schema.json": "02ba5fd11b6903f50eccc283679c0b5ac85c4714",
+        }
+        for path, blob in expected.items():
+            if git_blob_sha1(fetch_content("Young-Consultations/.github", path, commit, token)) != blob:
+                raise CompatibilityError("disabled historical receiver bundle bytes changed")
+        return "CODEX_RESULT_TOKEN"
     source = fetch_workflow(
         "Young-Consultations/.github",
         ".github/workflows/codex-result-receiver.yml",
@@ -961,6 +983,7 @@ def verify_registry(
                 receiver_ref,
                 token,
                 set(entry["idempotency"]["reusable_admission_releases"]),
+                **({"allow_disabled_legacy": True} if not enabled else {}),
             )
             if supplied_secret != required_secret:
                 raise CompatibilityError(
