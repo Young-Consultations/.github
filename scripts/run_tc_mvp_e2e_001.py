@@ -269,6 +269,16 @@ class FakeTargetEffects:
         if not instructions:
             raise ValueError("instructions must not be empty")
 
+    def prepare_content(self, delivery_id: str, timeout_seconds: float) -> None:
+        """Model the admitted content setup without Git/network effects."""
+        if not delivery_id or timeout_seconds <= 0:
+            raise ValueError("invalid simulated content preparation")
+
+    def verify_recovered_publication(self, branch: str, pr: str, timeout_seconds: float) -> None:
+        """Model recovery verification without reading or mutating remote state."""
+        if not branch or not pr or timeout_seconds <= 0:
+            raise ValueError("invalid simulated publication recovery")
+
     def has_candidate_changes(self, timeout_seconds: float) -> bool:
         """Model a nonempty Codex change without touching the checkout."""
         return True
