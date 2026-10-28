@@ -1,20 +1,41 @@
 import base64
 import json
 import subprocess
+import pytest
 from pathlib import Path
 
 
 from scripts import generate_current_runtime, runtime_preflight
 
 
+@pytest.fixture(autouse=True)
+def published_preflight_fixture(request, monkeypatch):
+    # Keep deployed-mode regressions independent of the current candidate state.
+    if request.node.name not in {
+        "test_deployed_live_runtime_fails_before_cutover_and_accepts_exact_source_pin",
+        "test_published_runtime_does_not_use_candidate_bypass",
+        "test_missing_audit_token_reports_failed_credential_boundary",
+    }:
+        return
+    original = runtime_preflight.load
+    def load(path):
+        value = original(path)
+        if path == "release/current-runtime.json":
+            value["release_state"] = "published"
+            value["control_plane"].update(tag="ai-sdlc-v3.1.0", tag_published=True,
+                tag_commit_sha="e9d11fc99fee73d247c93699f058ed64786bd4c0")
+        return value
+    monkeypatch.setattr(runtime_preflight, "load", load)
+
+
 def test_current_runtime_record_is_generated_from_authoritative_state():
     path = Path("release/current-runtime.json")
     assert path.read_text(encoding="utf-8") == generate_current_runtime.render()
     value = json.loads(path.read_text(encoding="utf-8"))
-    assert value["release_state"] == "published"
-    assert value["control_plane"]["tag"] == "ai-sdlc-v3.1.0"
-    assert value["control_plane"]["tag_published"] is True
-    assert value["control_plane"]["tag_commit_sha"] == "e9d11fc99fee73d247c93699f058ed64786bd4c0"
+    assert value["release_state"] == "candidate"
+    assert value["control_plane"]["tag"] == "ai-sdlc-v4.0.0"
+    assert value["control_plane"]["tag_published"] is False
+    assert value["control_plane"]["tag_commit_sha"] is None
     assert value["activation"]["enabled_targets"] == [
         "Young-Consultations/consulting-playbook"
     ]
@@ -22,16 +43,16 @@ def test_current_runtime_record_is_generated_from_authoritative_state():
 
 def test_attested_published_release_passes_offline_runtime_publication_gate():
     result = subprocess.run(
-        ["python3", "scripts/runtime_preflight.py", "--offline"],
+        ["python3", "scripts/runtime_preflight.py", "--offline", "--candidate"],
         check=False, text=True, capture_output=True,
     )
     assert result.returncode == 0, result.stdout + result.stderr
     report = json.loads(result.stdout)
     assert report["status"] == "PASS"
     assert report["next_action"] == "run SIM"
-    assert report["release_state"] == "published"
+    assert report["release_state"] == "candidate"
     assert report["checks"][1] == {
-        "boundary": "release-publication", "status": "PASS",
+        "boundary": "release-publication", "status": "CANDIDATE",
     }
 
 
@@ -509,7 +530,7 @@ def test_missing_audit_token_reports_failed_credential_boundary(
     monkeypatch.setattr(
         runtime_preflight,
         "remote_tag_commit",
-        lambda tag: manifest["tag_commit_sha"],
+        lambda tag: "e9d11fc99fee73d247c93699f058ed64786bd4c0",
     )
     # Exercise the published deployed mode. A missing audit token must
     # independently fail both credential metadata and source-pin verification.

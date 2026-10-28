@@ -185,7 +185,7 @@ def test_receiver_accepts_reviewed_split_release_composition(tmp_path):
     ).accepted
 
 
-def test_bundled_3_1_0_policy_accepts_3_0_1_admission():
+def test_bundled_4_0_0_policy_accepts_3_0_1_admission():
     journal = FakeJournal()
     binding = {
         "contract_version": RESULT["contract_version"],
@@ -203,7 +203,7 @@ def test_bundled_3_1_0_policy_accepts_3_0_1_admission():
         SOURCE,
         RESULT["target_repository"],
         journal,
-        "ai-sdlc-v3.1.0",
+        "ai-sdlc-v4.0.0",
     ).accepted
 
 
