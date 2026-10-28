@@ -102,15 +102,22 @@ def test_scenario_e_router_rejects_conflicting_payload_for_delivery_id(tmp_path,
     monkeypatch.setenv("ROUTER_DELIVERY_LEDGER", str(ledger))
     monkeypatch.setenv("EXECUTION_INPUT", json.dumps(execution))
     monkeypatch.setenv("WORKFLOW_REF", "Young-Consultations/portfolio-tasks/.github/workflows/codex-execute.yml@codex-adapter-v2.3.2")
+    journal = []
+    dispatched = []
     def fake_run(cmd, **kwargs):
         if cmd[1:3] == ["api", "user"]:
             return subprocess.CompletedProcess(cmd, 0, stdout='{"login":"mightyjoe909"}')
         if "--slurp" in cmd:
-            return subprocess.CompletedProcess(cmd, 0, stdout="[[]]")
+            return subprocess.CompletedProcess(cmd, 0, stdout=json.dumps([journal]))
         if "--method" in cmd and "POST" in cmd:
+            posted = {"id": len(journal) + 1, "user": {"login": "mightyjoe909"},
+                      "body": next(arg[5:] for arg in cmd if arg.startswith("body="))}
+            journal.append(posted)
             return subprocess.CompletedProcess(
-                cmd, 0, stdout='{"id":1,"user":{"login":"mightyjoe909"}}'
+                cmd, 0, stdout=json.dumps(posted)
             )
+        if cmd[1:3] == ["workflow", "run"]:
+            dispatched.append(cmd)
         return subprocess.CompletedProcess(cmd, 0, stdout="")
     monkeypatch.setattr(subprocess, "run", fake_run)
     from scripts import codex_router
@@ -119,6 +126,7 @@ def test_scenario_e_router_rejects_conflicting_payload_for_delivery_id(tmp_path,
         repositories, {repository: True for repository in repositories}
     ))
     codex_router.dispatch()
+    assert len(dispatched) == 1
     changed = copy.deepcopy(execution); changed["instructions"] = "Altered immutable instructions."
     monkeypatch.setenv("EXECUTION_INPUT", json.dumps(changed))
     try:
@@ -127,6 +135,7 @@ def test_scenario_e_router_rejects_conflicting_payload_for_delivery_id(tmp_path,
         assert exc.code == 1
     else:
         raise AssertionError("conflict was not rejected")
+    assert len(dispatched) == 1
 
 
 def test_scenario_f_ambiguous_target_state_fails_closed():
