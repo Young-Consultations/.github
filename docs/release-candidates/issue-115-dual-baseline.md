@@ -79,3 +79,8 @@ Control-plane version classification must be assessed separately against its fin
 4. Complete candidate readiness, every registered target verification, no-effect SIM, current-commit CI and Codex or Copilot review before release-candidate merge. Follow with organization tag publication and the separate publication-attestation PR, then environment binding/source migration/deployed preflight and a separately approved fresh REAL identity.
 
 Issue #115 currently authorizes planning and no-cost verification only and explicitly excludes tag publication, registry/manifest activation, environment changes and REAL execution. This record advances that authorized preparation and presents concrete release decisions for approval. DEF-0125 remains investigating; finalized source #167 is not a reusable acceptance identity.
+
+
+## Owner approval and migration candidate, 2026-10-28
+
+The owner approved the preceding release classification/migration proposal. Proceed with major target `codex-adapter-v4.0.0` and coordinate the atomic organization release as `ai-sdlc-v4.0.0`; retain v2 payload schemas. Target migration PR: https://github.com/Young-Consultations/consulting-playbook/pull/97 at `8a0b3087229eb0da784a04d2bdaa9f47aaa7a072`. It pins both receiver and credential preflight to 4.0.0 and regenerates its pin/report. The earlier 405981a report digest remains historical evidence, not the digest for this new candidate. CI/review and release-aware receiver verification are required before target tagging. Approval covers release preparation/publication after those gates; environment changes and fresh REAL acceptance retain their separate operational gates.
