@@ -11,12 +11,12 @@ def test_current_published_release_is_structurally_coherent():
     assert validate_release.validate() == []
 
 
-def test_candidate_rejects_publication_and_passes_structural_candidate_gate():
+def test_attestation_passes_publication_and_rejects_candidate_gate():
     assert validate_release.validate() == []
-    assert validate_release.validate(require_publishable=True) == [
-        "publishable release must declare tag_published true"
+    assert validate_release.validate(require_publishable=True) == []
+    assert validate_release.validate(require_candidate_ready=True) == [
+        "candidate readiness requires an unpublished release without a tag commit"
     ]
-    assert validate_release.validate(require_candidate_ready=True) == []
 
 
 def test_published_release_requires_trusted_journal_authors(monkeypatch):
@@ -38,8 +38,8 @@ def test_mvp_fixture_targets_match_attested_published_manifest():
     manifest = json.loads((ROOT / "release/release-manifest.json").read_text(encoding="utf-8"))
     fixture = json.loads((ROOT / "tests/fixtures/mvp-v2/manifest.json").read_text(encoding="utf-8"))
     assert manifest["release_version"] == "4.0.0"
-    assert manifest["tag_published"] is False
-    assert manifest["tag_commit_sha"] is None
+    assert manifest["tag_published"] is True
+    assert manifest["tag_commit_sha"] == "6e51f058bf828b0732cb1b773ba1835acaa1d5cd"
     assert "immutable_reference" not in fixture
     assert "immutable_reference" not in manifest
     assert sorted(fixture["targets"]) == manifest["supported_targets"]

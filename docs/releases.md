@@ -128,7 +128,19 @@ required for a given registered repository.
 
 ## Current compatibility update
 
-Published and attested `ai-sdlc-v3.1.0` is the current immutable control-plane
+Published `ai-sdlc-v4.0.0` resolves to reviewed PR #116 merge commit
+`6e51f058bf828b0732cb1b773ba1835acaa1d5cd`. The separate publication attestation
+records that SHA and the generated published runtime. The matching immutable
+target `codex-adapter-v4.0.0` resolves to
+`84964d3ba099630cd5c6101e598bfca5433c74c5`, with report SHA-256
+`1eba66061a253c821110c274fdaebfd6442b0ca4fa4acb4f9761c250a6c9c13b`.
+V2 payload schemas remain unchanged. Protected environment authorization, source
+consumer migration, deployed preflight and separately approved fresh REAL
+acceptance remain subsequent gates; DEF-0125 stays investigating.
+
+### Historical 3.1.0 publication
+
+Published and attested `ai-sdlc-v3.1.0` is the preceding immutable control-plane
 compatibility release at reviewed PR #113 merge commit
 `e9d11fc99fee73d247c93699f058ed64786bd4c0`; separate attestation PR #114
 records that identity on `main`. The matching reviewed target is immutable

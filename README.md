@@ -12,8 +12,15 @@ package are released as one immutable compatibility unit. Current activation in
 that consumer compatibility unit. See [release, upgrade,
 deprecation, and rollback procedures](docs/releases.md).
 
-The attested [`ai-sdlc-v3.1.0` release](docs/releases/3.1.0.md) is the
-current immutable control-plane compatibility baseline, reviewed in
+The current published [`ai-sdlc-v4.0.0` release](docs/releases/4.0.0.md) resolves
+to reviewed PR #116 merge commit `6e51f058bf828b0732cb1b773ba1835acaa1d5cd`.
+The manifest/runtime record attest that immutable tag separately. Its target is
+`codex-adapter-v4.0.0` at `84964d3ba099630cd5c6101e598bfca5433c74c5`, with report
+SHA-256 `1eba66061a253c821110c274fdaebfd6442b0ca4fa4acb4f9761c250a6c9c13b`.
+Deployment and fresh REAL acceptance remain pending.
+
+The historical attested [`ai-sdlc-v3.1.0` release](docs/releases/3.1.0.md) was
+reviewed in
 [PR #113](https://github.com/Young-Consultations/.github/pull/113)
 and published at commit
 `e9d11fc99fee73d247c93699f058ed64786bd4c0`.
