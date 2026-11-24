@@ -364,3 +364,15 @@ def test_smoke_and_production_routes_select_modes_explicitly():
     assert "default: implement" in router
     assert "EXECUTION_MODE: ${{ inputs.execution-mode }}" in action
     assert "execution_mode: verify" in smoke
+
+
+def test_contract_ci_requires_pinned_actionlint():
+    workflow = yaml.safe_load(CONTRACT_WORKFLOW.read_text(encoding="utf-8"))
+    steps = workflow["jobs"]["static-contract-checks"]["steps"]
+    step = next(step for step in steps if step.get("name") == "Run pinned actionlint")
+    assert "if" not in step
+    assert not step.get("continue-on-error", False)
+    script = step["run"]
+    assert "set -euo pipefail" in script
+    assert "go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.7" in script
+    assert script.strip().endswith('"$GOBIN/actionlint"')

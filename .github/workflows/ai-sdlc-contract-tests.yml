@@ -212,14 +212,14 @@ jobs:
         run: |
           git diff --check
           git diff --check HEAD^ HEAD
-      - name: Run actionlint when available
+      - name: Run pinned actionlint
         shell: bash
         run: |
-          if command -v actionlint >/dev/null 2>&1; then
-            actionlint
-          else
-            echo '::notice::actionlint is not available on this runner and was not run.'
-          fi
+          set -euo pipefail
+          export GOBIN="$RUNNER_TEMP/actionlint-bin"
+          go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.7
+          "$GOBIN/actionlint" -version
+          "$GOBIN/actionlint"
       - name: Upload static-check report
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
