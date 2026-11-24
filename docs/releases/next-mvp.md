@@ -18,28 +18,12 @@ This is a functional interoperability MVP, not a production-readiness claim.
 
 ## Compatibility state for this increment
 
-The published immutable compatibility baseline remains `ai-sdlc-v2.3.2` at
-commit `5738ace3ee90dde11336f8f8099e64e5645f7139`, using payload
-`ai-sdlc-contract/v2` and fixture oracle `TC-MVP-CI-001` version 2.3.0.
-
-Implementation of `TC-MVP-E2E-001-SIM` with the actual result receiver exposed
-DEF-0032: the target legitimately returns `draft-pr-created` for the initial
-successful delivery and `duplicate-reused` when the same managed draft is found
-on redelivery, while the published receiver rejected every non-identical second
-result for a delivery as ambiguous. That contradiction prevents truthful REAL
-retry acceptance against 2.3.2.
-
-The corrective compatibility candidate is `ai-sdlc-v2.4.0`. The release policy
-classifies the added accepted receiver retry outcome as a backward-compatible
-MINOR change. It preserves the v2 payload schemas and narrows receiver retry
-semantics so `draft-pr-created -> duplicate-reused` is accepted as an idempotent
-no-op only when it represents the same stable managed-draft effect. Every other
-non-identical result remains ambiguous and fails closed. The 2.3.2 tag must not
-move or be reinterpreted.
-
-`TC-MVP-E2E-001-REAL` is blocked until 2.4.0 is published and the selected
-`consulting-playbook` target is bound by reviewed immutable evidence to a target
-workflow that consumes the 2.4.0 receiver.
+The current compatibility baseline and accepted live path are recorded in
+[4.0.0 release evidence](4.0.0.md). The payload remains
+`ai-sdlc-contract/v2` and fixture oracle version 2.3.0. Only consulting-playbook
+is enabled. Earlier 2.3.2/2.4.0 receiver correction and acceptance planning are
+historical; they do not authorize replay or target activation. The original
+MVP objective and human approval boundary remain unchanged.
 
 ## Business and user value
 

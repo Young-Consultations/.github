@@ -49,7 +49,7 @@ def test_attested_published_release_passes_offline_runtime_publication_gate():
     assert result.returncode == 0, result.stdout + result.stderr
     report = json.loads(result.stdout)
     assert report["status"] == "PASS"
-    assert report["next_action"] == "run SIM"
+    assert report["next_action"] == "run live Runtime Preflight; offline checks only"
     assert report["release_state"] == "published"
     assert report["checks"][1] == {
         "boundary": "release-publication", "status": "PASS",
@@ -149,6 +149,8 @@ def test_deployed_live_runtime_fails_before_cutover_and_accepts_exact_source_pin
     assert runtime_preflight.main() == 0
     accepted = json.loads(capsys.readouterr().out)
     assert accepted["status"] == "PASS"
+    assert "run immutable REAL preflight" in accepted["next_action"]
+    assert "run SIM" not in accepted["next_action"]
     assert {"boundary": "deployed-source-router-pin", "status": "PASS"} in accepted["checks"]
 
 
@@ -563,3 +565,34 @@ def test_remote_release_tag_resolves_annotated_tag(monkeypatch):
     ])
     monkeypatch.setattr(runtime_preflight, "api_one", lambda endpoint: next(values))
     assert runtime_preflight.remote_tag_commit("ai-sdlc-v3.0.0") == "c" * 40
+
+
+@pytest.mark.parametrize("status,category", [
+    (401, "authentication rejected"), (403, "access forbidden or rate limited"),
+    (404, "resource unavailable or inaccessible"), (429, "rate limited"),
+    (503, "GitHub service failure"),
+])
+def test_audit_http_failure_reports_only_safe_status(monkeypatch, status, category):
+    sentinel = "DO-NOT-PRINT-credential-or-response"
+    def unavailable(*args, **kwargs):
+        raise subprocess.CalledProcessError(
+            1, ["gh", "api", sentinel], output=sentinel,
+            stderr=f"gh: {sentinel} (HTTP {status})\n",
+        )
+    monkeypatch.setattr(runtime_preflight.subprocess, "run", unavailable)
+    errors = runtime_preflight.audit_credentials({"org/repo": {"secrets": {"X": "role"}}}, "audit-token")
+    errors += runtime_preflight.audit_result_sender_binding("audit-token")
+    errors += runtime_preflight.audit_source_router_pin("ai-sdlc-v4.0.0", "audit-token")
+    assert len(errors) == 3
+    assert all(f"HTTP {status}: {category}" in error for error in errors)
+    assert all(sentinel not in error and "audit-token" not in error for error in errors)
+
+
+def test_unknown_cli_failure_does_not_echo_output():
+    error = subprocess.CalledProcessError(1, ["gh", "private"], stderr="network unavailable private")
+    assert runtime_preflight.safe_failure(error) == "GitHub CLI request failed; HTTP status unavailable"
+    assert runtime_preflight.safe_failure(OSError("private")) == "GitHub CLI could not be executed"
+
+
+def test_candidate_guidance_preserves_sim_boundary():
+    assert runtime_preflight.success_guidance({}, offline=False, candidate=True) == "run SIM for the reviewed candidate; no REAL authorization"

@@ -25,7 +25,7 @@ stateDiagram-v2
 
 Terminal outcome variants include `succeeded`, `verified`, `duplicate-reused`, `ambiguous-rejected`, `cancelled`, `rejected`, and `failed` as supported by the active contract. Entry requires a schema-valid, identity-consistent result and required evidence. Terminal states cannot regress. Unknown/absent evidence remains awaiting, uncertain, or failed—not successful.
 
-### Published 3.1.0 pre-execution journal guard (deployment pending)
+### Historical published 3.1.0 pre-execution journal guard
 
 The immutable `ai-sdlc-v3.1.0` release at reviewed merge commit
 `e9d11fc99fee73d247c93699f058ed64786bd4c0`, recorded by separate
@@ -34,7 +34,7 @@ journal guard **before** any cost-bearing target executor operation. The
 compatible target implementation is immutable `codex-adapter-v3.1.0` at
 `4f15841efcba4883770b5e32c0582f733d73eb91`. Its tag and publication
 attestation do not establish source-consumer migration, deployed Runtime
-Preflight, or REAL acceptance; `portfolio-tasks` still pins 3.0.3. The
+Preflight, or REAL acceptance; at that stage `portfolio-tasks` still pinned 3.0.3. The [current 4.0.0 release](../releases/4.0.0.md) has separate live evidence. The
 published 3.1.0 deployed preflight must independently inspect the source
 router job on `portfolio-tasks@main` and **reject** the old pin until its
 separately approved migration is merged. A unique

@@ -2,9 +2,9 @@
 
 **Status:** Approved next-MVP acceptance design
 **Owner:** `Young-Consultations/.github`
-**Published and attested control-plane baseline:** `ai-sdlc-v3.1.0` / `ai-sdlc-contract/v2`, with target `codex-adapter-v3.1.0`.
-**Current source-consumer pin:** `ai-sdlc-v3.0.3`
-**Current live acceptance state:** **3.1.0 REAL acceptance not yet established.** The following is historical predecessor-only acceptance: REAL #154 proved the earlier initial path; REAL #156 exposed result-writer identity defect #83; REAL #159 exposed DEF-0073 and DEF-0086. Published and attested 3.0.3 at `f3229bfa4a06da963cae7c390c6075b4f6c12f7b` plus immutable `codex-adapter-v3.0.3` is the corrective composition. Deployed Runtime Preflight 36867504568 and immutable REAL readiness preflight 36867939797 passed, portfolio-tasks adopted 3.0.3 through PR #163, first #159 target run 36911342397 produced one managed draft PR #82 and source run 36911478182 projected one terminal result, and unchanged redelivery target run 36913463403 returned `duplicate-reused` for the same delivery/branch/PR before Codex with no second receiver/source visible effect. DEF-0073, DEF-0064, and DEF-0086 are resolved.
+**Published and attested control-plane baseline:** `ai-sdlc-v4.0.0` / `ai-sdlc-contract/v2`, with target `codex-adapter-v4.0.0`.
+**Current source-consumer pin:** `ai-sdlc-v4.0.0`
+**Current live acceptance state:** DEF-0125 accepted in the specific 4.0.0 live path. See [4.0.0 release evidence](../releases/4.0.0.md). The following is historical predecessor-only acceptance: REAL #154 proved the earlier initial path; REAL #156 exposed result-writer identity defect #83; REAL #159 exposed DEF-0073 and DEF-0086. Published and attested 3.0.3 at `f3229bfa4a06da963cae7c390c6075b4f6c12f7b` plus immutable `codex-adapter-v3.0.3` is the corrective composition. Deployed Runtime Preflight 36867504568 and immutable REAL readiness preflight 36867939797 passed, portfolio-tasks adopted 3.0.3 through PR #163, first #159 target run 36911342397 produced one managed draft PR #82 and source run 36911478182 projected one terminal result, and unchanged redelivery target run 36913463403 returned `duplicate-reused` for the same delivery/branch/PR before Codex with no second receiver/source visible effect. DEF-0073, DEF-0064, and DEF-0086 are resolved.
 **Initial enabled target:** `Young-Consultations/consulting-playbook`
 
 > **Historical 2.4.5 completion addendum:** REAL issue #151 exposed the 2.4.4 target publication-transport defect after successful Codex execution. The immutable repair is `codex-adapter-v2.4.5` (`4f062ca73acfc3458f0d690bf1c7687bafd0a8eb`) with conformance report SHA256 `8a7e3479a8768050b7621cec4d7663d8ab60d266291cb2d1027886200799c2fc`. Control-plane release `ai-sdlc-v2.4.5` resolves to `afe09d320268581bc83021cbfc80bf2a0f0bff91`; publication attestation merged, deployed Runtime Preflight run 36277959203 and immutable REAL preflight run 36278028013 passed, portfolio-tasks advanced to 2.4.5, and fresh issue #154 completed the live path through target run 36279165335 and managed draft PR #66. See [2.4.5 release procedure](../releases/2.4.5.md).
@@ -49,7 +49,7 @@
 > acceptance sequence has completed. See
 > [3.0.3 release procedure](../releases/3.0.3.md).
 >
-## 3.1.0 post-tag publication and pending REAL acceptance
+## Historical 3.1.0 post-tag publication and pending REAL acceptance
 
 The immutable control-plane `ai-sdlc-v3.1.0` tag resolves to reviewed
 merge commit `e9d11fc99fee73d247c93699f058ed64786bd4c0`;
@@ -80,6 +80,12 @@ are **historical** DEF-0086 acceptance, not a current 3.1.0 live procedure
 or permission to replay that delivery.
 
 ## Purpose
+
+The mode definitions and approval boundaries remain applicable. The version-specific
+3.0.x and 3.1.0 procedures below are retained as historical evidence, not a
+request to replay an earlier delivery or migrate the current source backward.
+For current release identity and accepted scope, use [4.0.0](../releases/4.0.0.md).
+
 
 > **Historical 2.4.3 operating addendum:** At that stage, the 2.4.2 repair release was the published
 > rollback baseline. The planned REAL gate required 2.4.3 and
