@@ -97,6 +97,10 @@ class CompatibilityError(ValueError):
     """An actionable registry or target compatibility failure."""
 
 
+class EvidenceUnavailable(CompatibilityError):
+    """Remote evidence could not be obtained; compatibility is indeterminate."""
+
+
 if yaml is not None:
     class GithubSafeLoader(yaml.SafeLoader):
         """Safe YAML loader which does not interpret GitHub's `on` key as boolean."""
@@ -662,9 +666,10 @@ def verify_interface(source: str) -> str:
 
 def fetch_json(url: str, token: str | None = None) -> Any:
     headers = {"Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28"}
-    if token:
-        headers["Authorization"] = f"Bearer {token}"
-    debug(f"requesting {url} (authentication: {'configured' if token else 'not configured'})")
+    if not token or not token.strip():
+        raise EvidenceUnavailable("GitHub authentication is not configured; no request sent")
+    headers["Authorization"] = f"Bearer {token}"
+    debug(f"requesting {url} (authentication: configured)")
     try:
         with urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=30) as response:
             return json.load(response)
@@ -675,7 +680,7 @@ def fetch_json(url: str, token: str | None = None) -> Any:
         safe_reason = re.sub(
             r"(?i)(authorization|token|secret|password)[:=][^\s,]+", r"\1=[redacted]", safe_reason
         )
-        raise CompatibilityError(f"GitHub evidence is unavailable ({url}): {status}{safe_reason}") from exc
+        raise EvidenceUnavailable(f"GitHub evidence is unavailable ({url}): {status}{safe_reason}") from exc
 
 
 def fetch_content(repository: str, path: str, ref: str, token: str | None = None) -> bytes:
@@ -973,6 +978,8 @@ def verify_registry(
             evidence = validate_conformance_record(repository, entry, required=True)
             if evidence is None:  # Defensive: required=True must never return None.
                 raise CompatibilityError(f"{repository}: reviewed TC-MVP-CI-001 evidence is missing")
+            if not token or not token.strip():
+                raise EvidenceUnavailable("GitHub authentication is not configured; no request sent")
             commit = fetch_tag_commit(repository, ref, token)
             if commit != evidence["adapter_commit_sha"]:
                 raise CompatibilityError("adapter tag does not resolve to the reviewed adapter commit")
@@ -991,6 +998,8 @@ def verify_registry(
                 )
             verify_conformance_report(repository, ref, path, evidence, token)
             row["result"] = "pass"
+        except EvidenceUnavailable as exc:
+            row["result"] = f"blocked: {exc}"
         except CompatibilityError as exc:
             row["result"] = f"fail: {exc}"
         debug(f"{repository}: {row['result']} ({row['transport_interface']})")

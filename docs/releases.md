@@ -48,6 +48,13 @@ validated keys; changing their meaning is breaking.
    capability registry.
 3. Explicitly verify every registered target with
    `python scripts/verify_release_target_workflows.py --repository OWNER/REPOSITORY`.
+   Scheduled, manual and PR compatibility checks use the built-in read-only
+   Actions token (`GH_TOKEN`); local live checks require an explicitly supplied
+   read-only `GH_TOKEN` or `GITHUB_TOKEN`. Never use a router/dispatch token.
+   Missing authentication, rate limits and API outages block verification
+   (indeterminate evidence), not proof of incompatibility. Run the manual
+   compatibility workflow with `repository: all` on the candidate branch to
+   verify cross-repository access before acceptance. No activation changes.
    This release-aware command delegates to the normal immutable verifier first.
    Before the control-plane tag exists, it may verify the current reviewed
    checkout only when the target pins the exact tag named by the current release

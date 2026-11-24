@@ -331,6 +331,11 @@ def test_manual_target_compatibility_can_verify_disabled_targets():
     assert "repository:" in text
     assert "default: all" in text
     assert "SELECTED_REPOSITORY: ${{ inputs.repository || 'all' }}" in text
+    step = text.split("- name: Verify selected registered target workflows", 1)[1].split("- name: Upload compatibility report", 1)[0]
+    assert "if: ${{ github.event_name != 'pull_request' }}" in step
+    assert "GH_TOKEN: ${{ github.token }}" in step
+    assert "secrets." not in step
+    assert "permissions:\n  contents: read\n  actions: read" in text
     for repository in (
         "Young-Consultations/.github",
         "Young-Consultations/portfolio-tasks",
@@ -359,3 +364,15 @@ def test_smoke_and_production_routes_select_modes_explicitly():
     assert "default: implement" in router
     assert "EXECUTION_MODE: ${{ inputs.execution-mode }}" in action
     assert "execution_mode: verify" in smoke
+
+
+def test_contract_ci_requires_pinned_actionlint():
+    workflow = yaml.safe_load(CONTRACT_WORKFLOW.read_text(encoding="utf-8"))
+    steps = workflow["jobs"]["static-contract-checks"]["steps"]
+    step = next(step for step in steps if step.get("name") == "Run pinned actionlint")
+    assert "if" not in step
+    assert not step.get("continue-on-error", False)
+    script = step["run"]
+    assert "set -euo pipefail" in script
+    assert "go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.7" in script
+    assert script.strip().endswith('"$GOBIN/actionlint"')

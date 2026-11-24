@@ -769,7 +769,7 @@ def test_fetch_failure_reports_http_status_and_url():
     with patch.object(checker.urllib.request, "urlopen", side_effect=error), pytest.raises(
         checker.CompatibilityError, match=r"HTTP 404: Not Found"
     ) as raised:
-        checker.fetch_workflow("org/repo", ".github/workflows/codex-execute.yml", "missing")
+        checker.fetch_workflow("org/repo", ".github/workflows/codex-execute.yml", "missing", "fake-token")
 
     assert "api.github.com/repos/org/repo/contents/" in str(raised.value)
 
@@ -867,7 +867,7 @@ def test_one_incompatible_target_does_not_block_unrelated_target(tmp_path):
         patch.object(checker, "verify_receiver_at_ref", return_value="CODEX_RESULT_TOKEN"),
         patch.object(checker, "verify_conformance_report"),
     ):
-        report = checker.verify_registry(entries, None)
+        report = checker.verify_registry(entries, "fake-token")
     assert report[0]["result"] == "pass"
     assert report[1]["result"].startswith("fail:")
 
@@ -902,3 +902,31 @@ def test_migrated_target_entries_use_v2_and_expected_paths():
         and item["conformance"]["activation_evidence_sufficient"] is True
         for name, item in entries.items()
     )
+
+
+@pytest.mark.parametrize("token", [None, "", "   "])
+def test_live_missing_authentication_is_blocked_without_requests(tmp_path, token):
+    entries = checker.load_registry(registry(tmp_path, {"org/repo": entry()}))
+    with patch.object(checker.urllib.request, "urlopen") as network:
+        report = checker.verify_registry(entries, token)
+        with pytest.raises(checker.EvidenceUnavailable, match="authentication is not configured"):
+            checker.fetch_json("https://api.github.test/evidence", token)
+        network.assert_not_called()
+    assert report[0]["result"].startswith("blocked: GitHub authentication is not configured")
+    assert report[0]["transport_interface"] == "not evaluated"
+
+
+@pytest.mark.parametrize("status, reason", [(401, "Unauthorized"), (403, "rate limit exceeded"), (429, "Too Many Requests"), (503, "Unavailable")])
+def test_live_http_evidence_failure_is_blocked_not_incompatible(tmp_path, monkeypatch, status, reason):
+    registry_path = registry(tmp_path, {"org/repo": entry()})
+    activation_path = activation(tmp_path, {"org/repo": True})
+    report_path = tmp_path / "report.json"
+    monkeypatch.setenv("GH_TOKEN", "fake-token")
+    error = checker.urllib.error.HTTPError("https://api.github.test/evidence", status, reason, {}, None)
+    with patch.object(checker.urllib.request, "urlopen", side_effect=error) as network:
+        assert checker.main(["--registry", str(registry_path), "--activation", str(activation_path), "--report", str(report_path)]) == 1
+        network.assert_called_once()
+    row = json.loads(report_path.read_text())["targets"][0]
+    assert row["result"].startswith("blocked: GitHub evidence is unavailable")
+    assert f"HTTP {status}:" in row["result"]
+    assert row["transport_interface"] == "not evaluated"
