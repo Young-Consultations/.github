@@ -90,7 +90,7 @@ SIM is repeatable no-real-effects evidence. It:
   exactly one source projection, and conflicting duplicate rejection;
 - asserts zero real Codex, branch, commit, push, PR, merge, release, deployment,
   production, or secret-output effects;
-- records published baseline 2.3.2, candidate 2.4.0, target adapter identity,
+- records the applicable published or candidate release, exact target adapter identity,
   and `real_acceptance_satisfied: false`.
 
 SIM may run in PR CI and by manual dispatch. Passing SIM is required before REAL
@@ -110,11 +110,11 @@ execution trigger.
 
 Before that human action, REAL preflight must fail closed unless:
 
-- `ai-sdlc-v2.4.0` is published;
+- the selected reviewed immutable control-plane release is published and attested;
 - `consulting-playbook` is still the sole enabled target;
 - the registry binds the exact immutable consulting adapter and its passing
   conformance report;
-- that target workflow consumes the 2.4.0 result receiver;
+- that target workflow consumes the reviewed release-bound result receiver;
 - fresh SIM evidence passes and explicitly does not claim REAL acceptance;
 - required credentials, source revision/approval, harmless scope, and
   draft-only publication policy are confirmed.
@@ -124,7 +124,9 @@ one delivery-owned branch, and exactly one managed draft PR. It must never
 merge, release generated work, deploy, change repository/organization settings,
 or perform production operations.
 
-## Release and target coordination before REAL
+## Historical 2.4.0 release and target coordination before REAL
+
+This completed predecessor planning sequence is retained for historical context, not current release instructions. Use the current release record and approved release procedure for new work.
 
 PR #54 prepares the control-plane 2.4.0 candidate with `tag_published: false`.
 It is not itself the live acceptance run. After that candidate is reviewed and
@@ -219,10 +221,10 @@ reviewed passing evidence.
 - `TC-MVP-E2E-001-SIM` passes against the exact immutable adapter of the sole
   enabled target and the candidate receiver with all prohibited real-effect
   counters at zero.
-- Published 2.3.2 remains immutable and 2.4.0 is published only after the
-  corrected receiver and selected target binding pass release governance.
-- REAL preflight fails before paid/mutating effects while 2.4.0 is unpublished
-  or the target receiver pin is stale.
+- Historical published tags remain immutable; new release publication follows
+  reviewed receiver and selected target binding evidence.
+- REAL preflight fails before paid/mutating effects while the selected release
+  is unpublished or the target receiver pin is stale.
 - One intentionally approved `TC-MVP-E2E-001-REAL` run ends in one validated
   draft PR and one correlated source projection.
 - Redelivery returns/reuses the same managed draft and creates neither a second
@@ -235,10 +237,10 @@ reviewed passing evidence.
 
 ## Risks and remaining governance dependencies
 
-Remaining work before REAL is implementation/release governance, not an open
-architecture decision: target-side receiver repin, new immutable adapter
-evidence, registry reconciliation, final 2.4.0 publication, credential review,
-and retention/reconciliation settings confirmation.
+The 4.0.0 live path has been demonstrated as recorded in the release evidence.
+Any further REAL scenario requires current release/readiness evidence and a
+separate human approval. Remaining retention/reconciliation settings and wider
+target enablement are separate governance work.
 
 Risks remain label/provenance drift, incompatible target adapters, ambiguous
 delivery acknowledgement, duplicate publication, result loss, excessive

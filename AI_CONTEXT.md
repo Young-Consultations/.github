@@ -468,14 +468,14 @@ reviewed predecessor needed to recover the already-admitted #159 delivery, and
 accepts 3.0.2 for new admissions after source adoption. Unsupported release
 combinations remain fail-closed.
 
-Portfolio-tasks now consumes 3.0.2 after the required deployed preflights.
+At that historical stage portfolio-tasks consumed 3.0.2 after the required deployed preflights.
 Source reconciliation run 36666315992 then preserved #159's original trusted
 3.0.1 admission and cleared the queued state without fabricating a terminal
 result. That recovery exposed DEF-0086 at the router's cross-release admission
 reuse boundary. Published 3.0.3 must pass deployed Runtime Preflight and
 immutable REAL preflight and be source-adopted before #159 is reauthorized.
 Controlled REAL terminal projection and unchanged same-delivery redelivery
-remain required before closing the applicable acceptance defects.
+were required before closing the applicable acceptance defects and were subsequently demonstrated on the specific #159 path.
 
 ## 3.0.1 published Runtime Preflight organization-secret repair
 

@@ -98,7 +98,8 @@ be reinterpreted by rewriting published tags. The tagged 3.1.0 control-plane
 commit and independently reviewed target adapter are immutable;
 publication attestation is recorded in merged PR #114. The source-consumer
 migration, deployed Runtime Preflight and separately governed REAL
-authorization remain outstanding.
+authorization were outstanding at that historical stage. The current 4.0.0
+acceptance record supersedes those pending deployment statements.
 
 ## Workflow compatibility matrix
 
