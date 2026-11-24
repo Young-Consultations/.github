@@ -331,6 +331,11 @@ def test_manual_target_compatibility_can_verify_disabled_targets():
     assert "repository:" in text
     assert "default: all" in text
     assert "SELECTED_REPOSITORY: ${{ inputs.repository || 'all' }}" in text
+    step = text.split("- name: Verify selected registered target workflows", 1)[1].split("- name: Upload compatibility report", 1)[0]
+    assert "if: ${{ github.event_name != 'pull_request' }}" in step
+    assert "GH_TOKEN: ${{ github.token }}" in step
+    assert "secrets." not in step
+    assert "permissions:\n  contents: read\n  actions: read" in text
     for repository in (
         "Young-Consultations/.github",
         "Young-Consultations/portfolio-tasks",

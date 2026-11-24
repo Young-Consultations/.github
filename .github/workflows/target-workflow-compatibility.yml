@@ -57,7 +57,7 @@ jobs:
       - name: Verify selected registered target workflows
         if: ${{ github.event_name != 'pull_request' }}
         env:
-          GH_TOKEN: ${{ secrets.CODEX_ROUTER_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
           SELECTED_REPOSITORY: ${{ inputs.repository || 'all' }}
         shell: bash
         run: |
