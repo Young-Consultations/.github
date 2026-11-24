@@ -17,7 +17,9 @@ to reviewed PR #116 merge commit `6e51f058bf828b0732cb1b773ba1835acaa1d5cd`.
 The manifest/runtime record attest that immutable tag separately. Its target is
 `codex-adapter-v4.0.0` at `84964d3ba099630cd5c6101e598bfca5433c74c5`, with report
 SHA-256 `1eba66061a253c821110c274fdaebfd6442b0ca4fa4acb4f9761c250a6c9c13b`.
-Deployment and fresh REAL acceptance remain pending.
+Deployment, source migration and DEF-0125 live acceptance are complete for the
+sole enabled consulting target. See the [current release evidence](docs/releases/4.0.0.md).
+Runtime Preflight recovery is documented in [the release runbook](docs/releases.md#runtime-preflight-credential-recovery).
 
 The historical attested [`ai-sdlc-v3.1.0` release](docs/releases/3.1.0.md) was
 reviewed in
@@ -36,13 +38,9 @@ cost-bearing execution and permits prior managed-draft effects only through
 ownership-verified reuse. The existing `ai-sdlc-contract/v2` payloads remain
 unchanged.
 
-**Source-consumer migration is still pending.** The `portfolio-tasks` source
-continues to pin the previously published `ai-sdlc-v3.0.3` release through
-merged PR #163. A separate source repin, deployed Runtime Preflight and
-controlled new-identity REAL acceptance are required, and independent
-[consulting-playbook #93](https://github.com/Young-Consultations/consulting-playbook/issues/93)
-must be assessed first. Never re-run the finalized failed delivery from
-[.github issue #111](https://github.com/Young-Consultations/.github/issues/111).
+The source now consumes `ai-sdlc-v4.0.0` via portfolio PR #169. Historical
+3.1.0 and 3.0.3 evidence below is not current deployment authority. Never
+replay finalized failed deliveries, including source #167 or #170.
 
 For historical evidence, [published 3.0.3](docs/releases/3.0.3.md) at
 `f3229bfa4a06da963cae7c390c6075b4f6c12f7b` repaired

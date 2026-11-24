@@ -20,6 +20,35 @@ def load(relative: str) -> dict[str, Any]:
     return json.loads((ROOT / relative).read_text(encoding="utf-8"))
 
 
+def safe_failure(exc: Exception) -> str:
+    """Report fixed categories, never raw CLI output or response data."""
+    if isinstance(exc, subprocess.CalledProcessError):
+        stderr = exc.stderr if isinstance(exc.stderr, str) else ""
+        statuses = set(re.findall(r"(?m)^gh: [^\r\n]*\(HTTP ([1-5][0-9]{2})\)\s*$", stderr))
+        if len(statuses) == 1:
+            status = statuses.pop()
+            category = {
+                "401": "authentication rejected; check credential expiry or revocation",
+                "403": "access forbidden or rate limited; check approved scope",
+                "404": "resource unavailable or inaccessible",
+                "429": "rate limited",
+            }.get(status, "GitHub service failure" if status.startswith("5") else "API request rejected")
+            return f"HTTP {status}: {category}"
+        return "GitHub CLI request failed; HTTP status unavailable"
+    if isinstance(exc, OSError):
+        return "GitHub CLI could not be executed"
+    return "invalid or unavailable GitHub evidence"
+
+
+def success_guidance(runtime: dict[str, Any], *, offline: bool, candidate: bool) -> str:
+    if offline:
+        return "run live Runtime Preflight; offline checks only"
+    if candidate:
+        return "run SIM for the reviewed candidate; no REAL authorization"
+    return (f"review {runtime['control_plane']['tag']} acceptance evidence; if REAL readiness is outstanding, "
+            "run immutable REAL preflight before separate human approval")
+
+
 def api(endpoint: str, *, token: str | None = None) -> Any:
     env = None if token is None else {**os.environ, "GH_TOKEN": token}
     completed = subprocess.run(
@@ -149,10 +178,10 @@ def audit_result_sender_binding(audit_token: str) -> list[str]:
             "PORTFOLIO_RESULT_SENDERS",
             audit_token,
         )
-    except (subprocess.CalledProcessError, json.JSONDecodeError, ValueError) as exc:
+    except (subprocess.CalledProcessError, OSError, json.JSONDecodeError, ValueError) as exc:
         return [
             "credentials: cannot inspect Young-Consultations/portfolio-tasks "
-            f"variable PORTFOLIO_RESULT_SENDERS: {exc}"
+            f"variable PORTFOLIO_RESULT_SENDERS: {safe_failure(exc)}"
         ]
 
     actual = {
@@ -200,10 +229,10 @@ def audit_source_router_pin(expected_tag: str, audit_token: str) -> list[str]:
         encoded = "".join(body["content"].split())
         source = base64.b64decode(encoded, validate=True).decode("utf-8")
     except (
-        subprocess.CalledProcessError, json.JSONDecodeError,
+        subprocess.CalledProcessError, OSError, json.JSONDecodeError,
         UnicodeError, binascii.Error, ValueError, KeyError,
     ) as exc:
-        return [f"source-pin: cannot verify source workflow on main: {exc}"]
+        return [f"source-pin: cannot verify source workflow on main: {safe_failure(exc)}"]
 
     # Identify only the actual route job's reusable-workflow call. Do not
     # accept a correct ref in a comment or in an unrelated job as proof.
@@ -225,7 +254,7 @@ def audit_source_router_pin(expected_tag: str, audit_token: str) -> list[str]:
         return [
             "source-pin: portfolio-tasks main route job must invoke "
             f"the exact immutable {expected_tag} router; "
-            "an earlier/different pin is not deployed 3.1.0 evidence"
+            "an earlier/different pin is not deployed release evidence"
         ]
     return []
 
@@ -257,8 +286,8 @@ def audit_credentials(roles: dict[str, Any], audit_token: str) -> list[str]:
                     audit_token,
                     environment=environment,
                 )
-            except (subprocess.CalledProcessError, json.JSONDecodeError) as exc:
-                failures.append(f"credentials: cannot inspect {label}: {exc}")
+            except (subprocess.CalledProcessError, OSError, json.JSONDecodeError) as exc:
+                failures.append(f"credentials: cannot inspect {label}: {safe_failure(exc)}")
                 continue
             for name in values.get("secrets", {}):
                 if name in actual_secrets:
@@ -274,12 +303,13 @@ def audit_credentials(roles: dict[str, Any], audit_token: str) -> list[str]:
                     )
                 except (
                     subprocess.CalledProcessError,
+                    OSError,
                     json.JSONDecodeError,
                     ValueError,
                 ) as exc:
                     failures.append(
                         f"credentials: cannot verify {label} secret {name} "
-                        f"through organization scope: {exc}"
+                        f"through organization scope: {safe_failure(exc)}"
                     )
                     continue
                 if not selected_org_secret:
@@ -323,8 +353,8 @@ def main() -> int:
         expected_commit = runtime["control_plane"].get("tag_commit_sha")
         try:
             actual_commit = remote_tag_commit(runtime["control_plane"]["tag"])
-        except (subprocess.CalledProcessError, json.JSONDecodeError, ValueError) as exc:
-            failures.append(f"release-tag: cannot resolve remote tag: {exc}")
+        except (subprocess.CalledProcessError, OSError, json.JSONDecodeError, ValueError) as exc:
+            failures.append(f"release-tag: cannot resolve remote tag: {safe_failure(exc)}")
         else:
             if actual_commit != expected_commit:
                 failures.append(
@@ -375,7 +405,7 @@ def main() -> int:
         "release_state": runtime["release_state"],
         "checks": checks,
         "failures": failures,
-        "next_action": "run SIM" if not failures else failures[0],
+        "next_action": success_guidance(runtime, offline=args.offline, candidate=args.candidate) if not failures else failures[0],
     }
     rendered = json.dumps(result, indent=2, sort_keys=True) + "\n"
     if args.output:

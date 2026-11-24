@@ -37,14 +37,13 @@ group. The target workflow applies the canonical group with
 
 ## Caller
 
-The following caller example remains the **currently deployed portfolio-tasks
-source pin** (3.0.3); it is not a recommendation to skip the separately reviewed
-3.1.0 source migration.
+The following caller example reflects the deployed `portfolio-tasks` source
+pin to 4.0.0 (portfolio PR #169).
 
 ```yaml
 jobs:
   route:
-    uses: Young-Consultations/.github/.github/workflows/codex-router.yml@ai-sdlc-v3.0.3
+    uses: Young-Consultations/.github/.github/workflows/codex-router.yml@ai-sdlc-v4.0.0
     permissions:
       contents: read
       actions: read
@@ -61,20 +60,13 @@ tokens are supported without calling the user-only `GET /user` endpoint. On
 redelivery, only an identical marker written by that same author is reused;
 untrusted lookalike comments are never admission authority.
 
-The attested [3.1.0 release](releases/3.1.0.md) is the latest published
-control-plane compatibility unit at reviewed PR #113 merge commit
-`e9d11fc99fee73d247c93699f058ed64786bd4c0` and separate publication-
-attestation PR #114. The registered target for this release is immutable
-`codex-adapter-v3.1.0` at
-`4f15841efcba4883770b5e32c0582f733d73eb91`. The 3.1.0 preflight
-checks trusted terminal journal evidence before cost-bearing execution and
-permits prior managed draft results only through verified reuse. Deployed
-Runtime Preflight, source-consumer migration and REAL acceptance are **not
-complete**, and no replay of the failed delivery from issue #111 is authorized.
+Current release and source deployment: see [4.0.0 evidence](releases/4.0.0.md).
+Only the consulting target is enabled. The 3.1.0 terminal-result guard is
+historical predecessor evidence; no replay of a finalized failure is authorized.
 
 Historical [3.0.3 release](releases/3.0.3.md) is immutable at reviewed PR #104
 merge commit `f3229bfa4a06da963cae7c390c6075b4f6c12f7b`.
-Portfolio-tasks still invokes 3.0.3 through merged PR #163. Its historical
+Portfolio-tasks previously invoked 3.0.3 through merged PR #163. Its historical
 deployed Runtime Preflight 36867504568, REAL readiness preflight 36867939797
 and #159 unchanged redelivery acceptance prove the **older**
 predecessor-admission recovery (DEF-0086), not 3.1.0 REAL readiness.

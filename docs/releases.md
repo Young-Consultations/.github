@@ -141,9 +141,55 @@ records that SHA and the generated published runtime. The matching immutable
 target `codex-adapter-v4.0.0` resolves to
 `84964d3ba099630cd5c6101e598bfca5433c74c5`, with report SHA-256
 `1eba66061a253c821110c274fdaebfd6442b0ca4fa4acb4f9761c250a6c9c13b`.
-V2 payload schemas remain unchanged. Protected environment authorization, source
-consumer migration, deployed preflight and separately approved fresh REAL
-acceptance remain subsequent gates; DEF-0125 stays investigating.
+V2 payload schemas remain unchanged. Published `ai-sdlc-v4.0.0` at `6e51f058bf828b0732cb1b773ba1835acaa1d5cd` is attested by PR #117. Portfolio PR #169 migrated the source pin to 4.0.0; only `consulting-playbook` is enabled, at immutable `codex-adapter-v4.0.0` (`84964d3ba099630cd5c6101e598bfca5433c74c5`). The deployed Runtime Preflight and immutable REAL readiness passed in runs [40800598820](https://github.com/Young-Consultations/.github/actions/runs/40800598820) and [40800767847](https://github.com/Young-Consultations/.github/actions/runs/40800767847). Fresh [source #171](https://github.com/Young-Consultations/portfolio-tasks/issues/171) and [target run 40802447762](https://github.com/Young-Consultations/consulting-playbook/actions/runs/40802447762) established DEF-0125 executor/current-content separation, one model invocation, one managed draft and correlated result. [Consulting PR #99](https://github.com/Young-Consultations/consulting-playbook/pull/99) merged following review; its [acceptance journal](https://github.com/Young-Consultations/consulting-playbook/blob/main/ai-sdlc/engineering-journal/2026-10-28-def-0125-live-acceptance.md) records the October 28 closure. This is specific live-path evidence, not acceptance of terminal-failure replay (#111), other target activation, or future REAL execution. Never replay finalized sources #167 or #170.
+
+
+
+## Runtime Preflight credential recovery
+
+For deployed verification use `runtime-preflight.yml` on `main`, with
+`candidate_mode=false`. The built-in Actions token checks the immutable
+release tag; `PREFLIGHT_AUDIT_TOKEN` is a separate read-only credential
+for required repository/environment/organization metadata, sender binding and
+the source router pin. The audit never reads secret values. Metadata PASS
+does not prove that every execution credential is valid for its actual role.
+
+If verification fails, inspect the fixed HTTP category and affected scope.
+401 indicates rejected authentication (check expiration or revocation); 403
+can indicate forbidden access or rate limiting; 404 means the resource is
+unavailable or inaccessible; 429 indicates rate limiting; 5xx indicates
+service failure. Unknown CLI failures are indeterminate. Do not weaken
+verification, retry repeatedly, or substitute router credentials.
+
+For an expired PAT, the owner regenerates it in GitHub's fine-grained PAT
+settings, preserving the already reviewed repository selections, read-only
+audit permissions and expiration policy. Update the existing secret at its
+actual repository or selected-organization scope. Do not add duplicate
+secrets, widen permissions, or print values. For an existing repository
+secret, an authenticated administrator may use the interactive CLI:
+
+```bash
+gh secret set PREFLIGHT_AUDIT_TOKEN --repo Young-Consultations/.github
+gh workflow run runtime-preflight.yml --repo Young-Consultations/.github --ref main -f candidate_mode=false
+```
+
+Use the existing organization secret settings instead if that is the
+approved storage scope. Review credential roles in
+[the manifest](../config/codex-credential-roles.json) and
+[Security Architecture](architecture/SecurityArchitecture.md).
+Do not rotate the GitHub App private key, protected provider secret or
+Personal Ops credential as a side effect. Verify every affected role with
+its existing least-effect gate before a separately approved REAL delivery.
+Record expiration dates without secret material and plan renewal before expiry.
+
+On November 24, 2026, [run 45502035833](https://github.com/Young-Consultations/.github/actions/runs/45502035833)
+failed audit metadata and source-pin retrieval; the owner observed an expired
+audit PAT. Following renewal, [run 45507185255](https://github.com/Young-Consultations/.github/actions/runs/45507185255)
+passed all five boundaries at unchanged main `dd9d4b4fed70d0316d7f84d338ef7041a4e06859`.
+This establishes recovery, not new REAL acceptance. A successful deployed
+preflight directs the operator to the applicable release acceptance evidence;
+run immutable REAL preflight only if readiness remains outstanding. Offline
+checks and candidate SIM never authorize REAL.
 
 ### Historical 3.1.0 publication
 
@@ -159,9 +205,7 @@ The receiver supports reviewed admissions 3.0.1, 3.0.2, 3.0.3, and 3.1.0;
 the new terminal-receipt preflight rejects re-execution after trusted terminal
 failure, limiting prior managed draft results to ownership-verified reuse.
 Release and attestation do **not** establish deployed Runtime Preflight, source
-adoption or REAL acceptance. The source consumer still pins 3.0.3, and
-independent consulting-playbook content-baseline defect #93 must be assessed
-before any new-identity REAL dispatch.
+adoption or REAL acceptance. At that historical stage the source still pinned 3.0.3 and #93 required assessment. Both have been superseded by the 4.0.0 migration and specific live acceptance above; #111 remains separate.
 
 ### Historical 3.0.3 publication and source adoption
 

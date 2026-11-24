@@ -3,8 +3,9 @@
 **Normative status:** organization-owned baseline for consumer alignment.
 **Payload version:** `ai-sdlc-contract/v2` (v3 is out of scope).
 **Payload compatibility baseline:** `ai-sdlc-contract/v2`, fixture `2.3.0`.
-**Current published and attested control-plane compatibility release:** `ai-sdlc-v3.1.0` at `e9d11fc99fee73d247c93699f058ed64786bd4c0` (PR #114 publication attestation).
-**Current source-consumer pin:** `ai-sdlc-v3.0.3` through reviewed portfolio-tasks PR #163.
+**Current published and attested control-plane compatibility release:** `ai-sdlc-v4.0.0` at `6e51f058bf828b0732cb1b773ba1835acaa1d5cd` (PR #117).
+**Current source-consumer pin:** `ai-sdlc-v4.0.0` through reviewed portfolio-tasks PR #169.
+**Enabled target and live evidence:** [4.0.0 release evidence](../releases/4.0.0.md).
 
 Published `ai-sdlc-v3.0.3` repairs DEF-0086 by preserving one trusted durable
 admission for an unchanged logical delivery across explicitly reviewed release
@@ -67,7 +68,7 @@ second time. Any other non-identical result for the delivery, including a
 different managed branch/PR or an unapproved status transition, is rejected and
 represented as `ambiguous-rejected`.
 
-## Tagged 3.1.0 pre-execution terminal-result gate (deployment pending)
+## Historical 3.1.0 pre-execution terminal-result gate
 
 Following [issue #111](https://github.com/Young-Consultations/.github/issues/111),
 the immutable **3.1.0 release** adds an opt-in canonical execution-input/v2 binding to
@@ -97,7 +98,8 @@ be reinterpreted by rewriting published tags. The tagged 3.1.0 control-plane
 commit and independently reviewed target adapter are immutable;
 publication attestation is recorded in merged PR #114. The source-consumer
 migration, deployed Runtime Preflight and separately governed REAL
-authorization remain outstanding.
+authorization were outstanding at that historical stage. The current 4.0.0
+acceptance record supersedes those pending deployment statements.
 
 ## Workflow compatibility matrix
 
@@ -256,7 +258,7 @@ receiver binding.
 
 ## Deployment/governance gates
 
-### Tagged 3.1.0 release and separate publication attestation
+### Historical 3.1.0 release and separate publication attestation
 
 The reviewed control-plane release tag `ai-sdlc-v3.1.0` resolves to
 `e9d11fc99fee73d247c93699f058ed64786bd4c0`, following reviewed
