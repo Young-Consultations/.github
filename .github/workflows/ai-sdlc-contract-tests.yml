@@ -59,6 +59,8 @@ jobs:
         run: python -m pytest tests/test_contract_schemas.py --junitxml=reports/schema.xml
       - name: Run result credential safety preflight tests
         run: python -m pytest tests/test_codex_result_credential_preflight.py --junitxml=reports/result-preflight.xml
+      - name: Run shared publication readiness evidence tests
+        run: python scripts/test_publication_readiness.py
       - name: Run repository target-adapter tests
         run: python -m pytest tests/test_codex_target_adapter.py --junitxml=reports/target-adapter.xml
       - name: Run pinned TC-MVP-CI-001 conformance oracle
