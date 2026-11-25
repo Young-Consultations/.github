@@ -104,6 +104,7 @@ def v5_adapter_binding_errors(root: Path, registry: dict) -> list[str]:
             and SHA.fullmatch(evidence["adapter_commit_sha"]) is not None
             and adapter["report_path"] == evidence["report_path"]
             and report_blob == adapter["report_git_blob_sha"]
+            and hashlib.sha1(f"blob {len(pin_raw)}\0".encode() + pin_raw).hexdigest() == adapter["pin_git_blob_sha"]
             and hashlib.sha256(report_raw).hexdigest() == adapter["report_sha256"] == evidence["report_sha256"]
             and revision == computed == report["adapter_revision"] == adapter["conformance_revision"]
             and report["compatibility_sha"] == pin["compatibility_sha"] == evidence["compatibility_sha"]

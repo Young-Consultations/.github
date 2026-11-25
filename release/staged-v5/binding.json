@@ -17,7 +17,8 @@
     "report_path": ".ai-sdlc/conformance/tc-mvp-ci-001.json",
     "report_git_blob_sha": "88f2c18e93036dfd039364c872d46233951070ac",
     "report_sha256": "b4958777139aaae9084943680f72f34a3b107e71a2f80717af3b1e46f16d0ab1",
-    "conformance_revision": "sha256:1002331e88b9e888f538af9997d35168ba88691f98ca3b02952cc28a580e988f"
+    "conformance_revision": "sha256:1002331e88b9e888f538af9997d35168ba88691f98ca3b02952cc28a580e988f",
+    "pin_git_blob_sha": "314e5b1f63f9c19c6c5d27292a86c26e02f4fe59"
   },
   "base_control_plane_commit": "13e7aa4d65f2d780a4b856cac33a5b5ac8639961",
   "required_before_adoption": [

@@ -626,3 +626,20 @@ def test_protected_publication_scope_unavailable_or_incomplete_denies(monkeypatc
 def test_protected_publication_scope_clean_passes(monkeypatch):
     monkeypatch.setattr(runtime_preflight, "api", lambda *a, **k: [{"total_count": 0, "secrets": [], "variables": []}])
     assert runtime_preflight.audit_protected_publication_scopes("org/repo", "audit-token") == []
+
+def test_v5_credential_audit_requires_protected_scope_readback(monkeypatch):
+    repo = "org/repo"
+    roles = {repo: {"secrets": {}, "variables": {}, "environments": {
+        "protected": {"secrets": {"PUBLICATION_READINESS_EVIDENCE": "evidence"},
+                      "variables": {"PUBLICATION_POLICY_REVISION": "policy",
+                                    "CODEX_AUTHORIZED_CONTROL_PLANE_SHA": "release"}}
+    }}}
+    def names(repository, kind, audit_token, *, environment=None):
+        assert repository == repo
+        return set(roles[repo]["environments"]["protected"][kind]) if environment else set()
+    monkeypatch.setattr(runtime_preflight, "named_values", names)
+    def deny(repository, token):
+        assert (repository, token) == (repo, "audit-token")
+        return ["credentials: synthetic protected scope denial"]
+    monkeypatch.setattr(runtime_preflight, "audit_protected_publication_scopes", deny)
+    assert runtime_preflight.audit_credentials(roles, "audit-token") == ["credentials: synthetic protected scope denial"]
