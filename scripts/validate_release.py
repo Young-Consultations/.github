@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import sys
@@ -75,6 +76,52 @@ def conformance_errors(repository: str, entry: dict, fixture_version: object) ->
     return [] if valid else [f"{repository}: reviewed conformance evidence is invalid"]
 
 
+def v5_adapter_binding_errors(root: Path, registry: dict) -> list[str]:
+    """Check the exact independently attested adapter evidence, not a readiness grant."""
+    try:
+        stage = root / "release/staged-v5"
+        binding = rollback_policy.strict_json((stage / "binding.json").read_text())
+        adapter = binding["adapter"]
+        report_raw = (stage / "evidence/target-report.json").read_bytes()
+        pin_raw = (stage / "evidence/target-pin.json").read_bytes()
+        report = rollback_policy.strict_json(report_raw.decode())
+        pin = rollback_policy.strict_json(pin_raw.decode())
+        entry = registry["Young-Consultations/consulting-playbook"]
+        evidence = entry["conformance"]
+        revision = pin["adapter_revision"]
+        pin["adapter_revision"] = None
+        computed = "sha256:" + hashlib.sha256(
+            json.dumps(pin, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+        report_blob = hashlib.sha1(
+            f"blob {len(report_raw)}\0".encode() + report_raw).hexdigest()
+        valid = (
+            binding["production_readiness_claim"] is False
+            and binding["activation_requested"] is False
+            and adapter["repository"] == "Young-Consultations/consulting-playbook"
+            and adapter["proposed_tag"] == evidence["adapter_ref"] == "codex-adapter-v5.0.0"
+            and adapter["resolved_tag_commit_sha"] == adapter["reviewed_merge_commit"]
+                == evidence["adapter_commit_sha"]
+            and SHA.fullmatch(evidence["adapter_commit_sha"]) is not None
+            and adapter["report_path"] == evidence["report_path"]
+            and report_blob == adapter["report_git_blob_sha"]
+            and hashlib.sha256(report_raw).hexdigest() == adapter["report_sha256"] == evidence["report_sha256"]
+            and revision == computed == report["adapter_revision"] == adapter["conformance_revision"]
+            and report["compatibility_sha"] == pin["compatibility_sha"] == evidence["compatibility_sha"]
+            and report["activation_requested"] is False
+            and report["production_readiness_claim"] is False
+            and report["adapter_tag_published"] is False
+            and report["activation_evidence_sufficient"] is True
+            and report["failures"] == []
+            and len(report["scenario_results"]) == 29
+            and all(row["result"] == "pass" for row in report["scenario_results"])
+            and bool(report["effect_traps"])
+            and all(type(v) is int and v == 0 for v in report["effect_traps"].values())
+        )
+    except (OSError, ValueError, KeyError, TypeError, AttributeError):
+        valid = False
+    return [] if valid else ["v5 adapter binding: missing, mismatched or unsafe immutable evidence"]
+
+
 def validate(
     root: Path = ROOT, *, require_publishable: bool = False,
     require_candidate_ready: bool = False,
@@ -143,6 +190,8 @@ def validate(
             ref = str(entry.get("workflow_ref", "")).rsplit("@", 1)[-1]
             if IMMUTABLE_ADAPTER_TAG.fullmatch(ref) is None:
                 errors.append(f"{repository}: release readiness requires an immutable codex-adapter-v* tag")
+    if require_release_binding and version == "5.0.0":
+        errors.extend(v5_adapter_binding_errors(root, registry))
     activation = load_json(root / "config/codex-activation.json")
     targets = activation.get("targets")
     if activation.get("activation_format_version") != 1 or not isinstance(targets, dict):
@@ -186,6 +235,22 @@ def validate(
             or not roles["repositories"]
         ):
             errors.append("credential role manifest is invalid")
+        elif version == "5.0.0":
+            try:
+                target = roles["repositories"]["Young-Consultations/consulting-playbook"]
+                protected = target["environments"]["consulting-playbook-codex"]
+                secrets = {"PUBLICATION_READINESS_EVIDENCE"}
+                variables = {"PUBLICATION_POLICY_REVISION", "CODEX_AUTHORIZED_CONTROL_PLANE_SHA"}
+                valid_scopes = (
+                    secrets <= protected["secrets"].keys()
+                    and variables <= protected["variables"].keys()
+                    and not secrets.intersection(target["secrets"])
+                    and not variables.intersection(target["variables"])
+                )
+            except (KeyError, TypeError, AttributeError):
+                valid_scopes = False
+            if not valid_scopes:
+                errors.append("v5 credentials: publication readiness roles must be protected environment only")
 
     router = manifest.get("router_workflow")
     router_action = manifest.get("router_action")

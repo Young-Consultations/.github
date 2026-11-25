@@ -31,9 +31,9 @@ def test_staged_binding_is_not_release_attestation():
     report_path = STAGE / "evidence/target-report.json"
     report = load(report_path)
     pin = load(STAGE / "evidence/target-pin.json")
-    assert binding["status"] == "BLOCKED_UNPUBLISHED_BINDINGS"
+    assert binding["status"] == "BLOCKED_UNPUBLISHED_CONTROL_PLANE"
     assert binding["control_plane"]["resolved_commit_sha"] is None
-    assert binding["adapter"]["resolved_tag_commit_sha"] is None
+    assert binding["adapter"]["resolved_tag_commit_sha"] == binding["adapter"]["reviewed_merge_commit"]
     assert binding["production_readiness_claim"] is False
     assert binding["activation_requested"] is False
     assert manifest["release_version"] == "5.0.0"
@@ -104,8 +104,8 @@ def test_structural_overlay_in_temporary_checkout_only():
         assert "publishable release must declare tag_published true" in validate_release.validate(root, require_publishable=True)
         with patch.object(generate_current_runtime, "ROOT", root):
             assert generate_current_runtime.render() == (root / "release/current-runtime.json").read_text(encoding="utf-8")
-    assert load(ROOT / "release/release-manifest.json")["tag"] == "ai-sdlc-v4.0.0"
-    assert load(ROOT / "release/release-manifest.json")["tag_published"] is True
+    assert load(ROOT / "release/release-manifest.json")["tag"] == "ai-sdlc-v5.0.0"
+    assert load(ROOT / "release/release-manifest.json")["tag_published"] is False
 
 @pytest.fixture
 def staged_root(tmp_path):
@@ -184,6 +184,11 @@ def test_invalid_rollback_metadata_fails_all_validation_modes(staged_root, fault
 def test_legacy_v4_exception_is_exact_and_not_resume_authority():
     manifest = load(ROOT / "release/release-manifest.json")
     runtime = load(ROOT / "release/current-runtime.json")
+    manifest.update(release_version="4.0.0", tag=rollback_policy.LEGACY_TAG, tag_published=True, tag_commit_sha=rollback_policy.LEGACY_SHA, previous_known_good=rollback_policy.LEGACY_PREDECESSOR)
+    manifest.pop("rollback_policy")
+    runtime["control_plane"].update(release_version="4.0.0", tag=rollback_policy.LEGACY_TAG, tag_published=True, tag_commit_sha=rollback_policy.LEGACY_SHA)
+    runtime["release_state"] = "published"
+    runtime.pop("rollback_policy")
     assert rollback_policy.legacy_manifest(manifest)
     assert rollback_policy.runtime_errors(manifest, runtime) == []
     assert "rollback_policy" not in runtime

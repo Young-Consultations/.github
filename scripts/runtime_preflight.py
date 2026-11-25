@@ -267,6 +267,51 @@ def audit_source_router_pin(expected_tag: str, audit_token: str) -> list[str]:
     return []
 
 
+PROTECTED_PUBLICATION_NAMES = {
+    "secrets": {"PUBLICATION_READINESS_EVIDENCE"},
+    "variables": {"PUBLICATION_POLICY_REVISION", "CODEX_AUTHORIZED_CONTROL_PLANE_SHA",
+                  "PUBLICATION_CANARY_AUTHORIZATION", "PUBLICATION_CANARY_APPROVER",
+                  "PUBLICATION_CANARY_PUBLISHER"},
+}
+
+
+def strict_scope_names(endpoint: str, kind: str, audit_token: str) -> set[str]:
+    """Reject incomplete/ambiguous metadata; list names only, never values."""
+    rows = api(endpoint, token=audit_token)
+    if not isinstance(rows, list) or not rows:
+        raise ValueError("missing scope metadata")
+    names = []
+    totals = set()
+    for row in rows:
+        if (not isinstance(row, dict) or type(row.get("total_count")) is not int
+                or not isinstance(row.get(kind), list)):
+            raise ValueError("invalid scope metadata")
+        totals.add(row["total_count"])
+        for item in row[kind]:
+            if not isinstance(item, dict) or not isinstance(item.get("name"), str) or not item["name"]:
+                raise ValueError("invalid scope name")
+            names.append(item["name"].upper())
+    if totals != {len(names)} or len(set(names)) != len(names):
+        raise ValueError("incomplete or duplicate scope metadata")
+    return set(names)
+
+
+def audit_protected_publication_scopes(repository: str, audit_token: str) -> list[str]:
+    """Conservatively deny any repo/org fallback, including unselected org names."""
+    owner = repository.split("/", 1)[0]
+    failures = []
+    for scope in (f"repos/{repository}/actions", f"orgs/{owner}/actions"):
+        for kind, protected in PROTECTED_PUBLICATION_NAMES.items():
+            try:
+                names = strict_scope_names(f"{scope}/{kind}?per_page=100", kind, audit_token)
+            except (subprocess.CalledProcessError, OSError, ValueError, TypeError) as exc:
+                failures.append(f"credentials: cannot verify protected publication {kind} scope: {safe_failure(exc)}")
+                continue
+            for name in sorted(names & protected):
+                failures.append(f"credentials: protected publication {kind} {name} has forbidden repository/organization fallback")
+    return failures
+
+
 def audit_credentials(roles: dict[str, Any], audit_token: str) -> list[str]:
     failures: list[str] = []
     for repository, expected in roles.items():
@@ -328,6 +373,11 @@ def audit_credentials(roles: dict[str, Any], audit_token: str) -> list[str]:
             for name in values.get("variables", {}):
                 if name not in actual_variables:
                     failures.append(f"credentials: {label} variable {name} is missing")
+        if any(
+            "PUBLICATION_READINESS_EVIDENCE" in values.get("secrets", {})
+            for values in expected.get("environments", {}).values()
+        ):
+            failures.extend(audit_protected_publication_scopes(repository, audit_token))
     return failures
 
 

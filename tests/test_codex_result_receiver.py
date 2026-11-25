@@ -185,7 +185,7 @@ def test_receiver_accepts_reviewed_split_release_composition(tmp_path):
     ).accepted
 
 
-def test_bundled_4_0_0_policy_accepts_3_0_1_admission():
+def test_bundled_v5_policy_rejects_old_admission_and_accepts_v5():
     journal = FakeJournal()
     binding = {
         "contract_version": RESULT["contract_version"],
@@ -198,13 +198,11 @@ def test_bundled_4_0_0_policy_accepts_3_0_1_admission():
         "activation_sha256": "b" * 64,
     }
     journal.entries[0] = JournalComment(marker(ADMISSION, binding), "router-bot")
-    assert receive(
-        json.dumps(RESULT),
-        SOURCE,
-        RESULT["target_repository"],
-        journal,
-        "ai-sdlc-v4.0.0",
-    ).accepted
+    with pytest.raises(ReceiverError):
+        receive(json.dumps(RESULT), SOURCE, RESULT["target_repository"], journal, "ai-sdlc-v5.0.0")
+    binding["control_plane_release"] = "ai-sdlc-v5.0.0"
+    journal.entries[0] = JournalComment(marker(ADMISSION, binding), "router-bot")
+    assert receive(json.dumps(RESULT), SOURCE, RESULT["target_repository"], journal, "ai-sdlc-v5.0.0").accepted
 
 
 def test_receiver_rejects_unreviewed_admission_release(tmp_path):

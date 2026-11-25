@@ -20,7 +20,11 @@ def published_preflight_fixture(request, monkeypatch):
     original = runtime_preflight.load
     def load(path):
         value = original(path)
+        if path == "release/release-manifest.json":
+            value.update(release_version="4.0.0", tag="ai-sdlc-v4.0.0", tag_published=True, tag_commit_sha="6e51f058bf828b0732cb1b773ba1835acaa1d5cd", previous_known_good=runtime_preflight.rollback_policy.LEGACY_PREDECESSOR)
+            value.pop("rollback_policy", None)
         if path == "release/current-runtime.json":
+            value.pop("rollback_policy", None)
             value["release_state"] = "published"
             value["control_plane"].update(release_version="4.0.0", tag="ai-sdlc-v4.0.0", tag_published=True,
                 tag_commit_sha="6e51f058bf828b0732cb1b773ba1835acaa1d5cd")
@@ -32,31 +36,30 @@ def test_current_runtime_record_is_generated_from_authoritative_state():
     path = Path("release/current-runtime.json")
     assert path.read_text(encoding="utf-8") == generate_current_runtime.render()
     value = json.loads(path.read_text(encoding="utf-8"))
-    assert value["release_state"] == "published"
-    assert value["control_plane"]["tag"] == "ai-sdlc-v4.0.0"
-    assert value["control_plane"]["tag_published"] is True
-    assert value["control_plane"]["tag_commit_sha"] == "6e51f058bf828b0732cb1b773ba1835acaa1d5cd"
+    assert value["release_state"] == "candidate"
+    assert value["control_plane"]["tag"] == "ai-sdlc-v5.0.0"
+    assert value["control_plane"]["tag_published"] is False
+    assert value["control_plane"]["tag_commit_sha"] is None
     assert value["activation"]["enabled_targets"] == [
         "Young-Consultations/consulting-playbook"
     ]
 
 
-def test_attested_published_release_passes_offline_runtime_publication_gate():
-    result = subprocess.run(
-        ["python3", "scripts/runtime_preflight.py", "--offline"],
-        check=False, text=True, capture_output=True,
-    )
-    assert result.returncode == 0, result.stdout + result.stderr
-    report = json.loads(result.stdout)
-    assert report["status"] == "PASS"
-    assert report["next_action"] == "run live Runtime Preflight; offline checks only"
-    assert report["release_state"] == "published"
-    assert report["checks"][1] == {
-        "boundary": "release-publication", "status": "PASS",
-    }
-
-
-
+def test_unpublished_candidate_denies_deployed_mode_and_passes_offline_candidate():
+    for args, code, status, publication in [
+        (["--offline"], 1, "FAIL", "FAIL"),
+        (["--offline", "--candidate"], 0, "PASS", "CANDIDATE"),
+    ]:
+        result = subprocess.run(
+            ["python3", "scripts/runtime_preflight.py", *args],
+            check=False, text=True, capture_output=True,
+        )
+        assert result.returncode == code, result.stdout + result.stderr
+        report = json.loads(result.stdout)
+        assert report["status"] == status
+        assert report["release_state"] == "candidate"
+        assert report["checks"][1] == {"boundary": "release-publication", "status": publication}
+        assert report["rollback_policy"]["real_resume_authorized"] is False
 
 def _source_workflow(tag: str, *, extra_job: bool = False) -> dict:
     source = (
@@ -596,3 +599,30 @@ def test_unknown_cli_failure_does_not_echo_output():
 
 def test_candidate_guidance_preserves_sim_boundary():
     assert runtime_preflight.success_guidance({}, offline=False, candidate=True) == "run SIM for the reviewed candidate; no REAL authorization"
+
+@pytest.mark.parametrize("scope", ["repos/org/repo/actions", "orgs/org/actions"])
+@pytest.mark.parametrize("kind,name", [
+    ("secrets", "PUBLICATION_READINESS_EVIDENCE"),
+    ("variables", "PUBLICATION_POLICY_REVISION"),
+    ("variables", "CODEX_AUTHORIZED_CONTROL_PLANE_SHA"),
+])
+def test_protected_publication_fallback_is_denied(monkeypatch, scope, kind, name):
+    def fake_api(endpoint, *, token):
+        assert token == "audit-token"
+        field = endpoint.split("?")[0].rsplit("/", 1)[1]
+        values = [{"name": name}] if endpoint.startswith(scope + "/" + kind + "?") else []
+        return [{"total_count": len(values), field: values}]
+    monkeypatch.setattr(runtime_preflight, "api", fake_api)
+    failures = runtime_preflight.audit_protected_publication_scopes("org/repo", "audit-token")
+    assert len(failures) == 1 and name in failures[0]
+
+
+def test_protected_publication_scope_unavailable_or_incomplete_denies(monkeypatch):
+    monkeypatch.setattr(runtime_preflight, "api", lambda *a, **k: [{"total_count": 1, "secrets": [], "variables": []}])
+    failures = runtime_preflight.audit_protected_publication_scopes("org/repo", "audit-token")
+    assert len(failures) == 4
+
+
+def test_protected_publication_scope_clean_passes(monkeypatch):
+    monkeypatch.setattr(runtime_preflight, "api", lambda *a, **k: [{"total_count": 0, "secrets": [], "variables": []}])
+    assert runtime_preflight.audit_protected_publication_scopes("org/repo", "audit-token") == []

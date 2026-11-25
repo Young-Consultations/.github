@@ -11,13 +11,10 @@ def test_current_published_release_is_structurally_coherent():
     assert validate_release.validate() == []
 
 
-def test_attestation_passes_publication_and_rejects_candidate_gate():
+def test_candidate_passes_candidate_gate_and_rejects_publication():
     assert validate_release.validate() == []
-    assert validate_release.validate(require_publishable=True) == []
-    assert validate_release.validate(require_candidate_ready=True) == [
-        "candidate readiness requires an unpublished release without a tag commit"
-    ]
-
+    assert validate_release.validate(require_candidate_ready=True) == []
+    assert "publishable release must declare tag_published true" in validate_release.validate(require_publishable=True)
 
 def test_published_release_requires_trusted_journal_authors(monkeypatch):
     original_load = validate_release.load_json
@@ -37,9 +34,9 @@ def test_published_release_requires_trusted_journal_authors(monkeypatch):
 def test_mvp_fixture_targets_match_attested_published_manifest():
     manifest = json.loads((ROOT / "release/release-manifest.json").read_text(encoding="utf-8"))
     fixture = json.loads((ROOT / "tests/fixtures/mvp-v2/manifest.json").read_text(encoding="utf-8"))
-    assert manifest["release_version"] == "4.0.0"
-    assert manifest["tag_published"] is True
-    assert manifest["tag_commit_sha"] == "6e51f058bf828b0732cb1b773ba1835acaa1d5cd"
+    assert manifest["release_version"] == "5.0.0"
+    assert manifest["tag_published"] is False
+    assert manifest["tag_commit_sha"] is None
     assert "immutable_reference" not in fixture
     assert "immutable_reference" not in manifest
     assert sorted(fixture["targets"]) == manifest["supported_targets"]
@@ -64,7 +61,7 @@ def test_mutable_router_reference_is_rejected(tmp_path):
 
 
 def test_legacy_v4_predecessor_is_historical_identity_not_rollback_authority():
-    manifest = json.loads((ROOT / "release/release-manifest.json").read_text(encoding="utf-8"))
+    manifest = json.loads(subprocess.check_output(["git", "show", "c29cdade8e38e8b5b6ec3a831b9dc3be24266981:release/release-manifest.json"], cwd=ROOT, text=True))
     assert manifest["previous_known_good"] == {
         "release_version": "2.4.4",
         "commit_sha": "adb57508762168b3410f52e8a7b0151078c6e9b9",
@@ -126,7 +123,7 @@ def test_manifest_paths_cannot_escape_the_repository(tmp_path):
 
 
 def test_legacy_v4_release_records_historical_recovery_of_3_0_3():
-    manifest = json.loads((ROOT / "release/release-manifest.json").read_text(encoding="utf-8"))
+    manifest = json.loads(subprocess.check_output(["git", "show", "c29cdade8e38e8b5b6ec3a831b9dc3be24266981:release/release-manifest.json"], cwd=ROOT, text=True))
     assert manifest["release_version"] == "4.0.0"
     assert manifest["previous_known_good"]["release_version"] == "2.4.4"
     assert manifest["recovery_of"] == "3.0.3"
