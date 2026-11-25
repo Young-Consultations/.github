@@ -32,9 +32,9 @@ ACTIVATION = ROOT / "config/codex-activation.json"
 REGISTRY = ROOT / "config/codex-repositories.json"
 RELEASE_MANIFEST = ROOT / "release/release-manifest.json"
 REAL_TARGET = "Young-Consultations/consulting-playbook"
-PUBLISHED_BASELINE = "3.0.3"
-CANDIDATE_RELEASE = "4.0.0"
-TARGET_RECEIVER_RELEASE = "4.0.0"
+PUBLISHED_BASELINE = "4.0.0"
+CANDIDATE_RELEASE = "5.0.0"
+TARGET_RECEIVER_RELEASE = "5.0.0"
 TARGET_ROOT_ENV = "TC_MVP_E2E_TARGET_ROOT"
 COMMIT_SHA = re.compile(r"^[0-9a-f]{40}$")
 
@@ -360,6 +360,8 @@ def run_sim(report_path: Path, target_root: Path | None = None) -> list[str]:
 
     target_root = target_root or _target_root()
     identity_errors = _target_identity_errors(target_root)
+    if not identity_errors:
+        identity_errors = _target_receiver_pin_errors(target_root)
     errors = _candidate_release_errors() + _activation_errors() + identity_errors
     traps = EffectTraps()
     journal: SimJournal | None = None

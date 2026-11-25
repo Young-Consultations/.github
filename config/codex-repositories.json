@@ -69,7 +69,7 @@
       }
     },
     "Young-Consultations/consulting-playbook": {
-      "workflow_ref": "Young-Consultations/consulting-playbook/.github/workflows/codex-execute.yml@codex-adapter-v4.0.0",
+      "workflow_ref": "Young-Consultations/consulting-playbook/.github/workflows/codex-execute.yml@codex-adapter-v5.0.0",
       "allowed_task_types": [
         "automation",
         "documentation",
@@ -84,10 +84,10 @@
         "fixture_set": "TC-MVP-CI-001",
         "fixture_version": "2.3.0",
         "compatibility_sha": "e27b8a541afbd27b4be5606a19ffa43637ad312a",
-        "adapter_ref": "codex-adapter-v4.0.0",
-        "adapter_commit_sha": "84964d3ba099630cd5c6101e598bfca5433c74c5",
+        "adapter_ref": "codex-adapter-v5.0.0",
+        "adapter_commit_sha": "e4328a6ddde2da6e691b8127b01863b659a5537b",
         "report_path": ".ai-sdlc/conformance/tc-mvp-ci-001.json",
-        "report_sha256": "1eba66061a253c821110c274fdaebfd6442b0ca4fa4acb4f9761c250a6c9c13b",
+        "report_sha256": "b4958777139aaae9084943680f72f34a3b107e71a2f80717af3b1e46f16d0ab1",
         "status": "pass",
         "activation_evidence_sufficient": true
       },
@@ -99,11 +99,7 @@
         "requires_create_race_requery": true,
         "terminal_reuse_status": "duplicate-reused",
         "reusable_admission_releases": [
-          "ai-sdlc-v3.0.1",
-          "ai-sdlc-v3.0.2",
-          "ai-sdlc-v3.0.3",
-          "ai-sdlc-v3.1.0",
-          "ai-sdlc-v4.0.0"
+          "ai-sdlc-v5.0.0"
         ]
       }
     },

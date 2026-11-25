@@ -54,6 +54,17 @@ jobs:
           python scripts/verify_release_target_workflows.py
           --enabled-only
           --report reports/enabled-target-release-prerequisites.json
+      - name: Verify disabled immutable targets on candidate PR
+        if: ${{ github.event_name == 'pull_request' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for repository in Young-Consultations/.github Young-Consultations/portfolio-tasks Young-Consultations/slugger; do
+            report_name="$(printf '%s' "$repository" | tr '/.' '--')"
+            python scripts/verify_release_target_workflows.py --repository "$repository" --report "reports/${report_name}.json"
+          done
       - name: Verify selected registered target workflows
         if: ${{ github.event_name != 'pull_request' }}
         env:

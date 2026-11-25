@@ -583,14 +583,25 @@ def _journal_comment(comment_id, binding, author="router-app[bot]"):
     }
 
 
-def test_dispatch_reuses_compatible_predecessor_admission(monkeypatch):
+@pytest.mark.parametrize("historical_compatibility", [True, False])
+def test_dispatch_predecessor_reuse_requires_explicit_release_policy(monkeypatch, historical_compatibility):
     repository = "Young-Consultations/consulting-playbook"
-    monkeypatch.setenv("CONTROL_PLANE_RELEASE", "ai-sdlc-v3.0.3")
+    release = "ai-sdlc-v3.0.3" if historical_compatibility else "ai-sdlc-v5.0.0"
+    monkeypatch.setenv("CONTROL_PLANE_RELEASE", release)
+    original = codex_router.routing_configuration
+
+    def historical_configuration():
+        repos, activation = original()
+        repos[repository]["idempotency"]["reusable_admission_releases"] = ["ai-sdlc-v3.0.1"]
+        return repos, activation
+
+    if historical_compatibility:
+        monkeypatch.setattr(codex_router, "routing_configuration", historical_configuration)
     execution = execution_for(repository, "documentation")
     registry = json.loads(Path("config/codex-repositories.json").read_text())
     workflow_ref = registry["repositories"][repository]["workflow_ref"]
     prior = _binding_for(execution, "ai-sdlc-v3.0.1")
-    posted_binding = _posted_binding(execution)
+    posted_binding = _posted_binding(execution, release=release)
     api_calls = []
     workflow_calls = []
     reads = 0
@@ -623,12 +634,17 @@ def test_dispatch_reuses_compatible_predecessor_admission(monkeypatch):
     monkeypatch.setenv("WORKFLOW_REF", workflow_ref)
     monkeypatch.delenv("GITHUB_OUTPUT", raising=False)
 
-    codex_router.dispatch()
-
+    if historical_compatibility:
+        codex_router.dispatch()
+        assert len(workflow_calls) == 1
+        assert workflow_calls[0][:4] == ["gh", "workflow", "run", "codex-execute.yml"]
+    else:
+        assert registry["repositories"][repository]["idempotency"]["reusable_admission_releases"] == ["ai-sdlc-v5.0.0"]
+        with pytest.raises(SystemExit):
+            codex_router.dispatch()
+        assert workflow_calls == []
     assert reads == 2
     assert any("--method" in call and "DELETE" in call for call in api_calls)
-    assert len(workflow_calls) == 1
-    assert workflow_calls[0][:4] == ["gh", "workflow", "run", "codex-execute.yml"]
 
 
 def test_dispatch_preserves_same_release_reuse_without_cross_release_allowlist(

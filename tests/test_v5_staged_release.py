@@ -31,9 +31,9 @@ def test_staged_binding_is_not_release_attestation():
     report_path = STAGE / "evidence/target-report.json"
     report = load(report_path)
     pin = load(STAGE / "evidence/target-pin.json")
-    assert binding["status"] == "BLOCKED_UNPUBLISHED_BINDINGS"
+    assert binding["status"] == "BLOCKED_UNPUBLISHED_CONTROL_PLANE"
     assert binding["control_plane"]["resolved_commit_sha"] is None
-    assert binding["adapter"]["resolved_tag_commit_sha"] is None
+    assert binding["adapter"]["resolved_tag_commit_sha"] == binding["adapter"]["reviewed_merge_commit"]
     assert binding["production_readiness_claim"] is False
     assert binding["activation_requested"] is False
     assert manifest["release_version"] == "5.0.0"
@@ -104,8 +104,8 @@ def test_structural_overlay_in_temporary_checkout_only():
         assert "publishable release must declare tag_published true" in validate_release.validate(root, require_publishable=True)
         with patch.object(generate_current_runtime, "ROOT", root):
             assert generate_current_runtime.render() == (root / "release/current-runtime.json").read_text(encoding="utf-8")
-    assert load(ROOT / "release/release-manifest.json")["tag"] == "ai-sdlc-v4.0.0"
-    assert load(ROOT / "release/release-manifest.json")["tag_published"] is True
+    assert load(ROOT / "release/release-manifest.json")["tag"] == "ai-sdlc-v5.0.0"
+    assert load(ROOT / "release/release-manifest.json")["tag_published"] is False
 
 @pytest.fixture
 def staged_root(tmp_path):
@@ -184,6 +184,11 @@ def test_invalid_rollback_metadata_fails_all_validation_modes(staged_root, fault
 def test_legacy_v4_exception_is_exact_and_not_resume_authority():
     manifest = load(ROOT / "release/release-manifest.json")
     runtime = load(ROOT / "release/current-runtime.json")
+    manifest.update(release_version="4.0.0", tag=rollback_policy.LEGACY_TAG, tag_published=True, tag_commit_sha=rollback_policy.LEGACY_SHA, previous_known_good=rollback_policy.LEGACY_PREDECESSOR)
+    manifest.pop("rollback_policy")
+    runtime["control_plane"].update(release_version="4.0.0", tag=rollback_policy.LEGACY_TAG, tag_published=True, tag_commit_sha=rollback_policy.LEGACY_SHA)
+    runtime["release_state"] = "published"
+    runtime.pop("rollback_policy")
     assert rollback_policy.legacy_manifest(manifest)
     assert rollback_policy.runtime_errors(manifest, runtime) == []
     assert "rollback_policy" not in runtime
@@ -226,3 +231,28 @@ def test_rollback_recovery_request_denies_without_external_calls(staged_root, ca
     report = json.loads(capsys.readouterr().out)
     assert report["rollback_policy"] == rollback_policy.deny_policy()
     assert "REAL resume denied" in report["failures"][0]
+
+@pytest.mark.parametrize("fault", ["adapter-sha", "report-digest", "pin-blob", "report-bytes", "pin-bytes", "registry-sha"])
+def test_candidate_ready_rejects_tampered_adapter_binding(tmp_path, fault):
+    stage = tmp_path / "release/staged-v5"
+    shutil.copytree(STAGE, stage)
+    registry = load(ROOT / "config/codex-repositories.json")["repositories"]
+    binding_path = stage / "binding.json"
+    binding = load(binding_path)
+    assert validate_release.v5_adapter_binding_errors(tmp_path, registry) == []
+    if fault == "adapter-sha":
+        binding["adapter"]["resolved_tag_commit_sha"] = "0" * 40
+    elif fault == "report-digest":
+        binding["adapter"]["report_sha256"] = "0" * 64
+    elif fault == "pin-blob":
+        binding["adapter"]["pin_git_blob_sha"] = "0" * 40
+    elif fault == "report-bytes":
+        path = stage / "evidence/target-report.json"
+        path.write_bytes(path.read_bytes() + b" ")
+    elif fault == "pin-bytes":
+        path = stage / "evidence/target-pin.json"
+        path.write_bytes(path.read_bytes() + b" ")
+    elif fault == "registry-sha":
+        registry[TARGET]["conformance"]["adapter_commit_sha"] = "0" * 40
+    write_json(binding_path, binding)
+    assert validate_release.v5_adapter_binding_errors(tmp_path, registry)

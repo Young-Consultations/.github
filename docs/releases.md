@@ -292,3 +292,7 @@ post-publication issue is found, stop dispatch first and use the manifest's
 repository-local changes. Preserve admission/result journal evidence for
 reconciliation; do not delete receipts or reinterpret transport acknowledgement
 as execution success.
+
+## v5.0.0 unpublished candidate (V5.3)
+
+The approved adapter tag `codex-adapter-v5.0.0` independently resolves to `e4328a6ddde2da6e691b8127b01863b659a5537b`; the staged binding now records that exact immutable identity. The candidate branch composes the reviewed overlay. It does not change deployed main, source pins, activation, credential configuration, or authorize REAL. Candidate SIM and release-aware compatibility checks are evidence only. The published gate must deny this unpublished manifest. No rollback resume is allowed. Protected publication metadata must have no repository or organization fallback; inability to inspect either scope blocks readiness. DEF-0105 remains accepted-risk for the deployed v4 baseline. DEF-0147 remains investigating until a scheduled compatibility run on the actual accepted main revision verifies the intended registered targets with the read-only built-in token, no missing router credential, and retained reports; PR/synthetic CI is not that scheduled evidence. Do not dispatch operational workflows, publish the control-plane tag, or enable additional targets without separate approval.

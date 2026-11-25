@@ -1,9 +1,9 @@
 {
-  "release_version": "4.0.0",
-  "tag": "ai-sdlc-v4.0.0",
-  "tag_published": true,
-  "tag_commit_sha": "6e51f058bf828b0732cb1b773ba1835acaa1d5cd",
-  "contract_package_version": "4.0.0",
+  "release_version": "5.0.0",
+  "tag": "ai-sdlc-v5.0.0",
+  "tag_published": false,
+  "tag_commit_sha": null,
+  "contract_package_version": "5.0.0",
   "contract_payload_version": "ai-sdlc-contract/v2",
   "schema_version": "ai-sdlc-contract/v2",
   "registry_format_version": 1,
@@ -19,11 +19,11 @@
     "Young-Consultations/portfolio-tasks",
     "Young-Consultations/slugger"
   ],
-  "previous_known_good": {
-    "release_version": "2.4.4",
-    "commit_sha": "adb57508762168b3410f52e8a7b0151078c6e9b9"
+  "rollback_policy": {
+    "state": "no-reviewed-safe-rollback",
+    "candidate": null,
+    "real_resume_authorized": false
   },
-  "recovery_of": "3.0.3",
   "result_receiver_workflow": ".github/workflows/codex-result-receiver.yml",
   "result_receiver_action": "actions/codex-result-receiver/action.yml",
   "result_trust_policy": "config/codex-result-trust.json",
