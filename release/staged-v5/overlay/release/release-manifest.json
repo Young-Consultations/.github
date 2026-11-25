@@ -19,9 +19,10 @@
     "Young-Consultations/portfolio-tasks",
     "Young-Consultations/slugger"
   ],
-  "previous_known_good": {
-    "release_version": "2.4.4",
-    "commit_sha": "adb57508762168b3410f52e8a7b0151078c6e9b9"
+  "rollback_policy": {
+    "state": "no-reviewed-safe-rollback",
+    "candidate": null,
+    "real_resume_authorized": false
   },
   "result_receiver_workflow": ".github/workflows/codex-result-receiver.yml",
   "result_receiver_action": "actions/codex-result-receiver/action.yml",

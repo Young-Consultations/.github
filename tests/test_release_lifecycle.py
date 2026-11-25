@@ -63,7 +63,7 @@ def test_mutable_router_reference_is_rejected(tmp_path):
     assert any("mutable organization workflow ref" in error for error in validate_release.validate(tmp_path))
 
 
-def test_previous_known_good_is_published_2_4_4_commit():
+def test_legacy_v4_predecessor_is_historical_identity_not_rollback_authority():
     manifest = json.loads((ROOT / "release/release-manifest.json").read_text(encoding="utf-8"))
     assert manifest["previous_known_good"] == {
         "release_version": "2.4.4",
@@ -125,7 +125,7 @@ def test_manifest_paths_cannot_escape_the_repository(tmp_path):
     assert errors == ["current_runtime must be a safe repository-relative JSON path"]
 
 
-def test_minor_release_records_recovery_of_3_0_3():
+def test_legacy_v4_release_records_historical_recovery_of_3_0_3():
     manifest = json.loads((ROOT / "release/release-manifest.json").read_text(encoding="utf-8"))
     assert manifest["release_version"] == "4.0.0"
     assert manifest["previous_known_good"]["release_version"] == "2.4.4"

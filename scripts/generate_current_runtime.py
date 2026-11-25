@@ -7,6 +7,11 @@ import hashlib
 import json
 from pathlib import Path
 
+if __package__:
+    from . import rollback_policy
+else:
+    import rollback_policy
+
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / "release/current-runtime.json"
 
@@ -16,7 +21,12 @@ def load(path: str) -> dict:
 
 
 def render() -> str:
-    manifest = load("release/release-manifest.json")
+    manifest = rollback_policy.strict_json(
+        (ROOT / "release/release-manifest.json").read_text(encoding="utf-8")
+    )
+    errors = rollback_policy.manifest_errors(manifest)
+    if errors:
+        raise ValueError("; ".join(errors))
     registry = load(manifest["registry"])["repositories"]
     activation_path = ROOT / "config/codex-activation.json"
     activation = json.loads(activation_path.read_text(encoding="utf-8"))["targets"]
@@ -57,6 +67,8 @@ def render() -> str:
             "scope": credentials["scope"],
         },
     }
+    if not rollback_policy.legacy_manifest(manifest):
+        document["rollback_policy"] = manifest["rollback_policy"]
     return json.dumps(document, indent=2, sort_keys=True) + "\n"
 
 
@@ -64,7 +76,11 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
-    expected = render()
+    try:
+        expected = render()
+    except (OSError, ValueError) as exc:
+        print(f"current runtime generation blocked: {exc}")
+        return 1
     if args.check:
         if not OUTPUT.is_file() or OUTPUT.read_text(encoding="utf-8") != expected:
             print("release/current-runtime.json is stale")

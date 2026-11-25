@@ -13,11 +13,19 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import quote
 
+if __package__:
+    from . import rollback_policy
+else:
+    import rollback_policy
+
 ROOT = Path(__file__).resolve().parents[1]
 
 
 def load(relative: str) -> dict[str, Any]:
-    return json.loads((ROOT / relative).read_text(encoding="utf-8"))
+    raw = (ROOT / relative).read_text(encoding="utf-8")
+    if relative in {"release/release-manifest.json", "release/current-runtime.json"}:
+        return rollback_policy.strict_json(raw)
+    return json.loads(raw)
 
 
 def safe_failure(exc: Exception) -> str:
@@ -328,8 +336,30 @@ def main() -> int:
     parser.add_argument("--offline", action="store_true")
     parser.add_argument("--candidate", action="store_true")
     parser.add_argument("--output", type=Path)
+    parser.add_argument("--rollback-recovery", action="store_true",
+                        help="report deny-only rollback recovery decision without external calls")
     args = parser.parse_args()
-    runtime = load("release/current-runtime.json")
+    if args.rollback_recovery:
+        result = rollback_policy.recovery_denial()
+        rendered = json.dumps(result, indent=2, sort_keys=True) + "\n"
+        if args.output:
+            args.output.write_text(rendered, encoding="utf-8")
+        print(rendered, end="")
+        return 1
+    try:
+        manifest = load("release/release-manifest.json")
+        runtime = load("release/current-runtime.json")
+        policy_errors = rollback_policy.runtime_errors(manifest, runtime)
+    except (OSError, ValueError):
+        policy_errors = ["rollback: release metadata missing or invalid JSON"]
+    if policy_errors:
+        result = rollback_policy.recovery_denial()
+        result["failures"] = policy_errors
+        rendered = json.dumps(result, indent=2, sort_keys=True) + "\n"
+        if args.output:
+            args.output.write_text(rendered, encoding="utf-8")
+        print(rendered, end="")
+        return 1
     roles = load("config/codex-credential-roles.json")["repositories"]
     failures: list[str] = []
     checks: list[dict[str, str]] = []
@@ -407,6 +437,9 @@ def main() -> int:
         "failures": failures,
         "next_action": success_guidance(runtime, offline=args.offline, candidate=args.candidate) if not failures else failures[0],
     }
+    if not rollback_policy.legacy_manifest(manifest):
+        result["rollback_policy"] = rollback_policy.deny_policy()
+        result["rollback_next_action"] = rollback_policy.recovery_denial()["next_action"]
     rendered = json.dumps(result, indent=2, sort_keys=True) + "\n"
     if args.output:
         args.output.write_text(rendered, encoding="utf-8")
