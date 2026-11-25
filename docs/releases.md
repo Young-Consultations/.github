@@ -278,7 +278,7 @@ The immutable v4 and earlier manifests retain historical
 rollback authority. REAL #151 proved 2.4.4 can lose completed Codex work in
 publication; neither it nor any other predecessor is selected as safe.
 DEF-0105 remains accepted-risk pending operational adoption of the approved
-representation. Staged v5 is unpublished and not deployable; all publication
+representation. The immutable v5 tag is published, but is not adopted; publication identity
 and execution gates remain separate.
 
 ### Historical 2.4.0 candidate rollback
@@ -293,6 +293,10 @@ repository-local changes. Preserve admission/result journal evidence for
 reconciliation; do not delete receipts or reinterpret transport acknowledgement
 as execution success.
 
-## v5.0.0 unpublished candidate (V5.3)
+## v5.0.0 historical unpublished candidate (V5.3)
 
 The approved adapter tag `codex-adapter-v5.0.0` independently resolves to `e4328a6ddde2da6e691b8127b01863b659a5537b`; the staged binding now records that exact immutable identity. The candidate branch composes the reviewed overlay. It does not change deployed main, source pins, activation, credential configuration, or authorize REAL. Candidate SIM and release-aware compatibility checks are evidence only. The published gate must deny this unpublished manifest. No rollback resume is allowed. Protected publication metadata must have no repository or organization fallback; inability to inspect either scope blocks readiness. DEF-0105 remains accepted-risk for the deployed v4 baseline. DEF-0147 remains investigating until a scheduled compatibility run on the actual accepted main revision verifies the intended registered targets with the read-only built-in token, no missing router credential, and retained reports; PR/synthetic CI is not that scheduled evidence. Do not dispatch operational workflows, publish the control-plane tag, or enable additional targets without separate approval.
+
+## v5.0.0 publication attestation (V5.5c)
+
+Both immutable tags are independently verified: `ai-sdlc-v5.0.0` at `3cce887fc393fa80ed8f79308ca9b9c7241ce622` (tree `e1070f69f575ec72314fde937edf7762c69e5dab`) and `codex-adapter-v5.0.0` at `e4328a6ddde2da6e691b8127b01863b659a5537b`. [Reviewed candidate PR #126](https://github.com/Young-Consultations/.github/pull/126) and [exact post-merge CI](https://github.com/Young-Consultations/.github/actions/runs/45706699192) passed. Attestation changes main metadata only after review/merge; the immutable tag retains its original unpublished candidate manifest. `ATTESTED_PUBLICATION_BLOCKED_ADOPTION` explicitly denies production readiness and activation requests. Owner approved deferral of the actual verify-mode smoke until after tag publication: it journals admission and dispatches a real target, so it is not zero-effect offline CI and requires separate bounded authorization before adoption. Source stays at v4, paid approvals remain held, no credential or activation changes, no rollback resume. DEF-0105 remains accepted-risk; DEF-0147 remains investigating pending actual scheduled verification. No execution or source migration is authorized by this attestation.

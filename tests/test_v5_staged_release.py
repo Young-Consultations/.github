@@ -24,15 +24,16 @@ def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def test_staged_binding_is_not_release_attestation():
+def test_attested_binding_does_not_authorize_adoption():
     binding = load(STAGE / "binding.json")
     manifest = load(OVERLAY / "release/release-manifest.json")
     registry = load(OVERLAY / "config/codex-repositories.json")
     report_path = STAGE / "evidence/target-report.json"
     report = load(report_path)
     pin = load(STAGE / "evidence/target-pin.json")
-    assert binding["status"] == "BLOCKED_UNPUBLISHED_CONTROL_PLANE"
-    assert binding["control_plane"]["resolved_commit_sha"] is None
+    assert binding["status"] == "ATTESTED_PUBLICATION_BLOCKED_ADOPTION"
+    assert binding["control_plane"]["resolved_commit_sha"] == "3cce887fc393fa80ed8f79308ca9b9c7241ce622"
+    assert binding["control_plane"]["reviewed_tree_sha"] == "e1070f69f575ec72314fde937edf7762c69e5dab"
     assert binding["adapter"]["resolved_tag_commit_sha"] == binding["adapter"]["reviewed_merge_commit"]
     assert binding["production_readiness_claim"] is False
     assert binding["activation_requested"] is False
@@ -105,7 +106,7 @@ def test_structural_overlay_in_temporary_checkout_only():
         with patch.object(generate_current_runtime, "ROOT", root):
             assert generate_current_runtime.render() == (root / "release/current-runtime.json").read_text(encoding="utf-8")
     assert load(ROOT / "release/release-manifest.json")["tag"] == "ai-sdlc-v5.0.0"
-    assert load(ROOT / "release/release-manifest.json")["tag_published"] is False
+    assert load(ROOT / "release/release-manifest.json")["tag_published"] is True
 
 @pytest.fixture
 def staged_root(tmp_path):
@@ -256,3 +257,30 @@ def test_candidate_ready_rejects_tampered_adapter_binding(tmp_path, fault):
         registry[TARGET]["conformance"]["adapter_commit_sha"] = "0" * 40
     write_json(binding_path, binding)
     assert validate_release.v5_adapter_binding_errors(tmp_path, registry)
+
+@pytest.mark.parametrize("fault", ["missing", "wrong-sha", "wrong-tag", "missing-tree", "wrong-status", "readiness", "activation"])
+def test_published_control_binding_rejects_tampering(tmp_path, fault):
+    stage = tmp_path / "release/staged-v5"
+    stage.mkdir(parents=True)
+    path = stage / "binding.json"
+    binding = load(STAGE / "binding.json")
+    manifest = load(ROOT / "release/release-manifest.json")
+    write_json(path, binding)
+    assert validate_release.v5_control_binding_errors(tmp_path, manifest) == []
+    if fault == "missing":
+        path.unlink()
+    else:
+        if fault == "wrong-sha":
+            binding["control_plane"]["resolved_commit_sha"] = "0" * 40
+        elif fault == "wrong-tag":
+            binding["control_plane"]["proposed_tag"] = "ai-sdlc-v4.0.0"
+        elif fault == "missing-tree":
+            del binding["control_plane"]["reviewed_tree_sha"]
+        elif fault == "wrong-status":
+            binding["status"] = "BLOCKED_UNPUBLISHED_CONTROL_PLANE"
+        elif fault == "readiness":
+            binding["production_readiness_claim"] = True
+        elif fault == "activation":
+            binding["activation_requested"] = True
+        write_json(path, binding)
+    assert validate_release.v5_control_binding_errors(tmp_path, manifest)

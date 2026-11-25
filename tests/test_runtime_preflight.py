@@ -36,19 +36,19 @@ def test_current_runtime_record_is_generated_from_authoritative_state():
     path = Path("release/current-runtime.json")
     assert path.read_text(encoding="utf-8") == generate_current_runtime.render()
     value = json.loads(path.read_text(encoding="utf-8"))
-    assert value["release_state"] == "candidate"
+    assert value["release_state"] == "published"
     assert value["control_plane"]["tag"] == "ai-sdlc-v5.0.0"
-    assert value["control_plane"]["tag_published"] is False
-    assert value["control_plane"]["tag_commit_sha"] is None
+    assert value["control_plane"]["tag_published"] is True
+    assert value["control_plane"]["tag_commit_sha"] == "3cce887fc393fa80ed8f79308ca9b9c7241ce622"
     assert value["activation"]["enabled_targets"] == [
         "Young-Consultations/consulting-playbook"
     ]
 
 
-def test_unpublished_candidate_denies_deployed_mode_and_passes_offline_candidate():
+def test_published_attestation_passes_offline_and_rejects_candidate_bypass():
     for args, code, status, publication in [
-        (["--offline"], 1, "FAIL", "FAIL"),
-        (["--offline", "--candidate"], 0, "PASS", "CANDIDATE"),
+        (["--offline"], 0, "PASS", "PASS"),
+        (["--offline", "--candidate"], 1, "FAIL", "PASS"),
     ]:
         result = subprocess.run(
             ["python3", "scripts/runtime_preflight.py", *args],
@@ -57,7 +57,7 @@ def test_unpublished_candidate_denies_deployed_mode_and_passes_offline_candidate
         assert result.returncode == code, result.stdout + result.stderr
         report = json.loads(result.stdout)
         assert report["status"] == status
-        assert report["release_state"] == "candidate"
+        assert report["release_state"] == "published"
         assert report["checks"][1] == {"boundary": "release-publication", "status": publication}
         assert report["rollback_policy"]["real_resume_authorized"] is False
 
@@ -643,3 +643,16 @@ def test_v5_credential_audit_requires_protected_scope_readback(monkeypatch):
         return ["credentials: synthetic protected scope denial"]
     monkeypatch.setattr(runtime_preflight, "audit_protected_publication_scopes", deny)
     assert runtime_preflight.audit_credentials(roles, "audit-token") == ["credentials: synthetic protected scope denial"]
+
+def test_v5_attestation_still_denies_deployed_preflight_with_v4_source(monkeypatch, capsys):
+    monkeypatch.setenv("PREFLIGHT_AUDIT_TOKEN", "audit-token")
+    monkeypatch.setattr(runtime_preflight, "remote_tag_commit", lambda tag: "3cce887fc393fa80ed8f79308ca9b9c7241ce622")
+    monkeypatch.setattr(runtime_preflight, "audit_credentials", lambda *args: [])
+    monkeypatch.setattr(runtime_preflight, "audit_result_sender_binding", lambda *args: [])
+    monkeypatch.setattr(runtime_preflight, "api_one", lambda *args, **kwargs: _source_workflow("ai-sdlc-v4.0.0"))
+    monkeypatch.setattr("sys.argv", ["runtime_preflight.py"])
+    assert runtime_preflight.main() == 1
+    report = json.loads(capsys.readouterr().out)
+    assert report["status"] == "FAIL"
+    assert any(error.startswith("source-pin:") for error in report["failures"])
+    assert report["rollback_policy"]["real_resume_authorized"] is False

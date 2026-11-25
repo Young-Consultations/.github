@@ -123,6 +123,34 @@ def v5_adapter_binding_errors(root: Path, registry: dict) -> list[str]:
     return [] if valid else ["v5 adapter binding: missing, mismatched or unsafe immutable evidence"]
 
 
+def v5_control_binding_errors(root: Path, manifest: dict) -> list[str]:
+    """Publication identity only; a matching binding is not execution authority."""
+    try:
+        binding = rollback_policy.strict_json(
+            (root / "release/staged-v5/binding.json").read_text(encoding="utf-8"))
+        control = binding["control_plane"]
+        published = manifest["tag_published"]
+        valid = (
+            binding["production_readiness_claim"] is False
+            and binding["activation_requested"] is False
+            and control["proposed_tag"] == manifest["tag"] == "ai-sdlc-v5.0.0"
+            and control["resolved_commit_sha"] == manifest["tag_commit_sha"]
+            and (
+                (published is False and control["resolved_commit_sha"] is None
+                 and binding["status"] == "BLOCKED_UNPUBLISHED_CONTROL_PLANE")
+                or
+                (published is True and isinstance(control["resolved_commit_sha"], str)
+                 and SHA.fullmatch(control["resolved_commit_sha"]) is not None
+                 and binding["status"] == "ATTESTED_PUBLICATION_BLOCKED_ADOPTION"
+                 and SHA.fullmatch(control["reviewed_tree_sha"]) is not None
+                 and control["post_merge_ci_url"] == "https://github.com/Young-Consultations/.github/actions/runs/45706699192")
+            )
+        )
+    except (OSError, ValueError, KeyError, TypeError, AttributeError):
+        valid = False
+    return [] if valid else ["v5 control-plane binding: publication identity or adoption denial is inconsistent"]
+
+
 def validate(
     root: Path = ROOT, *, require_publishable: bool = False,
     require_candidate_ready: bool = False,
@@ -193,6 +221,7 @@ def validate(
                 errors.append(f"{repository}: release readiness requires an immutable codex-adapter-v* tag")
     if require_release_binding and version == "5.0.0":
         errors.extend(v5_adapter_binding_errors(root, registry))
+        errors.extend(v5_control_binding_errors(root, manifest))
     activation = load_json(root / "config/codex-activation.json")
     targets = activation.get("targets")
     if activation.get("activation_format_version") != 1 or not isinstance(targets, dict):
