@@ -11,10 +11,28 @@ def test_current_published_release_is_structurally_coherent():
     assert validate_release.validate() == []
 
 
-def test_candidate_passes_candidate_gate_and_rejects_publication():
+def test_attestation_passes_publication_and_rejects_candidate_gate():
     assert validate_release.validate() == []
-    assert validate_release.validate(require_candidate_ready=True) == []
-    assert "publishable release must declare tag_published true" in validate_release.validate(require_publishable=True)
+    assert validate_release.validate(require_publishable=True) == []
+    assert "candidate readiness requires an unpublished release without a tag commit" in validate_release.validate(require_candidate_ready=True)
+
+
+def test_published_tag_is_exact_reviewed_candidate_and_remains_unmodified():
+    manifest = json.loads((ROOT / "release/release-manifest.json").read_text())
+    binding = json.loads((ROOT / "release/staged-v5/binding.json").read_text())
+    sha = subprocess.check_output(["git", "rev-parse", "refs/tags/ai-sdlc-v5.0.0^{commit}"], cwd=ROOT, text=True).strip()
+    tree = subprocess.check_output(["git", "rev-parse", "refs/tags/ai-sdlc-v5.0.0^{tree}"], cwd=ROOT, text=True).strip()
+    assert sha == manifest["tag_commit_sha"] == binding["control_plane"]["resolved_commit_sha"] == "3cce887fc393fa80ed8f79308ca9b9c7241ce622"
+    assert tree == binding["control_plane"]["reviewed_tree_sha"] == "e1070f69f575ec72314fde937edf7762c69e5dab"
+    frozen = json.loads(subprocess.check_output(
+        ["git", "show", f"{sha}:release/release-manifest.json"], cwd=ROOT, text=True))
+    assert frozen["tag_published"] is False and frozen["tag_commit_sha"] is None
+    assert frozen["rollback_policy"]["real_resume_authorized"] is False
+    assert {**frozen, "tag_published": True, "tag_commit_sha": sha} == manifest
+    for path in ("config/codex-activation.json", "config/codex-repositories.json",
+                 "config/codex-credential-roles.json", "config/codex-result-receiver-compatibility.json"):
+        assert subprocess.check_output(["git", "show", f"{sha}:{path}"], cwd=ROOT) == (ROOT / path).read_bytes()
+
 
 def test_published_release_requires_trusted_journal_authors(monkeypatch):
     original_load = validate_release.load_json
@@ -35,8 +53,8 @@ def test_mvp_fixture_targets_match_attested_published_manifest():
     manifest = json.loads((ROOT / "release/release-manifest.json").read_text(encoding="utf-8"))
     fixture = json.loads((ROOT / "tests/fixtures/mvp-v2/manifest.json").read_text(encoding="utf-8"))
     assert manifest["release_version"] == "5.0.0"
-    assert manifest["tag_published"] is False
-    assert manifest["tag_commit_sha"] is None
+    assert manifest["tag_published"] is True
+    assert manifest["tag_commit_sha"] == "3cce887fc393fa80ed8f79308ca9b9c7241ce622"
     assert "immutable_reference" not in fixture
     assert "immutable_reference" not in manifest
     assert sorted(fixture["targets"]) == manifest["supported_targets"]

@@ -12,9 +12,18 @@ package are released as one immutable compatibility unit. Current activation in
 that consumer compatibility unit. See [release, upgrade,
 deprecation, and rollback procedures](docs/releases.md).
 
-The current published [`ai-sdlc-v4.0.0` release](docs/releases/4.0.0.md) resolves
+The published `ai-sdlc-v5.0.0` tag resolves to reviewed PR #126 merge
+`3cce887fc393fa80ed8f79308ca9b9c7241ce622`; its immutable consulting adapter
+`codex-adapter-v5.0.0` resolves to `e4328a6ddde2da6e691b8127b01863b659a5537b`.
+The publication attestation records these identities without granting adoption
+or paid execution. Source remains pinned to v4, approvals remain held, and
+actual verify-mode smoke, protected environment verification, no-model canary,
+source migration and deployed readiness remain separate owner-authorized gates.
+See the [v5 runbook](release/staged-v5/README.md).
+
+The currently deployed [`ai-sdlc-v4.0.0` release](docs/releases/4.0.0.md) resolves
 to reviewed PR #116 merge commit `6e51f058bf828b0732cb1b773ba1835acaa1d5cd`.
-The manifest/runtime record attest that immutable tag separately. Its target is
+The historical v4 manifest/runtime attested that immutable tag separately. Its target is
 `codex-adapter-v4.0.0` at `84964d3ba099630cd5c6101e598bfca5433c74c5`, with report
 SHA-256 `1eba66061a253c821110c274fdaebfd6442b0ca4fa4acb4f9761c250a6c9c13b`.
 Deployment, source migration and DEF-0125 live acceptance are complete for the

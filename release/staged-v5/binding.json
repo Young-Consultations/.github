@@ -1,11 +1,13 @@
 {
   "format_version": 1,
-  "status": "BLOCKED_UNPUBLISHED_CONTROL_PLANE",
+  "status": "ATTESTED_PUBLICATION_BLOCKED_ADOPTION",
   "production_readiness_claim": false,
   "activation_requested": false,
   "control_plane": {
     "proposed_tag": "ai-sdlc-v5.0.0",
-    "resolved_commit_sha": null
+    "resolved_commit_sha": "3cce887fc393fa80ed8f79308ca9b9c7241ce622",
+    "reviewed_tree_sha": "e1070f69f575ec72314fde937edf7762c69e5dab",
+    "post_merge_ci_url": "https://github.com/Young-Consultations/.github/actions/runs/45706699192"
   },
   "adapter": {
     "repository": "Young-Consultations/consulting-playbook",
@@ -22,11 +24,12 @@
   },
   "base_control_plane_commit": "13e7aa4d65f2d780a4b856cac33a5b5ac8639961",
   "required_before_adoption": [
-    "reverify immutable adapter tag, report and pin against this attested binding before publication",
-    "complete actual release PR and release-aware tests",
-    "publish and attest control-plane identity under separate approval",
+    "reverify both immutable release identities and attested evidence",
+    "complete and accept this separate publication attestation PR",
     "verify protected environment scopes and automation settings",
-    "separately authorize live canary and protected evidence provisioning",
-    "review source migration and deployed preflight"
+    "separately authorize bounded post-tag verify-mode smoke and verify zero model/branch/PR effects",
+    "separately authorize live no-model canary and protected evidence provisioning",
+    "review source migration, deployed preflight and immutable REAL readiness",
+    "separate owner authorization before any paid implementation"
   ]
 }

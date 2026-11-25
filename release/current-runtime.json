@@ -13,15 +13,15 @@
     "router_action": "actions/codex-router/action.yml",
     "router_workflow": ".github/workflows/codex-router.yml",
     "tag": "ai-sdlc-v5.0.0",
-    "tag_commit_sha": null,
-    "tag_published": false
+    "tag_commit_sha": "3cce887fc393fa80ed8f79308ca9b9c7241ce622",
+    "tag_published": true
   },
   "credential_role_manifest": {
     "path": "config/codex-credential-roles.json",
     "scope": "enabled-portfolio-to-consulting-path",
     "sha256": "189aa8bd66c3d74964a765a23f3e9b6a244f10abd1b8933205d8f9edca29270c"
   },
-  "release_state": "candidate",
+  "release_state": "published",
   "rollback_policy": {
     "candidate": null,
     "real_resume_authorized": false,
