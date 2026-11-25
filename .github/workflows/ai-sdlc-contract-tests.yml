@@ -61,6 +61,8 @@ jobs:
         run: python -m pytest tests/test_codex_result_credential_preflight.py --junitxml=reports/result-preflight.xml
       - name: Run shared publication readiness evidence tests
         run: python scripts/test_publication_readiness.py
+      - name: Check non-deployable v5 release staging
+        run: python -m pytest tests/test_v5_staged_release.py
       - name: Run repository target-adapter tests
         run: python -m pytest tests/test_codex_target_adapter.py --junitxml=reports/target-adapter.xml
       - name: Run pinned TC-MVP-CI-001 conformance oracle

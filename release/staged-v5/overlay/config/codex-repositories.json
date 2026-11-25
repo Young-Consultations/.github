@@ -1,0 +1,141 @@
+{
+  "registry_format_version": 1,
+  "repositories": {
+    "Young-Consultations/.github": {
+      "workflow_ref": "Young-Consultations/.github/.github/workflows/codex-execute.yml@codex-adapter-v2.3.1",
+      "allowed_task_types": [
+        "ci-cd",
+        "documentation",
+        "repository-maintenance",
+        "testing"
+      ],
+      "codex_environment": "github-target-codex",
+      "max_parallel_tasks": 1,
+      "draft_pr_only": true,
+      "contract_version": "ai-sdlc-contract/v2",
+      "conformance": {
+        "fixture_set": "TC-MVP-CI-001",
+        "fixture_version": "2.3.0",
+        "compatibility_sha": "e27b8a541afbd27b4be5606a19ffa43637ad312a",
+        "adapter_ref": "codex-adapter-v2.3.1",
+        "adapter_commit_sha": "4b0ff4f86429412261ee2887d11a1c124c397a8b",
+        "report_path": ".ai-sdlc/conformance/tc-mvp-ci-001.json",
+        "report_sha256": "48eaf52e768a7113755caf0da99a1657541a6b782473daeaf9fa02e22bb2a872",
+        "status": "pass",
+        "activation_evidence_sufficient": true
+      },
+      "idempotency": {
+        "branch_identity": "delivery_id",
+        "ownership_marker": "ai-sdlc-delivery-id",
+        "requires_preflight": true,
+        "requires_fail_closed_reuse": true,
+        "requires_create_race_requery": true,
+        "terminal_reuse_status": "duplicate-reused",
+        "reusable_admission_releases": []
+      }
+    },
+    "Young-Consultations/slugger": {
+      "workflow_ref": "Young-Consultations/slugger/.github/workflows/codex-execute.yml@codex-adapter-v2.3.2",
+      "allowed_task_types": [
+        "automation",
+        "bug-fix",
+        "documentation",
+        "feature",
+        "testing"
+      ],
+      "codex_environment": "slugger-codex-production",
+      "max_parallel_tasks": 2,
+      "draft_pr_only": true,
+      "contract_version": "ai-sdlc-contract/v2",
+      "conformance": {
+        "fixture_set": "TC-MVP-CI-001",
+        "fixture_version": "2.3.0",
+        "compatibility_sha": "e27b8a541afbd27b4be5606a19ffa43637ad312a",
+        "adapter_ref": "codex-adapter-v2.3.2",
+        "adapter_commit_sha": "797f239579bf56fbd5d11d98a1a6b5bad36d98a8",
+        "report_path": ".ai-sdlc/conformance/tc-mvp-ci-001.json",
+        "report_sha256": "8283c78bc9dcea9c2424d0ca250ff6031abecd68495692dd809ee03e06060f3c",
+        "status": "pass",
+        "activation_evidence_sufficient": true
+      },
+      "idempotency": {
+        "branch_identity": "delivery_id",
+        "ownership_marker": "ai-sdlc-delivery-id",
+        "requires_preflight": true,
+        "requires_fail_closed_reuse": true,
+        "requires_create_race_requery": true,
+        "terminal_reuse_status": "duplicate-reused",
+        "reusable_admission_releases": []
+      }
+    },
+    "Young-Consultations/consulting-playbook": {
+      "workflow_ref": "Young-Consultations/consulting-playbook/.github/workflows/codex-execute.yml@codex-adapter-v5.0.0",
+      "allowed_task_types": [
+        "automation",
+        "documentation",
+        "feature",
+        "testing"
+      ],
+      "codex_environment": "consulting-playbook-codex",
+      "max_parallel_tasks": 1,
+      "draft_pr_only": true,
+      "contract_version": "ai-sdlc-contract/v2",
+      "conformance": {
+        "fixture_set": "TC-MVP-CI-001",
+        "fixture_version": "2.3.0",
+        "compatibility_sha": "e27b8a541afbd27b4be5606a19ffa43637ad312a",
+        "adapter_ref": "codex-adapter-v5.0.0",
+        "adapter_commit_sha": "e4328a6ddde2da6e691b8127b01863b659a5537b",
+        "report_path": ".ai-sdlc/conformance/tc-mvp-ci-001.json",
+        "report_sha256": "b4958777139aaae9084943680f72f34a3b107e71a2f80717af3b1e46f16d0ab1",
+        "status": "pass",
+        "activation_evidence_sufficient": true
+      },
+      "idempotency": {
+        "branch_identity": "delivery_id",
+        "ownership_marker": "ai-sdlc-delivery-id",
+        "requires_preflight": true,
+        "requires_fail_closed_reuse": true,
+        "requires_create_race_requery": true,
+        "terminal_reuse_status": "duplicate-reused",
+        "reusable_admission_releases": [
+          "ai-sdlc-v5.0.0"
+        ]
+      }
+    },
+    "Young-Consultations/portfolio-tasks": {
+      "workflow_ref": "Young-Consultations/portfolio-tasks/.github/workflows/codex-execute.yml@codex-adapter-v2.3.2",
+      "allowed_task_types": [
+        "automation",
+        "backlog-governance",
+        "ci-cd",
+        "documentation",
+        "repository-maintenance"
+      ],
+      "codex_environment": "portfolio-tasks-codex-production",
+      "max_parallel_tasks": 1,
+      "draft_pr_only": true,
+      "contract_version": "ai-sdlc-contract/v2",
+      "conformance": {
+        "fixture_set": "TC-MVP-CI-001",
+        "fixture_version": "2.3.0",
+        "compatibility_sha": "e27b8a541afbd27b4be5606a19ffa43637ad312a",
+        "adapter_ref": "codex-adapter-v2.3.2",
+        "adapter_commit_sha": "a7b632eb6f51b750ed863c0f43353d6d931e8e5b",
+        "report_path": ".ai-sdlc/conformance/tc-mvp-ci-001.json",
+        "report_sha256": "9baf2c58d8e0ea055e01eee686610468ed739ae41768140d1e1cf2685092bba1",
+        "status": "pass",
+        "activation_evidence_sufficient": true
+      },
+      "idempotency": {
+        "branch_identity": "delivery_id",
+        "ownership_marker": "ai-sdlc-delivery-id",
+        "requires_preflight": true,
+        "requires_fail_closed_reuse": true,
+        "requires_create_race_requery": true,
+        "terminal_reuse_status": "duplicate-reused",
+        "reusable_admission_releases": []
+      }
+    }
+  }
+}

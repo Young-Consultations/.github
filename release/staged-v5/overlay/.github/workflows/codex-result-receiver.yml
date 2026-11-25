@@ -1,0 +1,74 @@
+name: Codex result receiver
+
+on:
+  workflow_call:
+    inputs:
+      execution_result:
+        description: Complete canonical execution-result/v2 JSON object.
+        required: true
+        type: string
+      source_issue:
+        description: Source issue bound to the admitted delivery.
+        required: true
+        type: string
+    secrets:
+      RESULT_WRITER_PRIVATE_KEY:
+        description: Private key for the dedicated ai-sdlc-result-writer GitHub App; used only to mint a short-lived portfolio-tasks installation token.
+        required: true
+    outputs:
+      accepted:
+        description: Receipt acceptance only; never execution success.
+        value: ${{ jobs.receive.outputs.accepted }}
+      delivery_id:
+        value: ${{ jobs.receive.outputs.delivery_id }}
+      correlation_id:
+        value: ${{ jobs.receive.outputs.correlation_id }}
+      execution_status:
+        value: ${{ jobs.receive.outputs.execution_status }}
+      failure_category:
+        value: ${{ jobs.receive.outputs.failure_category }}
+      diagnostic_summary:
+        value: ${{ jobs.receive.outputs.diagnostic_summary }}
+
+permissions:
+  contents: read
+
+jobs:
+  receive:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: result-${{ inputs.source_issue }}
+      cancel-in-progress: false
+    outputs:
+      accepted: ${{ steps.receive.outputs.accepted }}
+      delivery_id: ${{ steps.receive.outputs.delivery_id }}
+      correlation_id: ${{ steps.receive.outputs.correlation_id }}
+      execution_status: ${{ steps.receive.outputs.execution_status }}
+      failure_category: ${{ steps.receive.outputs.failure_category }}
+      diagnostic_summary: ${{ steps.receive.outputs.diagnostic_summary }}
+    steps:
+      - name: Mint fresh result-writer installation token
+        id: result-writer-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: "5100679"
+          private-key: ${{ secrets.RESULT_WRITER_PRIVATE_KEY }}
+          owner: Young-Consultations
+          repositories: portfolio-tasks
+          permission-issues: write
+          permission-contents: write
+      - name: Verify result-writer GitHub App identity
+        shell: bash
+        env:
+          APP_SLUG: ${{ steps.result-writer-token.outputs.app-slug }}
+        run: |
+          set -euo pipefail
+          [[ "$APP_SLUG" == "ai-sdlc-result-writer" ]]
+      - id: receive
+        uses: Young-Consultations/.github/actions/codex-result-receiver@ai-sdlc-v5.0.0
+        with:
+          result-token: ${{ steps.result-writer-token.outputs.token }}
+          execution-result: ${{ inputs.execution_result }}
+          source-issue: ${{ inputs.source_issue }}
+          caller-repository: ${{ github.repository }}
+          control-plane-release: ai-sdlc-v5.0.0
