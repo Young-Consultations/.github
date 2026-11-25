@@ -1,6 +1,6 @@
 # AI-SDLC Control-Plane Requirements Baseline
 
-**Baseline:** 1.0 (approved for the next MVP)
+**Baseline:** 1.1 (GH-FR-015 rollback clarification for the next release; owner-approved design, implementation review required)
 **Status:** Approved implementation baseline
 **Authoritative input:** [`../VISION.md`](../VISION.md)
 **Scope:** `Young-Consultations/.github`
