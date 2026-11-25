@@ -1,0 +1,42 @@
+{
+  "pin_format_version": 2,
+  "organization_repository": "Young-Consultations/.github",
+  "compatibility_sha": "e27b8a541afbd27b4be5606a19ffa43637ad312a",
+  "fixture_set": "TC-MVP-CI-001",
+  "fixture_version": "2.3.0",
+  "adapter_revision": "sha256:1002331e88b9e888f538af9997d35168ba88691f98ca3b02952cc28a580e988f",
+  "compatibility_files": {
+    "contracts/task-contract.schema.json": "d95673363eb7f825eb64b73ddb0468c787078ce4",
+    "contracts/execution-input.schema.json": "b2b16cfda619c82d73a5e78ae34566feb6b83224",
+    "contracts/execution-result.schema.json": "02ba5fd11b6903f50eccc283679c0b5ac85c4714",
+    "tests/fixtures/mvp-v2/manifest.json": "1656140614973245cf288380e6bcc89f83d8e51f",
+    "tests/fixtures/mvp-v2/scenarios.json": "d0b20b7272bcb38871cb07e51f6a1141eb1f4f04",
+    "tests/fixtures/mvp-v2/expected-results.json": "b45c6921f029220b2f3138d5cd2d9443499a3171"
+  },
+  "target_files": {
+    ".github/workflows/codex-execute.yml": "9451efd3da95f6b1cd3de578aec66bf7524372c1",
+    "scripts/codex_target_adapter.py": "0e8a1dcecbd154f87d935539d0ade5e096b67c7c",
+    "scripts/run_tc_mvp_ci_001.py": "41dd4eb16216a345f828df17c064b8b6017baf8f",
+    "scripts/codex_auth_handoff.py": "c66ecf1c01a8cd04178ebe0b865069fc64d2d30c",
+    "scripts/run_tc_mvp_ci_001_receiver_303.py": "f0a3441e7432215ec229485e80b912df665d0167",
+    "scripts/run_tc_mvp_ci_001_receiver_310.py": "2abc6feaea9f55bcfacfdf53a5501cc968c46790",
+    "scripts/task_content_baseline.py": "f854b5769b4921aca4dfc8055e03af7dad2ee8e2",
+    "scripts/task_content_checkout.py": "ec4edd073a13a61f8ad9a830b82dbfa404ff4386",
+    "scripts/validate_repository.py": "0ed354d5277731819ca6337aea1ef2e76dd4067b",
+    "scripts/test_task_content_baseline.py": "37ad56ce5ed44fe6f0190fbe26f69f6a00192e69",
+    "scripts/test_codex_execute_contract.py": "3c98501d74d635f0015f77bc9b55951a982781a4",
+    "scripts/test_task_content_checkout.py": "31e5f9f04b8d372d7aa42025b0012ee0474ceaa5",
+    ".github/workflows/mvp-conformance.yml": "f0be0518460eafd3e79a8fdb29d4adb5f8fe4e49",
+    "scripts/candidate_test_sandbox.py": "63e289ccb7a5e7732d9529845eb82da0463c981e",
+    "scripts/test_candidate_test_sandbox.py": "122812b72d2d5ed40eeb279e91fface397dfb310",
+    "scripts/test_publication_isolation.py": "1cb4f3ac3801c143767f30b1502bef8d252ba8cf",
+    "scripts/test_validate_repository.py": "67b7484fed51a831271e62ee1d650a46602495fd",
+    "scripts/publication_readiness.py": "da1694cd87be514986f96862c1db07c36217d462",
+    "scripts/test_publication_readiness.py": "f520be598da6a233855cf64be20c5b851880badf",
+    "scripts/publication_canary.py": "0936a280a403db99752d619e9d13f3f40add0253",
+    "scripts/test_publication_canary.py": "b7c148f66b93a7d8f480b7d4d3dba2aa5bce37fb",
+    "scripts/publication_canary_transport.py": "c9bc8ed32c0f2e5786e12c12fa99d26dbd2d186d",
+    "scripts/test_publication_canary_transport.py": "22163c03fe56eb3e95b523d135d5a581e1be9061",
+    ".github/workflows/publication-canary.yml": "8b4568988bf8849716b25b92a683031db69915a0"
+  }
+}

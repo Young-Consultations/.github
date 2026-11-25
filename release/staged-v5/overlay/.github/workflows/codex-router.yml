@@ -1,0 +1,62 @@
+name: Organization Codex Task Router
+
+on:
+  workflow_call:
+    inputs:
+      task_payload:
+        description: Canonical task-contract/v2 JSON produced by portfolio-tasks.
+        required: true
+        type: string
+      execution_mode:
+        description: Explicit canonical execution mode; production defaults to implementation.
+        required: false
+        type: string
+        default: implement
+    secrets:
+      CODEX_ROUTER_TOKEN:
+        description: Repository-scoped token or GitHub App token permitted to journal admission and dispatch the registered workflow.
+        required: true
+    outputs:
+      execution_result:
+        description: Dispatch status or deterministic canonical rejection JSON.
+        value: ${{ jobs.route.outputs.execution_result }}
+      correlation_id:
+        value: ${{ jobs.route.outputs.correlation_id }}
+      delivery_id:
+        value: ${{ jobs.route.outputs.delivery_id }}
+      failure_category:
+        value: ${{ jobs.route.outputs.failure_category }}
+      diagnostic_summary:
+        value: ${{ jobs.route.outputs.diagnostic_summary }}
+      concurrency_group:
+        value: ${{ jobs.route.outputs.concurrency_group }}
+      activation_revision:
+        value: ${{ jobs.route.outputs.activation_revision }}
+      activation_sha256:
+        value: ${{ jobs.route.outputs.activation_sha256 }}
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  route:
+    name: Validate, admit, and dispatch canonical task
+    runs-on: ubuntu-latest
+    outputs:
+      execution_result: ${{ steps.router.outputs.execution_result }}
+      correlation_id: ${{ steps.router.outputs.correlation_id }}
+      delivery_id: ${{ steps.router.outputs.delivery_id }}
+      failure_category: ${{ steps.router.outputs.failure_category }}
+      diagnostic_summary: ${{ steps.router.outputs.diagnostic_summary }}
+      concurrency_group: ${{ steps.router.outputs.concurrency_group }}
+      activation_revision: ${{ steps.router.outputs.activation_revision }}
+      activation_sha256: ${{ steps.router.outputs.activation_sha256 }}
+    steps:
+      - id: router
+        uses: Young-Consultations/.github/actions/codex-router@ai-sdlc-v5.0.0
+        with:
+          router-token: ${{ secrets.CODEX_ROUTER_TOKEN }}
+          task-payload: ${{ inputs.task_payload }}
+          execution-mode: ${{ inputs.execution_mode }}
+          control-plane-release: ai-sdlc-v5.0.0
