@@ -128,6 +128,8 @@ def write_json(path, value):
     "missing", "unknown", "candidate", "resume-true", "resume-zero",
     "extra", "null", "list", "legacy", "duplicate-key", "runtime-missing",
     "runtime-mismatch", "runtime-legacy", "runtime-identity",
+    "publication-zero", "publication-sha-missing", "runtime-publication-zero",
+    "runtime-sha-missing",
 ])
 def test_invalid_rollback_metadata_fails_all_validation_modes(staged_root, fault):
     mp = staged_root / "release/release-manifest.json"
@@ -159,6 +161,14 @@ def test_invalid_rollback_metadata_fails_all_validation_modes(staged_root, fault
         runtime["previous_known_good"] = rollback_policy.LEGACY_PREDECESSOR
     elif fault == "runtime-identity":
         runtime["control_plane"]["release_version"] = "4.0.0"
+    elif fault == "publication-zero":
+        manifest["tag_published"] = 0
+    elif fault == "publication-sha-missing":
+        del manifest["tag_commit_sha"]
+    elif fault == "runtime-publication-zero":
+        runtime["control_plane"]["tag_published"] = 0
+    elif fault == "runtime-sha-missing":
+        del runtime["control_plane"]["tag_commit_sha"]
     write_json(mp, manifest)
     write_json(rp, runtime)
     if fault == "duplicate-key":

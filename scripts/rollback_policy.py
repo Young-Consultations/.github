@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 from typing import Any
 
 LEGACY_TAG = "ai-sdlc-v4.0.0"
@@ -60,6 +61,15 @@ def manifest_errors(manifest: Any) -> list[str]:
         return []
     if manifest.get("release_version") != "5.0.0" or manifest.get("tag") != "ai-sdlc-v5.0.0":
         return ["rollback: unsupported release identity (only attested v4 and v5 supported)"]
+    published = manifest.get("tag_published")
+    sha = manifest.get("tag_commit_sha")
+    if (
+        type(published) is not bool
+        or "tag_commit_sha" not in manifest
+        or (published is False and sha is not None)
+        or (published is True and (not isinstance(sha, str) or re.fullmatch(r"[0-9a-f]{40}", sha) is None))
+    ):
+        return ["rollback: invalid v5 publication identity"]
     if "previous_known_good" in manifest:
         return ["rollback: legacy predecessor field forbidden for v5"]
     if not valid_policy(manifest.get("rollback_policy")):
@@ -74,9 +84,10 @@ def runtime_errors(manifest: Any, runtime: Any) -> list[str]:
     if not isinstance(runtime, dict) or not isinstance(runtime.get("control_plane"), dict):
         return ["rollback: invalid runtime record"]
     control = runtime["control_plane"]
-    if any(control.get(k) != manifest.get(k) for k in (
-        "release_version", "tag", "tag_published", "tag_commit_sha"
-    )) or runtime.get("release_state") != (
+    identity_fields = ("release_version", "tag", "tag_published", "tag_commit_sha")
+    if any(k not in control or control[k] != manifest[k] for k in identity_fields) or (
+        control["tag_published"] is not manifest["tag_published"]
+    ) or runtime.get("release_state") != (
         "published" if manifest.get("tag_published") is True else "candidate"
     ):
         return ["rollback: runtime release identity differs from manifest"]

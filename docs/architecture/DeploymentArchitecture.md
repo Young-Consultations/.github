@@ -54,9 +54,12 @@ dispatch. Only a separately reviewed execution-safe recovery composition may
 supply replacement immutable pins. The v5 deny-only policy records that none
 is currently available; historical predecessor metadata never authorizes
 resume. Recheck all applicable release and operational gates and obtain
-separate human authorization before resuming cost-bearing work. Retain durable
-admission/result journal and PR records; ephemeral runner state is never the
-sole recovery source. Restore tests must prove identity/invariant preservation.
+separate human authorization before resuming cost-bearing work. A target may
+be isolated without reverting unrelated targets through the existing authorized
+isolation procedure. Recovery reconstructs state from authoritative task,
+route/attempt audit, target evidence, admission/result journal and PR records;
+ephemeral runner state is never the sole recovery source. Restore tests must
+prove identity/invariant preservation.
 
 ## Availability targets
 
