@@ -22,6 +22,11 @@
     "sha256": "189aa8bd66c3d74964a765a23f3e9b6a244f10abd1b8933205d8f9edca29270c"
   },
   "release_state": "candidate",
+  "rollback_policy": {
+    "candidate": null,
+    "real_resume_authorized": false,
+    "state": "no-reviewed-safe-rollback"
+  },
   "runtime_record_format_version": 1,
   "targets": {
     "Young-Consultations/.github": {

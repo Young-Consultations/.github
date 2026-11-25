@@ -28,7 +28,7 @@ These prospective records govern architecture rather than merely describing curr
 
 ## ADR-007 — Atomic immutable compatibility releases
 
-**Context:** Router, schema, validator, registry format and checks are interdependent. **Decision:** Bind them in one immutable release manifest with adoption, deprecation and known-good rollback. **Alternatives:** independently version all artifacts; movable branch references. **Tradeoffs:** coordinated releases versus elimination of mixed-version ambiguity. **Consequences:** production consumers pin identities. **Open questions:** signing/attestation enforcement mechanism.
+**Context:** Router, schema, validator, registry format and checks are interdependent. **Decision:** Bind them in one immutable release manifest with adoption, deprecation and explicit rollback safety. Under the owner-approved #82 decision for v5, the manifest and generated runtime represent no reviewed safe rollback available with a null candidate and false resume authorization. Preserve historical release identities; no automatic rollback or execution authority. When rollback is needed, hold new implementation dispatch until a separately reviewed recovery composition passes applicable gates and the human owner authorizes resume. **Alternatives:** independently version all artifacts; movable branch references. **Tradeoffs:** coordinated releases versus elimination of mixed-version ambiguity. **Consequences:** production consumers pin identities. **Open questions:** signing/attestation enforcement mechanism.
 
 ## ADR-008 — Evidence-based asynchronous outcomes
 

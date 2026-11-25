@@ -253,32 +253,37 @@ Published 3.0.2, 3.0.1, and 3.0.0 remain immutable predecessor evidence.
 
 ## Rollback
 
-Stop new dispatches through the normal approval control before changing release
-pins. A manifest `previous_known_good` entry is a rollback candidate, not
-automatic authority to resume cost-bearing execution.
+GH-FR-015 / ADR-007 / issue #82: stop new implementation dispatch before
+changing release pins. Current runtime health and recovery authorization are
+distinct. The approved v5 design records `rollback_policy` in the manifest
+and generated runtime with state `no-reviewed-safe-rollback`, candidate null
+and real_resume_authorized false. No other policy shape is supported by this
+slice. Missing, contradictory or malformed policy fails validation. Normal
+runtime checks may pass while rollback is unavailable; neither a health check
+nor this metadata authorizes execution. The read-only
+`python scripts/runtime_preflight.py --rollback-recovery` decision always
+denies resume and performs no external checks or mutations. No automatic
+rollback exists.
 
-Before selecting a rollback release, review the failure class and verify that
-the candidate is not known to contain the same affected-path defect. If the
-recorded predecessor is known unsafe or rollback safety is indeterminate, keep
-REAL implementation disabled and select a separately reviewed safe release.
-Do not resume cost-bearing Codex work until that release passes the applicable
-contract, target-compatibility, publication, credential, and operational
-preflight gates.
+If rollback is necessary, preserve evidence, hold approvals/dispatch, and
+review a separate recovery composition (control plane, target, source,
+registry, receiver, credentials, publication and applicable acceptance
+evidence). Do not resume cost-bearing work until it is independently verified
+and separately authorized by the owner. Use reviewed repository-local changes
+to restore coherent immutable pins. Never move tags, mix release units, weaken
+allowlists, replay terminal deliveries or erase audit evidence.
 
-For 2.4.5 specifically, the manifest records 2.4.4 as
-`previous_known_good`, but REAL #151 proved that 2.4.4 can lose completed Codex
-work during publication. Therefore 2.4.4 must not be used to resume cost-bearing
-implementation. Issue #82 owns correction of the manifest/rollback-safety
-representation; this containment rule applies until that decision is resolved.
-
-When a reviewed safe rollback release is selected, update affected consumer pins
-through repository-local pull requests, restore package/schema pins from that
-same immutable unit, and rerun all required checks before resuming. Do not move
-published tags, mix release units, weaken allowlists, or erase audit evidence.
+The immutable v4 and earlier manifests retain historical
+`previous_known_good` values. These are **historical identity only**, never
+rollback authority. REAL #151 proved 2.4.4 can lose completed Codex work in
+publication; neither it nor any other predecessor is selected as safe.
+DEF-0105 remains accepted-risk pending operational adoption of the approved
+representation. Staged v5 is unpublished and not deployable; all publication
+and execution gates remain separate.
 
 ### Historical 2.4.0 candidate rollback
 
-If the 2.4.0 candidate fails before publication, do not create its tag. Restore
+Historical procedure retained for forensic context only; it is not current rollback authority. If the 2.4.0 candidate fails before publication, do not create its tag. Restore
 the control-plane manifest/receiver/package references to published 2.3.2 and
 leave any candidate target adapter tags unused or retained only as immutable
 forensic evidence according to repository policy. If 2.4.0 is published and a

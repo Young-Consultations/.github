@@ -8,6 +8,11 @@ import re
 import sys
 from pathlib import Path
 
+if __package__:
+    from . import rollback_policy
+else:
+    import rollback_policy
+
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "release/release-manifest.json"
 SEMVER = re.compile(r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?$")
@@ -78,7 +83,15 @@ def validate(
     if require_publishable and require_candidate_ready:
         return ["publication and candidate readiness modes are mutually exclusive"]
     require_release_binding = require_publishable or require_candidate_ready
-    manifest = load_json(root / MANIFEST.relative_to(ROOT))
+    try:
+        manifest = rollback_policy.strict_json(
+            (root / MANIFEST.relative_to(ROOT)).read_text(encoding="utf-8")
+        )
+    except (OSError, ValueError):
+        return ["rollback: release manifest missing or invalid JSON"]
+    if not isinstance(manifest, dict):
+        return ["rollback: invalid manifest"]
+    errors.extend(rollback_policy.manifest_errors(manifest))
     version = manifest.get("release_version", "")
     if not SEMVER.fullmatch(version):
         errors.append("release_version must be semantic versioning")
@@ -146,8 +159,16 @@ def validate(
     if runtime_path is None or not runtime_path.is_file():
         errors.append("generated current runtime record must exist")
     else:
-        runtime = load_json(runtime_path)
+        try:
+            runtime = rollback_policy.strict_json(runtime_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            runtime = None
+        errors.extend(rollback_policy.runtime_errors(manifest, runtime))
         control_plane = runtime.get("control_plane", {}) if isinstance(runtime, dict) else {}
+        if not isinstance(control_plane, dict):
+            control_plane = {}
+        if not isinstance(runtime, dict):
+            runtime = {}
         if (
             runtime.get("runtime_record_format_version") != 1
             or control_plane.get("tag") != manifest.get("tag")
@@ -182,10 +203,6 @@ def validate(
             errors.append("release router must self-pin its action bundle to the release tag")
         if "github.workflow_sha" in router_source or "actions/checkout@" in router_source:
             errors.append("release router workflow must not resolve policy through caller context")
-
-    previous = manifest.get("previous_known_good", {})
-    if not re.fullmatch(r"[0-9a-f]{40}", previous.get("commit_sha", "")):
-        errors.append("previous known-good release must have a full commit SHA")
 
     fixture_path = manifest.get("fixture_manifest")
     if not isinstance(fixture_path, str) or not (root / fixture_path).is_file():

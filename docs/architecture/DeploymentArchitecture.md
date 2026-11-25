@@ -49,11 +49,17 @@ contract/security gates, every adapter's digest-bound complete conformance
 report, non-recursive exact-file pin, separately resolved immutable tag/commit,
 and the non-empty reviewed receiver trust policy pass the publication gate.
 Disabled or unevaluated targets are blockers, not compatibility success.
-Consumers adopt deliberately. Rollback pins the manifest's known-good release
-and may disable a target without reverting unrelated targets. Recovery
-reconstructs state from authoritative task, route/attempt audit, target evidence
-and PR records; ephemeral runner state is never the sole recovery source.
-Restore tests must prove identity/invariant preservation.
+Consumers adopt deliberately. When rollback is required, hold new implementation
+dispatch. Only a separately reviewed execution-safe recovery composition may
+supply replacement immutable pins. The v5 deny-only policy records that none
+is currently available; historical predecessor metadata never authorizes
+resume. Recheck all applicable release and operational gates and obtain
+separate human authorization before resuming cost-bearing work. A target may
+be isolated without reverting unrelated targets through the existing authorized
+isolation procedure. Recovery reconstructs state from authoritative task,
+route/attempt audit, target evidence, admission/result journal and PR records;
+ephemeral runner state is never the sole recovery source. Restore tests must
+prove identity/invariant preservation.
 
 ## Availability targets
 

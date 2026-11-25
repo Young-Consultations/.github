@@ -22,8 +22,8 @@ def published_preflight_fixture(request, monkeypatch):
         value = original(path)
         if path == "release/current-runtime.json":
             value["release_state"] = "published"
-            value["control_plane"].update(tag="ai-sdlc-v3.1.0", tag_published=True,
-                tag_commit_sha="e9d11fc99fee73d247c93699f058ed64786bd4c0")
+            value["control_plane"].update(release_version="4.0.0", tag="ai-sdlc-v4.0.0", tag_published=True,
+                tag_commit_sha="6e51f058bf828b0732cb1b773ba1835acaa1d5cd")
         return value
     monkeypatch.setattr(runtime_preflight, "load", load)
 
@@ -129,7 +129,7 @@ def test_deployed_live_runtime_fails_before_cutover_and_accepts_exact_source_pin
 ):
     monkeypatch.setenv("PREFLIGHT_AUDIT_TOKEN", "audit-token")
     monkeypatch.setattr(runtime_preflight, "remote_tag_commit",
-                        lambda tag: "e9d11fc99fee73d247c93699f058ed64786bd4c0")
+                        lambda tag: "6e51f058bf828b0732cb1b773ba1835acaa1d5cd")
     monkeypatch.setattr(runtime_preflight, "audit_credentials", lambda *a: [])
     monkeypatch.setattr(runtime_preflight, "audit_result_sender_binding", lambda *a: [])
     monkeypatch.setattr("sys.argv", ["runtime_preflight.py"])
@@ -144,7 +144,7 @@ def test_deployed_live_runtime_fails_before_cutover_and_accepts_exact_source_pin
     assert any(x.startswith("source-pin:") for x in rejected["failures"])
     monkeypatch.setattr(
         runtime_preflight, "api_one",
-        lambda *a, **k: _source_workflow("ai-sdlc-v3.1.0"),
+        lambda *a, **k: _source_workflow("ai-sdlc-v4.0.0"),
     )
     assert runtime_preflight.main() == 0
     accepted = json.loads(capsys.readouterr().out)
@@ -532,7 +532,7 @@ def test_missing_audit_token_reports_failed_credential_boundary(
     monkeypatch.setattr(
         runtime_preflight,
         "remote_tag_commit",
-        lambda tag: "e9d11fc99fee73d247c93699f058ed64786bd4c0",
+        lambda tag: "6e51f058bf828b0732cb1b773ba1835acaa1d5cd",
     )
     # Exercise the published deployed mode. A missing audit token must
     # independently fail both credential metadata and source-pin verification.

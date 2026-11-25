@@ -105,5 +105,5 @@ sequenceDiagram
   V-->>R: Coherent verification report
   Note over V,R: Disabled or not evaluated is not PASS
   R->>R: Human approval, integrity/signing checks
-  R-->>M: Immutable release identity + known-good rollback
+  R-->>M: Immutable release identity + explicit rollback safety
 ```
