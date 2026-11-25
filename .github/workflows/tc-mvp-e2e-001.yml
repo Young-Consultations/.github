@@ -19,6 +19,9 @@ on:
       - 'pyproject.toml'
       - 'tests/fixtures/mvp-v2/**'
       - 'tests/test_tc_mvp_e2e_001.py'
+      - 'tests/test_terminal_replay_seam.py'
+      - 'scripts/codex_result_credential_preflight.py'
+      - 'tests/test_codex_result_credential_preflight.py'
       - 'tests/test_codex_router.py'
       - 'tests/test_codex_result_receiver.py'
       - 'tests/test_release_lifecycle.py'
@@ -75,6 +78,8 @@ jobs:
         run: python -m pip install -r requirements-dev.txt
       - name: Run receiver and dual-mode harness tests
         run: python -m pytest tests/test_codex_router.py tests/test_codex_result_receiver.py tests/test_release_lifecycle.py tests/test_tc_mvp_e2e_001.py
+      - name: Verify terminal replay safety seam (DEF-0151)
+        run: python -m pytest tests/test_terminal_replay_seam.py --junitxml=reports/terminal-replay-seam.xml
       - name: Run TC-MVP-E2E-001-SIM
         run: python scripts/run_tc_mvp_e2e_001.py --mode sim --report reports/tc-mvp-e2e-001-sim.json
       - name: Upload SIM evidence
@@ -82,7 +87,9 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: tc-mvp-e2e-001-sim
-          path: reports/tc-mvp-e2e-001-sim.json
+          path: |
+            reports/tc-mvp-e2e-001-sim.json
+            reports/terminal-replay-seam.xml
           if-no-files-found: error
 
   real-preflight:
