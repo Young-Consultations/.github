@@ -1,6 +1,6 @@
 {
   "format_version": 1,
-  "status": "BLOCKED_UNPUBLISHED_BINDINGS",
+  "status": "BLOCKED_UNPUBLISHED_CONTROL_PLANE",
   "production_readiness_claim": false,
   "activation_requested": false,
   "control_plane": {
@@ -11,7 +11,7 @@
     "repository": "Young-Consultations/consulting-playbook",
     "proposed_tag": "codex-adapter-v5.0.0",
     "reviewed_merge_commit": "e4328a6ddde2da6e691b8127b01863b659a5537b",
-    "resolved_tag_commit_sha": null,
+    "resolved_tag_commit_sha": "e4328a6ddde2da6e691b8127b01863b659a5537b",
     "reviewed_tree_sha": "4f3281403243a5446a4e4a0fd5a84af4db0033c3",
     "post_merge_ci_url": "https://github.com/Young-Consultations/consulting-playbook/actions/runs/45533333147",
     "report_path": ".ai-sdlc/conformance/tc-mvp-ci-001.json",
@@ -21,7 +21,7 @@
   },
   "base_control_plane_commit": "13e7aa4d65f2d780a4b856cac33a5b5ac8639961",
   "required_before_adoption": [
-    "independently resolve approved adapter tag to reviewed commit and re-fetch report",
+    "reverify immutable adapter tag, report and pin against this attested binding before publication",
     "complete actual release PR and release-aware tests",
     "publish and attest control-plane identity under separate approval",
     "verify protected environment scopes and automation settings",
